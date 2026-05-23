@@ -1,72 +1,98 @@
 import Link from 'next/link'
-import { Sparkles } from 'lucide-react'
+import { Activity, Bell, FileText, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 
 const highlights = [
-  'Pacientes e histórico clínico organizados',
-  'Exames, atendimentos e evolução em um só lugar',
-  'Fluxo simples para a rotina do profissional optometrista',
+  {
+    title: 'Prontuário',
+    description: 'Pacientes e histórico clínico',
+    icon: FileText,
+  },
+  {
+    title: 'Exames',
+    description: 'Atendimentos e evolução',
+    icon: Activity,
+  },
+  {
+    title: 'Retornos',
+    description: 'Alertas para acompanhamento',
+    icon: Bell,
+  },
 ]
 
 export default function Home() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-slate-950 px-4 text-white selection:bg-indigo-500/30">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-10 text-white selection:bg-indigo-500/30">
       <div className="pointer-events-none absolute left-[-20%] top-[-20%] h-[60%] w-[60%] rounded-full bg-violet-600/10 blur-[120px]" />
       <div className="pointer-events-none absolute bottom-[-20%] right-[-20%] h-[60%] w-[60%] rounded-full bg-indigo-600/10 blur-[120px]" />
 
-      <div className="relative z-10 flex min-h-screen items-center justify-center py-16">
-        <div className="w-full max-w-3xl text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/20">
-            <Sparkles className="h-7 w-7 text-white" />
+      <div className="relative z-10 w-full max-w-xl">
+        <div className="mb-6 flex flex-col items-center">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/20">
+            <Sparkles className="h-6 w-6 text-white" />
           </div>
-
-          <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
-            Lensys <span className="text-indigo-400">Care</span>
-          </h1>
-
-          <p className="mt-3 text-sm font-medium text-slate-400 sm:text-base">
-            Sistema de gestão para optometria clínica
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-300">
+            Lensys Care
           </p>
+        </div>
 
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-            Pacientes, exames, atendimentos e evolução clínica em uma plataforma feita para
-            profissionais da visão.
-          </p>
+        <Card glass className="relative border-slate-800 bg-slate-900/60 shadow-2xl">
+          <CardHeader className="px-6 pb-4 pt-8 text-center sm:px-10">
+            <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
+              Sistema de gestão para{' '}
+              <span className="bg-gradient-to-r from-violet-300 to-indigo-300 bg-clip-text text-transparent">
+                optometria clínica
+              </span>
+            </h1>
+            <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-slate-400 sm:text-base">
+              Organize pacientes, atendimentos, exames e evolução clínica em uma plataforma
+              feita para profissionais da visão.
+            </p>
+          </CardHeader>
 
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button asChild variant="premium" size="lg" className="w-full sm:w-auto">
-              <Link href="/login">Entrar</Link>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="w-full border-slate-800 bg-slate-900/50 text-white hover:border-indigo-400/40 hover:bg-slate-900 sm:w-auto"
-            >
-              <Link href="/register">Criar conta</Link>
-            </Button>
-          </div>
+          <CardContent className="px-6 pb-7 pt-4 sm:px-10">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button asChild variant="premium" size="lg" className="w-full font-semibold">
+                <Link href="/login">Entrar</Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="w-full border-slate-700 bg-slate-950/40 text-white hover:border-indigo-400/40 hover:bg-slate-800 hover:text-white"
+              >
+                <Link href="/register">Criar conta</Link>
+              </Button>
+            </div>
 
-          <div className="mt-4">
+            <div className="mt-7 grid gap-3 sm:grid-cols-3">
+              {highlights.map((highlight) => {
+                const Icon = highlight.icon
+
+                return (
+                  <div
+                    key={highlight.title}
+                    className="rounded-xl border border-slate-800/80 bg-slate-950/40 p-3 text-left"
+                  >
+                    <Icon className="mb-2 h-4 w-4 text-indigo-300" />
+                    <p className="text-xs font-semibold text-white">{highlight.title}</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">{highlight.description}</p>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+
+          <CardFooter className="justify-center border-t border-slate-800/60 px-6 py-4">
             <Link
               href="/planos"
-              className="text-sm font-medium text-slate-400 transition-colors hover:text-slate-200"
+              className="text-sm font-medium text-slate-400 transition-colors hover:text-indigo-300"
             >
-              Ver planos
+              Conhecer planos e recursos
             </Link>
-          </div>
-
-          <div className="mt-12 flex flex-col items-center gap-3 text-sm text-slate-400">
-            {highlights.map((item) => (
-              <div
-                key={item}
-                className="rounded-full border border-slate-800/80 bg-slate-900/40 px-4 py-2"
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
+          </CardFooter>
+        </Card>
       </div>
     </main>
   )
