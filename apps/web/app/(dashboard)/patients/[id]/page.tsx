@@ -16,6 +16,36 @@ import {
   FileText,
 } from 'lucide-react'
 
+type PatientAlert = {
+  id: string
+  status: 'PENDING' | 'SENT' | 'DISMISSED'
+  channel: 'EMAIL' | 'WHATSAPP' | 'SMS'
+  due_date: Date | string
+  sent_at: Date | string | null
+}
+
+type DecimalLike = number | string | { toString(): string; valueOf(): string | number }
+
+type PatientExam = {
+  id: string
+  exam_date: Date | string
+  examiner: {
+    full_name: string
+    crm: string | null
+  }
+  od_sph: DecimalLike | null
+  od_cyl: DecimalLike | null
+  od_axis: number | null
+  od_va: string | null
+  oe_sph: DecimalLike | null
+  oe_cyl: DecimalLike | null
+  oe_axis: number | null
+  oe_va: string | null
+  addition: DecimalLike | null
+  pd: DecimalLike | null
+  prescription_notes: string | null
+}
+
 interface PatientDetailPageProps {
   params: {
     id: string
@@ -139,7 +169,7 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
                 <div className="text-xs text-slate-400 font-semibold italic">Nenhum lembrete gerado ainda. Lembretes são criados automaticamente ao salvar um exame.</div>
               ) : (
                 <div className="space-y-3">
-                  {patient.alerts.map((alert) => {
+                  {patient.alerts.map((alert: PatientAlert) => {
                     const isPending = alert.status === 'PENDING'
                     const isSent = alert.status === 'SENT'
                     return (
@@ -191,7 +221,7 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
                 </Link>
               </div>
             ) : (
-              patient.exams.map((exam) => (
+              patient.exams.map((exam: PatientExam) => (
                 <Card key={exam.id} className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                   {/* Exam Card Header */}
                   <div className="bg-slate-50/50 dark:bg-slate-950/40 px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs">
@@ -224,7 +254,7 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
                           <tr>
                             <td className="py-3 px-4 font-bold text-slate-400 bg-slate-50/30 dark:bg-slate-950/10">OD (Direito)</td>
                             <td className="py-3 font-bold text-slate-800 dark:text-slate-200">
-                              {exam.od_sph ? `${exam.od_sph > 0 ? '+' : ''}${Number(exam.od_sph).toFixed(2)}` : 'Plano'}
+                              {exam.od_sph ? `${Number(exam.od_sph) > 0 ? '+' : ''}${Number(exam.od_sph).toFixed(2)}` : 'Plano'}
                             </td>
                             <td className="py-3 text-slate-600 dark:text-slate-400">
                               {exam.od_cyl ? `${Number(exam.od_cyl).toFixed(2)}` : '0.00'}
@@ -238,7 +268,7 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
                           <tr>
                             <td className="py-3 px-4 font-bold text-slate-400 bg-slate-50/30 dark:bg-slate-950/10">OE (Esquerdo)</td>
                             <td className="py-3 font-bold text-slate-800 dark:text-slate-200">
-                              {exam.oe_sph ? `${exam.oe_sph > 0 ? '+' : ''}${Number(exam.oe_sph).toFixed(2)}` : 'Plano'}
+                              {exam.oe_sph ? `${Number(exam.oe_sph) > 0 ? '+' : ''}${Number(exam.oe_sph).toFixed(2)}` : 'Plano'}
                             </td>
                             <td className="py-3 text-slate-600 dark:text-slate-400">
                               {exam.oe_cyl ? `${Number(exam.oe_cyl).toFixed(2)}` : '0.00'}

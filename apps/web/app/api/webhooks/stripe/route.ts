@@ -21,6 +21,42 @@ const PaymentStatus = {
   FAILED: 'FAILED',
 } as const
 
+type CheckoutSessionEvent = {
+  id: string
+  metadata?: {
+    clinicId?: string
+  } | null
+  subscription?: string | null
+}
+
+type StripeSubscriptionRecord = {
+  id: string
+  status: string
+  current_period_end: number
+  cancel_at_period_end: boolean
+  trial_end: number | null
+  metadata?: {
+    clinicId?: string
+  } | null
+  items: {
+    data: Array<{
+      price: {
+        id: string
+      }
+    }>
+  }
+}
+
+type StripeInvoiceRecord = {
+  id: string
+  customer: string | null
+  payment_intent: string | null
+  amount_paid: number
+  amount_due: number
+  currency: string
+  billing_reason: string | null
+}
+
 function mapStripeStatus(stripeStatus: string): typeof SubscriptionStatus[keyof typeof SubscriptionStatus] {
   switch (stripeStatus) {
     case 'active':
@@ -66,7 +102,7 @@ export async function POST(request: Request) {
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.CheckoutSession
+        const session = event.data.object as CheckoutSessionEvent
         const clinicId = session.metadata?.clinicId
 
         if (!clinicId) {
@@ -75,7 +111,7 @@ export async function POST(request: Request) {
         }
 
         if (session.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
+          const subscription = await stripe.subscriptions.retrieve(session.subscription as string) as unknown as StripeSubscriptionRecord
           const trialEnds = subscription.trial_end ? new Date(subscription.trial_end * 1000) : null
 
           await prisma.subscription.upsert({
@@ -106,7 +142,7 @@ export async function POST(request: Request) {
       }
 
       case 'customer.subscription.updated': {
-        const subscription = event.data.object as Stripe.Subscription
+        const subscription = event.data.object as unknown as StripeSubscriptionRecord
         const clinicId = subscription.metadata?.clinicId
 
         const updateData = {
@@ -134,7 +170,7 @@ export async function POST(request: Request) {
       }
 
       case 'customer.subscription.deleted': {
-        const subscription = event.data.object as Stripe.Subscription
+        const subscription = event.data.object as unknown as StripeSubscriptionRecord
         const clinicId = subscription.metadata?.clinicId
 
         const downgradeData = {
@@ -163,7 +199,7 @@ export async function POST(request: Request) {
       }
 
       case 'invoice.payment_succeeded': {
-        const invoice = event.data.object as Stripe.Invoice
+        const invoice = event.data.object as unknown as StripeInvoiceRecord
 
         if (!invoice.customer) break
 
@@ -193,7 +229,7 @@ export async function POST(request: Request) {
       }
 
       case 'invoice.payment_failed': {
-        const invoice = event.data.object as Stripe.Invoice
+        const invoice = event.data.object as unknown as StripeInvoiceRecord
 
         if (!invoice.customer) break
 

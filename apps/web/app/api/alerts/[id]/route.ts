@@ -22,6 +22,20 @@ interface AlertRecord {
   }
 }
 
+interface AlertQueryRecord {
+  id: string
+  patient_id: string
+  exam_id: string
+  due_date: string
+  channel: 'EMAIL' | 'WHATSAPP' | 'SMS'
+  patients: {
+    full_name: string
+    email: string | null
+    phone: string | null
+    clinic_id: string
+  }[]
+}
+
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
@@ -79,7 +93,18 @@ export async function POST(
       }
 
       // 3. Dispatch based on channel
-      const alertTyped = alert as AlertRecord
+      const alertQuery = alert as unknown as AlertQueryRecord
+      const patient = alertQuery.patients[0]
+
+      if (!patient) {
+        return NextResponse.json({ error: 'PATIENT_NOT_FOUND', message: 'Paciente do alerta não encontrado.' }, { status: 404 })
+      }
+
+      const alertTyped: AlertRecord = {
+        ...alertQuery,
+        patients: patient,
+      }
+
       if (alertTyped.channel === 'EMAIL') {
         await sendAlertEmail(alertTyped)
       } else if (alertTyped.channel === 'WHATSAPP') {

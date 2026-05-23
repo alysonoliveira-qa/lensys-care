@@ -10,6 +10,51 @@ const SubscriptionStatus = {
   TRIALING: 'TRIALING',
 } as const
 
+type RegisterTransactionClient = {
+  clinic: {
+    create: (args: {
+      data: {
+        name: string
+        slug: string
+        email: string
+        phone?: string
+      }
+    }) => Promise<{
+      id: string
+      name: string
+      slug: string
+    }>
+  }
+  profile: {
+    create: (args: {
+      data: {
+        id: string
+        clinic_id: string
+        full_name: string
+        role: 'OWNER'
+      }
+    }) => Promise<{
+      id: string
+      clinic_id: string
+      full_name: string
+      role: 'OWNER'
+    }>
+  }
+  subscription: {
+    create: (args: {
+      data: {
+        clinic_id: string
+        plan: typeof Plan[keyof typeof Plan]
+        status: typeof SubscriptionStatus[keyof typeof SubscriptionStatus]
+        trial_ends_at: Date
+      }
+    }) => Promise<{
+      id: string
+      clinic_id: string
+    }>
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -68,7 +113,9 @@ export async function POST(request: Request) {
 
     // 4. Create Clinic, Profile and Subscription in a single transaction
     const result = await prisma.$transaction(async (tx) => {
-      const clinic = await tx.clinic.create({
+      const txClient = tx as unknown as RegisterTransactionClient
+
+      const clinic = await txClient.clinic.create({
         data: {
           name: clinicName,
           slug,
@@ -77,7 +124,7 @@ export async function POST(request: Request) {
         },
       })
 
-      const profile = await tx.profile.create({
+      const profile = await txClient.profile.create({
         data: {
           id: userId,
           clinic_id: clinic.id,
@@ -86,7 +133,7 @@ export async function POST(request: Request) {
         },
       })
 
-      const subscription = await tx.subscription.create({
+      const subscription = await txClient.subscription.create({
         data: {
           clinic_id: clinic.id,
           plan: Plan.ESSENTIAL,

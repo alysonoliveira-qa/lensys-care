@@ -11,10 +11,10 @@ export interface AlertData {
   id: string
   patient_id: string
   exam_id: string
-  due_date: string
+  due_date: Date | string
   status: 'PENDING' | 'SENT' | 'DISMISSED'
   channel: 'EMAIL' | 'WHATSAPP' | 'SMS'
-  sent_at?: string | null
+  sent_at?: Date | string | null
   patient: {
     id: string
     full_name: string

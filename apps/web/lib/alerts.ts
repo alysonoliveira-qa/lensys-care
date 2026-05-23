@@ -94,6 +94,20 @@ interface AlertWithRelations {
   }
 }
 
+interface AlertWithRelationRows {
+  id: string
+  patient_id: string
+  exam_id: string
+  due_date: string
+  channel: 'EMAIL' | 'WHATSAPP' | 'SMS'
+  patients: Array<{
+    full_name: string
+    email: string | null
+    phone: string | null
+    clinic_id: string
+  }>
+}
+
 /**
  * Sends an email reminder for an alert via Resend.
  */
@@ -196,8 +210,19 @@ export async function dispatchDueAlerts(daysAhead = 7): Promise<{ sent: number; 
   let sent = 0
   let failed = 0
 
-  for (const alert of alerts as AlertWithRelations[]) {
+  for (const alertRow of alerts as unknown as AlertWithRelationRows[]) {
     try {
+      const patient = alertRow.patients[0]
+      if (!patient) {
+        failed++
+        continue
+      }
+
+      const alert: AlertWithRelations = {
+        ...alertRow,
+        patients: patient,
+      }
+
       if (alert.channel === 'EMAIL') {
         await sendAlertEmail(alert)
       } else if (alert.channel === 'WHATSAPP') {
@@ -214,7 +239,7 @@ export async function dispatchDueAlerts(daysAhead = 7): Promise<{ sent: number; 
 
       sent++
     } catch (err) {
-      console.error(`Failed to send alert ${alert.id}:`, err)
+      console.error(`Failed to send alert ${alertRow.id}:`, err)
       failed++
     }
   }

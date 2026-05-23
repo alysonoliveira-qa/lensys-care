@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -52,7 +52,7 @@ interface SubscriptionState {
   status: string
 }
 
-export default function PlanosPage() {
+function PlanosPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
@@ -316,5 +316,13 @@ export default function PlanosPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function PlanosPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+      <PlanosPageContent />
+    </Suspense>
   )
 }

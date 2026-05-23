@@ -15,6 +15,31 @@ interface PatientsPageProps {
   }
 }
 
+type PatientsWhereClause = {
+  clinic_id: string
+  OR?: Array<{
+    full_name?: {
+      contains: string
+      mode: 'insensitive'
+    }
+    email?: {
+      contains: string
+      mode: 'insensitive'
+    }
+  }>
+}
+
+type PatientListItem = {
+  id: string
+  full_name: string
+  dob: Date | string
+  phone: string | null
+  email: string | null
+  exams: Array<{
+    exam_date: Date | string
+  }>
+}
+
 export const revalidate = 0
 
 export default async function PatientsPage({ searchParams }: PatientsPageProps) {
@@ -42,7 +67,7 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
   const skip = (page - 1) * limit
 
   // Query conditions
-  const whereClause = {
+  const whereClause: PatientsWhereClause = {
     clinic_id: clinicId,
   }
 
@@ -136,7 +161,7 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {patients.map((p) => {
+                  {patients.map((p: PatientListItem) => {
                     const lastExam = p.exams[0]
                     return (
                       <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/10 transition-colors">

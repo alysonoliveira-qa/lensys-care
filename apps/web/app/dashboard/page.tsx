@@ -17,6 +17,28 @@ import {
   UserCheck
 } from 'lucide-react'
 
+type PatientDobRecord = {
+  dob: Date
+}
+
+type RecentPatient = {
+  id: string
+  full_name: string
+  dob: Date | string
+  phone: string | null
+  email: string | null
+}
+
+type RecentAlert = {
+  id: string
+  patient_id: string
+  due_date: Date | string
+  channel: 'EMAIL' | 'WHATSAPP' | 'SMS'
+  patient: {
+    full_name: string
+  }
+}
+
 export const revalidate = 0
 
 export default async function DashboardPage() {
@@ -90,7 +112,7 @@ export default async function DashboardPage() {
   }
 
   const today = new Date()
-  patientsDob.forEach((p) => {
+  patientsDob.forEach((p: PatientDobRecord) => {
     const age = today.getFullYear() - p.dob.getFullYear()
     if (age < 18) ageGroups.infant++
     else if (age < 40) ageGroups.young++
@@ -237,7 +259,7 @@ export default async function DashboardPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {recentPatients.map((p) => (
+                      {recentPatients.map((p: RecentPatient) => (
                         <tr key={p.id} className="text-slate-600 dark:text-slate-300 font-medium">
                           <td className="py-3 font-bold text-slate-800 dark:text-slate-200">{p.full_name}</td>
                           <td className="py-3">{new Date(p.dob).toLocaleDateString('pt-BR')}</td>
@@ -274,7 +296,7 @@ export default async function DashboardPage() {
               {recentAlerts.length === 0 ? (
                 <div className="py-6 text-center text-sm text-slate-400">Nenhum alerta pendente no momento.</div>
               ) : (
-                recentAlerts.map((alert) => (
+                recentAlerts.map((alert: RecentAlert) => (
                   <div
                     key={alert.id}
                     className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20 flex flex-col gap-2"
