@@ -1,180 +1,195 @@
--- ─────────────────────────────────────────────────────────────────────────────
 -- 002_rls_policies.sql
--- Row Level Security policies for all OptoTech tables.
--- Every policy gates access to records belonging to the authenticated user's clinic.
--- ─────────────────────────────────────────────────────────────────────────────
+-- Tenant-scoped RLS for the Lensys Care tables.
+-- Privileged helper functions live outside the exposed public schema.
 
--- ─── Helper function: get current user's clinic_id ───────────────────────────
--- Reads the clinic_id from the profiles table for the authenticated user.
--- Used in every RLS policy to avoid subquery duplication.
-CREATE OR REPLACE FUNCTION auth_clinic_id()
+CREATE SCHEMA IF NOT EXISTS private;
+REVOKE ALL ON SCHEMA private FROM PUBLIC;
+
+CREATE OR REPLACE FUNCTION private.auth_clinic_id()
 RETURNS UUID
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
+SET search_path = ''
 AS $$
-  SELECT clinic_id FROM profiles WHERE id = auth.uid()
+  SELECT clinic_id
+  FROM public.profiles
+  WHERE id = (SELECT auth.uid())
 $$;
 
--- Helper: get current user's role
-CREATE OR REPLACE FUNCTION auth_role()
+CREATE OR REPLACE FUNCTION private.auth_role()
 RETURNS TEXT
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
+SET search_path = ''
 AS $$
-  SELECT role::TEXT FROM profiles WHERE id = auth.uid()
+  SELECT role::TEXT
+  FROM public.profiles
+  WHERE id = (SELECT auth.uid())
 $$;
 
--- ─── Enable RLS on all tables ────────────────────────────────────────────────
-ALTER TABLE clinics           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE profiles          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE patients          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE exams             ENABLE ROW LEVEL SECURITY;
-ALTER TABLE alerts            ENABLE ROW LEVEL SECURITY;
-ALTER TABLE subscriptions     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE stripe_customers  ENABLE ROW LEVEL SECURITY;
-ALTER TABLE payments          ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON FUNCTION private.auth_clinic_id() FROM PUBLIC;
+REVOKE ALL ON FUNCTION private.auth_role() FROM PUBLIC;
+GRANT USAGE ON SCHEMA private TO authenticated;
+GRANT EXECUTE ON FUNCTION private.auth_clinic_id() TO authenticated;
+GRANT EXECUTE ON FUNCTION private.auth_role() TO authenticated;
 
--- ─────────────────────────────────────────────────────────────────────────────
--- CLINICS
--- ─────────────────────────────────────────────────────────────────────────────
--- Users can only view their own clinic
-CREATE POLICY "clinics_select_own" ON clinics
-  FOR SELECT USING (id = auth_clinic_id());
+ALTER TABLE public.clinics          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.patients         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.exams            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.alerts           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.subscriptions    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.stripe_customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payments         ENABLE ROW LEVEL SECURITY;
 
--- Only OWNER can update clinic info
-CREATE POLICY "clinics_update_owner" ON clinics
-  FOR UPDATE USING (id = auth_clinic_id() AND auth_role() = 'OWNER');
+REVOKE ALL ON public.clinics, public.profiles, public.patients, public.exams,
+  public.alerts, public.subscriptions, public.stripe_customers, public.payments FROM anon;
 
--- ─────────────────────────────────────────────────────────────────────────────
--- PROFILES
--- ─────────────────────────────────────────────────────────────────────────────
--- All clinic members can view colleagues' profiles
-CREATE POLICY "profiles_select_clinic" ON profiles
-  FOR SELECT USING (clinic_id = auth_clinic_id());
+GRANT SELECT, UPDATE ON public.clinics TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.patients TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.exams TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON public.alerts TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON public.subscriptions TO authenticated;
+GRANT SELECT, INSERT ON public.stripe_customers TO authenticated;
+GRANT SELECT ON public.payments TO authenticated;
 
--- Only OWNER can insert / update / delete profiles
-CREATE POLICY "profiles_insert_owner" ON profiles
-  FOR INSERT WITH CHECK (clinic_id = auth_clinic_id() AND auth_role() = 'OWNER');
+CREATE POLICY "clinics_select_own" ON public.clinics
+  FOR SELECT TO authenticated
+  USING (id = (SELECT private.auth_clinic_id()));
 
-CREATE POLICY "profiles_update_owner" ON profiles
-  FOR UPDATE USING (clinic_id = auth_clinic_id() AND auth_role() = 'OWNER');
+CREATE POLICY "clinics_update_owner" ON public.clinics
+  FOR UPDATE TO authenticated
+  USING (id = (SELECT private.auth_clinic_id()) AND (SELECT private.auth_role()) = 'OWNER')
+  WITH CHECK (id = (SELECT private.auth_clinic_id()) AND (SELECT private.auth_role()) = 'OWNER');
 
-CREATE POLICY "profiles_delete_owner" ON profiles
-  FOR DELETE USING (clinic_id = auth_clinic_id() AND auth_role() = 'OWNER');
+CREATE POLICY "profiles_select_clinic" ON public.profiles
+  FOR SELECT TO authenticated
+  USING (clinic_id = (SELECT private.auth_clinic_id()));
 
--- ─────────────────────────────────────────────────────────────────────────────
--- PATIENTS
--- ─────────────────────────────────────────────────────────────────────────────
-CREATE POLICY "patients_select_clinic" ON patients
-  FOR SELECT USING (clinic_id = auth_clinic_id());
+CREATE POLICY "profiles_insert_owner" ON public.profiles
+  FOR INSERT TO authenticated
+  WITH CHECK (clinic_id = (SELECT private.auth_clinic_id()) AND (SELECT private.auth_role()) = 'OWNER');
 
-CREATE POLICY "patients_insert_clinic" ON patients
-  FOR INSERT WITH CHECK (clinic_id = auth_clinic_id());
+CREATE POLICY "profiles_update_owner" ON public.profiles
+  FOR UPDATE TO authenticated
+  USING (clinic_id = (SELECT private.auth_clinic_id()) AND (SELECT private.auth_role()) = 'OWNER')
+  WITH CHECK (clinic_id = (SELECT private.auth_clinic_id()) AND (SELECT private.auth_role()) = 'OWNER');
 
-CREATE POLICY "patients_update_clinic" ON patients
-  FOR UPDATE USING (clinic_id = auth_clinic_id());
+CREATE POLICY "profiles_delete_owner" ON public.profiles
+  FOR DELETE TO authenticated
+  USING (clinic_id = (SELECT private.auth_clinic_id()) AND (SELECT private.auth_role()) = 'OWNER');
 
--- Only OWNER or OPTOMETRIST can delete patients
-CREATE POLICY "patients_delete_staff" ON patients
-  FOR DELETE USING (
-    clinic_id = auth_clinic_id()
-    AND auth_role() IN ('OWNER', 'OPTOMETRIST')
+CREATE POLICY "patients_select_clinic" ON public.patients
+  FOR SELECT TO authenticated
+  USING (clinic_id = (SELECT private.auth_clinic_id()));
+
+CREATE POLICY "patients_insert_clinic" ON public.patients
+  FOR INSERT TO authenticated
+  WITH CHECK (clinic_id = (SELECT private.auth_clinic_id()));
+
+CREATE POLICY "patients_update_clinic" ON public.patients
+  FOR UPDATE TO authenticated
+  USING (clinic_id = (SELECT private.auth_clinic_id()))
+  WITH CHECK (clinic_id = (SELECT private.auth_clinic_id()));
+
+CREATE POLICY "patients_delete_staff" ON public.patients
+  FOR DELETE TO authenticated
+  USING (
+    clinic_id = (SELECT private.auth_clinic_id())
+    AND (SELECT private.auth_role()) IN ('OWNER', 'OPTOMETRIST')
   );
 
--- ─────────────────────────────────────────────────────────────────────────────
--- EXAMS
--- ─────────────────────────────────────────────────────────────────────────────
-CREATE POLICY "exams_select_clinic" ON exams
-  FOR SELECT USING (
+CREATE POLICY "exams_select_clinic" ON public.exams
+  FOR SELECT TO authenticated
+  USING (
     patient_id IN (
-      SELECT id FROM patients WHERE clinic_id = auth_clinic_id()
+      SELECT id FROM public.patients WHERE clinic_id = (SELECT private.auth_clinic_id())
     )
   );
 
-CREATE POLICY "exams_insert_clinic" ON exams
-  FOR INSERT WITH CHECK (
+CREATE POLICY "exams_insert_clinic" ON public.exams
+  FOR INSERT TO authenticated
+  WITH CHECK (
     patient_id IN (
-      SELECT id FROM patients WHERE clinic_id = auth_clinic_id()
+      SELECT id FROM public.patients WHERE clinic_id = (SELECT private.auth_clinic_id())
     )
   );
 
-CREATE POLICY "exams_update_clinic" ON exams
-  FOR UPDATE USING (
+CREATE POLICY "exams_update_clinic" ON public.exams
+  FOR UPDATE TO authenticated
+  USING (
     patient_id IN (
-      SELECT id FROM patients WHERE clinic_id = auth_clinic_id()
+      SELECT id FROM public.patients WHERE clinic_id = (SELECT private.auth_clinic_id())
+    )
+  )
+  WITH CHECK (
+    patient_id IN (
+      SELECT id FROM public.patients WHERE clinic_id = (SELECT private.auth_clinic_id())
     )
   );
 
-CREATE POLICY "exams_delete_staff" ON exams
-  FOR DELETE USING (
+CREATE POLICY "exams_delete_staff" ON public.exams
+  FOR DELETE TO authenticated
+  USING (
     patient_id IN (
-      SELECT id FROM patients WHERE clinic_id = auth_clinic_id()
+      SELECT id FROM public.patients WHERE clinic_id = (SELECT private.auth_clinic_id())
     )
-    AND auth_role() IN ('OWNER', 'OPTOMETRIST')
+    AND (SELECT private.auth_role()) IN ('OWNER', 'OPTOMETRIST')
   );
 
--- ─────────────────────────────────────────────────────────────────────────────
--- ALERTS
--- ─────────────────────────────────────────────────────────────────────────────
-CREATE POLICY "alerts_select_clinic" ON alerts
-  FOR SELECT USING (
+CREATE POLICY "alerts_select_clinic" ON public.alerts
+  FOR SELECT TO authenticated
+  USING (
     patient_id IN (
-      SELECT id FROM patients WHERE clinic_id = auth_clinic_id()
-    )
-  );
-
-CREATE POLICY "alerts_insert_clinic" ON alerts
-  FOR INSERT WITH CHECK (
-    patient_id IN (
-      SELECT id FROM patients WHERE clinic_id = auth_clinic_id()
+      SELECT id FROM public.patients WHERE clinic_id = (SELECT private.auth_clinic_id())
     )
   );
 
-CREATE POLICY "alerts_update_clinic" ON alerts
-  FOR UPDATE USING (
+CREATE POLICY "alerts_insert_clinic" ON public.alerts
+  FOR INSERT TO authenticated
+  WITH CHECK (
     patient_id IN (
-      SELECT id FROM patients WHERE clinic_id = auth_clinic_id()
+      SELECT id FROM public.patients WHERE clinic_id = (SELECT private.auth_clinic_id())
     )
   );
 
--- ─────────────────────────────────────────────────────────────────────────────
--- SUBSCRIPTIONS
--- ─────────────────────────────────────────────────────────────────────────────
--- All clinic members can read subscription (needed for hasFeature())
-CREATE POLICY "subscriptions_select_clinic" ON subscriptions
-  FOR SELECT USING (clinic_id = auth_clinic_id());
+CREATE POLICY "alerts_update_clinic" ON public.alerts
+  FOR UPDATE TO authenticated
+  USING (
+    patient_id IN (
+      SELECT id FROM public.patients WHERE clinic_id = (SELECT private.auth_clinic_id())
+    )
+  )
+  WITH CHECK (
+    patient_id IN (
+      SELECT id FROM public.patients WHERE clinic_id = (SELECT private.auth_clinic_id())
+    )
+  );
 
--- Only OWNER can manage subscription
-CREATE POLICY "subscriptions_insert_owner" ON subscriptions
-  FOR INSERT WITH CHECK (clinic_id = auth_clinic_id() AND auth_role() = 'OWNER');
+CREATE POLICY "subscriptions_select_clinic" ON public.subscriptions
+  FOR SELECT TO authenticated
+  USING (clinic_id = (SELECT private.auth_clinic_id()));
 
-CREATE POLICY "subscriptions_update_owner" ON subscriptions
-  FOR UPDATE USING (clinic_id = auth_clinic_id() AND auth_role() = 'OWNER');
+CREATE POLICY "subscriptions_insert_owner" ON public.subscriptions
+  FOR INSERT TO authenticated
+  WITH CHECK (clinic_id = (SELECT private.auth_clinic_id()) AND (SELECT private.auth_role()) = 'OWNER');
 
--- ─────────────────────────────────────────────────────────────────────────────
--- STRIPE CUSTOMERS
--- ─────────────────────────────────────────────────────────────────────────────
-CREATE POLICY "stripe_customers_select_clinic" ON stripe_customers
-  FOR SELECT USING (clinic_id = auth_clinic_id());
+CREATE POLICY "subscriptions_update_owner" ON public.subscriptions
+  FOR UPDATE TO authenticated
+  USING (clinic_id = (SELECT private.auth_clinic_id()) AND (SELECT private.auth_role()) = 'OWNER')
+  WITH CHECK (clinic_id = (SELECT private.auth_clinic_id()) AND (SELECT private.auth_role()) = 'OWNER');
 
-CREATE POLICY "stripe_customers_insert_owner" ON stripe_customers
-  FOR INSERT WITH CHECK (clinic_id = auth_clinic_id() AND auth_role() = 'OWNER');
+CREATE POLICY "stripe_customers_select_clinic" ON public.stripe_customers
+  FOR SELECT TO authenticated
+  USING (clinic_id = (SELECT private.auth_clinic_id()));
 
--- ─────────────────────────────────────────────────────────────────────────────
--- PAYMENTS
--- ─────────────────────────────────────────────────────────────────────────────
--- All clinic members can view payment history
-CREATE POLICY "payments_select_clinic" ON payments
-  FOR SELECT USING (clinic_id = auth_clinic_id());
+CREATE POLICY "stripe_customers_insert_owner" ON public.stripe_customers
+  FOR INSERT TO authenticated
+  WITH CHECK (clinic_id = (SELECT private.auth_clinic_id()) AND (SELECT private.auth_role()) = 'OWNER');
 
--- Payments are inserted only by service role (via webhook), not directly by users
--- No INSERT policy needed for authenticated users
-
--- ─────────────────────────────────────────────────────────────────────────────
--- SERVICE ROLE BYPASS
--- The service role key (used by Stripe webhook handler and pg_cron)
--- bypasses RLS automatically — no additional policies needed.
--- NEVER expose the service role key to the client.
--- ─────────────────────────────────────────────────────────────────────────────
+CREATE POLICY "payments_select_clinic" ON public.payments
+  FOR SELECT TO authenticated
+  USING (clinic_id = (SELECT private.auth_clinic_id()));
