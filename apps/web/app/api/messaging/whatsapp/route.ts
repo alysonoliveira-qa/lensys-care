@@ -1,0 +1,56 @@
+import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { prisma } from '@/lib/db'
+import { hasFeature, requireFeature } from '@/lib/features'
+import { sendWhatsApp } from '@/lib/messaging'
+
+export async function POST(request: Request) {
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'UNAUTHORIZED', message: 'Faça login para continuar.' }, { status: 401 })
+    }
+
+    // Load profile to identify clinic
+    const profile = await prisma.profile.findUnique({
+      where: { id: user.id },
+      select: { clinic_id: true },
+    })
+
+    if (!profile) {
+      return NextResponse.json({ error: 'PROFILE_NOT_FOUND', message: 'Perfil não encontrado.' }, { status: 404 })
+    }
+
+    const clinicId = profile.clinic_id
+
+    // Plan Gating: require the 'whatsapp' feature (will throw a typed Response if ESSENTIAL)
+    try {
+      await requireFeature(clinicId, 'whatsapp')
+    } catch (responseError: any) {
+      if (responseError instanceof Response) {
+        return responseError
+      }
+      throw responseError
+    }
+
+    const body = await request.json()
+    const { to, message } = body
+
+    if (!to || !message) {
+      return NextResponse.json({ error: 'MISSING_FIELDS', message: 'Destinatário e mensagem são obrigatórios.' }, { status: 400 })
+    }
+
+    // Send the WhatsApp message
+    await sendWhatsApp(to, message)
+
+    return NextResponse.json({ success: true, message: 'Mensagem de WhatsApp disparada com sucesso.' })
+  } catch (error: any) {
+    console.error('Manual WhatsApp message send failed:', error)
+    return NextResponse.json(
+      { error: 'SERVER_ERROR', message: error.message || 'Falha ao disparar mensagem.' },
+      { status: 500 }
+    )
+  }
+}

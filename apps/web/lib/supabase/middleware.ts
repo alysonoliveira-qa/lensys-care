@@ -44,8 +44,12 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Public paths that do not require authentication
-  const isPublicPage = pathname === '/planos'
-  const isAuthPage = pathname === '/login' || pathname === '/register'
+  const isPublicPage = pathname === '/' || pathname === '/planos'
+  const isAuthPage =
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname === '/auth/login' ||
+    pathname === '/auth/register'
   const isStaticOrFavicon = pathname.startsWith('/_next') || pathname === '/favicon.ico' || pathname.startsWith('/fonts')
   
   // APIs that have their own validation: Stripe Webhooks, Supabase alerts cron, etc.
@@ -69,7 +73,7 @@ export async function updateSession(request: NextRequest) {
   if (user && isAuthPage) {
     // Redirect to dashboard if trying to access login/register while authenticated
     const url = request.nextUrl.clone()
-    url.pathname = '/'
+    url.pathname = '/dashboard'
     return NextResponse.redirect(url)
   }
 

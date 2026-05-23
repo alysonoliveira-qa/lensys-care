@@ -1,0 +1,222 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// OptoTech — Prisma Schema
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  OWNER
+  OPTOMETRIST
+  RECEPTIONIST
+}
+
+enum AlertStatus {
+  PENDING
+  SENT
+  DISMISSED
+}
+
+enum AlertChannel {
+  EMAIL
+  WHATSAPP
+  SMS
+}
+
+enum Plan {
+  ESSENTIAL
+  CONECTA
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  CANCELED
+  PAST_DUE
+}
+
+enum PaymentStatus {
+  SUCCEEDED
+  FAILED
+  PENDING
+  REFUNDED
+}
+
+// ─── Clinic (Tenant) ─────────────────────────────────────────────────────────
+
+model Clinic {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String
+  slug       String   @unique
+  cnpj       String?
+  phone      String?
+  email      String
+  logo_url   String?
+  created_at DateTime @default(now()) @db.Timestamptz
+
+  // Relations
+  profiles       Profile[]
+  patients        Patient[]
+  subscription    Subscription?
+  stripe_customer StripeCustomer?
+  payments        Payment[]
+
+  @@map("clinics")
+}
+
+// ─── Profile (User / Professional) ───────────────────────────────────────────
+
+model Profile {
+  id         String   @id @db.Uuid // mirrors auth.users.id from Supabase
+  clinic_id  String   @db.Uuid
+  full_name  String
+  role       Role     @default(OPTOMETRIST)
+  crm        String?
+  created_at DateTime @default(now()) @db.Timestamptz
+
+  // Relations
+  clinic Clinic  @relation(fields: [clinic_id], references: [id], onDelete: Cascade)
+  exams  Exam[]
+
+  @@map("profiles")
+}
+
+// ─── Patient ─────────────────────────────────────────────────────────────────
+
+model Patient {
+  id         String    @id @default(uuid()) @db.Uuid
+  clinic_id  String    @db.Uuid
+  full_name  String
+  dob        DateTime  @db.Date
+  phone      String?
+  email      String?
+  notes      String?
+  created_at DateTime  @default(now()) @db.Timestamptz
+  updated_at DateTime  @updatedAt @db.Timestamptz
+
+  // Relations
+  clinic  Clinic  @relation(fields: [clinic_id], references: [id], onDelete: Cascade)
+  exams   Exam[]
+  alerts  Alert[]
+
+  @@map("patients")
+}
+
+// ─── Exam (Refractive Record / Prontuário) ────────────────────────────────────
+
+model Exam {
+  id           String   @id @default(uuid()) @db.Uuid
+  patient_id   String   @db.Uuid
+  performed_by String   @db.Uuid
+  exam_date    DateTime @db.Date
+
+  // Right eye (Olho Direito)
+  od_sph  Decimal? @db.Decimal(4, 2)
+  od_cyl  Decimal? @db.Decimal(4, 2)
+  od_axis Int?     @db.SmallInt
+  od_va   String?
+
+  // Left eye (Olho Esquerdo)
+  oe_sph  Decimal? @db.Decimal(4, 2)
+  oe_cyl  Decimal? @db.Decimal(4, 2)
+  oe_axis Int?     @db.SmallInt
+  oe_va   String?
+
+  // Additional data
+  addition           Decimal? @db.Decimal(3, 2)
+  pd                 Decimal? @db.Decimal(4, 1)
+  prescription_notes String?
+
+  created_at DateTime @default(now()) @db.Timestamptz
+
+  // Relations
+  patient    Patient   @relation(fields: [patient_id], references: [id], onDelete: Cascade)
+  examiner   Profile   @relation(fields: [performed_by], references: [id])
+  alerts     Alert[]
+
+  @@map("exams")
+}
+
+// ─── Alert ───────────────────────────────────────────────────────────────────
+
+model Alert {
+  id         String      @id @default(uuid()) @db.Uuid
+  patient_id String      @db.Uuid
+  exam_id    String      @db.Uuid
+  due_date   DateTime    @db.Date
+  status     AlertStatus @default(PENDING)
+  channel    AlertChannel
+  sent_at    DateTime?   @db.Timestamptz
+  created_at DateTime    @default(now()) @db.Timestamptz
+
+  // Relations
+  patient Patient @relation(fields: [patient_id], references: [id], onDelete: Cascade)
+  exam    Exam    @relation(fields: [exam_id], references: [id], onDelete: Cascade)
+
+  @@map("alerts")
+}
+
+// ─── Subscription ────────────────────────────────────────────────────────────
+
+model Subscription {
+  id                     String             @id @default(uuid()) @db.Uuid
+  clinic_id              String             @unique @db.Uuid
+  plan                   Plan               @default(ESSENTIAL)
+  status                 SubscriptionStatus @default(TRIALING)
+  trial_ends_at          DateTime?          @db.Timestamptz
+  current_period_end     DateTime?          @db.Timestamptz
+  payment_provider       String?
+  external_id            String?            // ID at payment provider (legacy/manual)
+  stripe_subscription_id String?            @unique
+  stripe_price_id        String?
+  cancel_at_period_end   Boolean            @default(false)
+  created_at             DateTime           @default(now()) @db.Timestamptz
+
+  // Relations
+  clinic Clinic @relation(fields: [clinic_id], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+// ─── StripeCustomer ──────────────────────────────────────────────────────────
+
+model StripeCustomer {
+  id                 String   @id @default(uuid()) @db.Uuid
+  clinic_id          String   @unique @db.Uuid
+  stripe_customer_id String   @unique
+  created_at         DateTime @default(now()) @db.Timestamptz
+
+  // Relations
+  clinic Clinic @relation(fields: [clinic_id], references: [id], onDelete: Cascade)
+
+  @@map("stripe_customers")
+}
+
+// ─── Payment ─────────────────────────────────────────────────────────────────
+
+model Payment {
+  id                    String        @id @default(uuid()) @db.Uuid
+  clinic_id             String        @db.Uuid
+  stripe_payment_intent String?
+  stripe_invoice_id     String?
+  amount_cents          Int
+  currency              String        @default("brl")
+  status                PaymentStatus @default(PENDING)
+  description           String?
+  paid_at               DateTime?     @db.Timestamptz
+  created_at            DateTime      @default(now()) @db.Timestamptz
+
+  // Relations
+  clinic Clinic @relation(fields: [clinic_id], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}

@@ -1,0 +1,107 @@
+import React from 'react'
+import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
+import { prisma } from '@/lib/db'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import AlertActionsList from '@/components/alerts/AlertActionsList'
+import { Bell, Calendar, Eye, Mail, Phone, RefreshCw, Sparkles, Filter } from 'lucide-react'
+import { AlertStatus } from '@prisma/client'
+
+interface AlertsPageProps {
+  searchParams?: {
+    status?: string
+  }
+}
+
+export const revalidate = 0
+
+export default async function AlertsPage({ searchParams }: AlertsPageProps) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
+  // Load clinic details
+  const profile = await prisma.profile.findUnique({
+    where: { id: user.id },
+    select: { clinic_id: true },
+  })
+
+  if (!profile) {
+    redirect('/login')
+  }
+
+  const clinicId = profile.clinic_id
+
+  // Support filtering by AlertStatus (PENDING, SENT, DISMISSED)
+  const activeStatus = (searchParams?.status || 'PENDING') as AlertStatus
+
+  // Fetch alerts from database with Prisma
+  const alerts = await prisma.alert.findMany({
+    where: {
+      status: activeStatus,
+      patient: { clinic_id: clinicId },
+    },
+    include: { patient: true },
+    orderBy: { due_date: 'asc' },
+  })
+
+  return (
+    <div className="space-y-6 select-none">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-extrabold tracking-tight flex items-center gap-2">
+            <Bell className="h-6 w-6 text-indigo-500" />
+            <span>Fila de Recalls & Lembretes</span>
+          </h2>
+          <p className="text-sm text-slate-500 mt-1">
+            Acompanhe e controle os alertas automáticos e manuais de retorno de exames.
+          </p>
+        </div>
+      </div>
+
+      {/* Filter Options */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 mr-2">
+          <Filter className="h-3.5 w-3.5" />
+          Filtrar Status:
+        </span>
+        {[
+          { label: 'Pendentes', value: 'PENDING', badge: 'warning' },
+          { label: 'Enviados', value: 'SENT', badge: 'success' },
+          { label: 'Cancelados / Dispensados', value: 'DISMISSED', badge: 'secondary' },
+        ].map((statusOpt) => {
+          const isActive = activeStatus === statusOpt.value
+          return (
+            <Link key={statusOpt.value} href={`/alerts?status=${statusOpt.value}`} passHref>
+              <Button
+                variant={isActive ? 'default' : 'outline'}
+                size="sm"
+                className={`h-8 text-xs font-semibold rounded-xl ${
+                  isActive
+                    ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                    : 'border-slate-200 dark:border-slate-800'
+                }`}
+              >
+                {statusOpt.label}
+              </Button>
+            </Link>
+          )
+        })}
+      </div>
+
+      {/* Alerts Table with Action Component */}
+      <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800">
+        <CardContent className="p-0">
+          <AlertActionsList alerts={alerts as any[]} activeStatus={activeStatus} />
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
