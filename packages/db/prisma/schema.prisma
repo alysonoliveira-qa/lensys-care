@@ -18,23 +18,31 @@ enum Role {
   OWNER
   OPTOMETRIST
   RECEPTIONIST
+
+  @@map("role")
 }
 
 enum AlertStatus {
   PENDING
   SENT
   DISMISSED
+
+  @@map("alert_status")
 }
 
 enum AlertChannel {
   EMAIL
   WHATSAPP
   SMS
+
+  @@map("alert_channel")
 }
 
 enum Plan {
   ESSENTIAL
   CONECTA
+
+  @@map("plan")
 }
 
 enum SubscriptionStatus {
@@ -42,6 +50,8 @@ enum SubscriptionStatus {
   TRIALING
   CANCELED
   PAST_DUE
+
+  @@map("subscription_status")
 }
 
 enum PaymentStatus {
@@ -49,6 +59,8 @@ enum PaymentStatus {
   FAILED
   PENDING
   REFUNDED
+
+  @@map("payment_status")
 }
 
 // ─── Clinic (Tenant) ─────────────────────────────────────────────────────────

@@ -54,6 +54,7 @@ export async function updateSession(request: NextRequest) {
   
   // APIs that have their own validation: Stripe Webhooks, Supabase alerts cron, etc.
   const isPublicApi = 
+    pathname === '/api/auth/register' ||
     pathname.startsWith('/api/webhooks') || 
     pathname === '/api/alerts/send' ||
     pathname.startsWith('/api/stripe/webhooks') // fallback just in case
