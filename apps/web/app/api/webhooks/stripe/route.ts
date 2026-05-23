@@ -2,10 +2,26 @@ import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe/client'
 import { constructWebhookEvent } from '@/lib/stripe/webhooks'
 import { prisma } from '@/lib/db'
-import { Plan, SubscriptionStatus, PaymentStatus } from '@prisma/client'
 import type Stripe from 'stripe'
 
-function mapStripeStatus(stripeStatus: string): SubscriptionStatus {
+const Plan = {
+  ESSENTIAL: 'ESSENTIAL',
+  CONECTA: 'CONECTA',
+} as const
+
+const SubscriptionStatus = {
+  ACTIVE: 'ACTIVE',
+  TRIALING: 'TRIALING',
+  CANCELED: 'CANCELED',
+  PAST_DUE: 'PAST_DUE',
+} as const
+
+const PaymentStatus = {
+  SUCCEEDED: 'SUCCEEDED',
+  FAILED: 'FAILED',
+} as const
+
+function mapStripeStatus(stripeStatus: string): typeof SubscriptionStatus[keyof typeof SubscriptionStatus] {
   switch (stripeStatus) {
     case 'active':
       return SubscriptionStatus.ACTIVE

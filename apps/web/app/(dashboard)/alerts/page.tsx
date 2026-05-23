@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button'
 import AlertActionsList from '@/components/alerts/AlertActionsList'
 import type { AlertData } from '@/components/alerts/AlertActionsList'
 import { Bell, Filter } from 'lucide-react'
-import { AlertStatus } from '@prisma/client'
+
+type AlertStatus = 'PENDING' | 'SENT' | 'DISMISSED'
 
 interface AlertsPageProps {
   searchParams?: {

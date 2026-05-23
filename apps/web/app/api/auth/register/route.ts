@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { prisma } from '@/lib/db'
-import { Plan, SubscriptionStatus } from '@prisma/client'
+
+const Plan = {
+  ESSENTIAL: 'ESSENTIAL',
+} as const
+
+const SubscriptionStatus = {
+  TRIALING: 'TRIALING',
+} as const
 
 export async function POST(request: Request) {
   try {
