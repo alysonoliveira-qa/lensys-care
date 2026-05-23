@@ -8,24 +8,37 @@ import { Badge } from '@/components/ui/badge'
 import {
   LayoutDashboard,
   Users,
-  ClipboardList,
   Bell,
   CreditCard,
   LogOut,
   Sparkles,
   User,
-  Building,
-  Menu
 } from 'lucide-react'
+
+interface ClinicSummary {
+  name: string
+}
+
+interface ProfileSummary {
+  full_name: string
+  role: string
+  clinic_id: string
+  clinic: ClinicSummary | null
+}
+
+interface SubscriptionSummary {
+  plan: string
+  status: string
+}
 
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
 
-  const [clinic, setClinic] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
-  const [subscription, setSubscription] = useState<any>(null)
+  const [clinic, setClinic] = useState<ClinicSummary | null>(null)
+  const [profile, setProfile] = useState<ProfileSummary | null>(null)
+  const [subscription, setSubscription] = useState<SubscriptionSummary | null>(null)
 
   useEffect(() => {
     async function loadData() {
@@ -40,18 +53,19 @@ export default function Sidebar() {
             .single()
 
           if (prof) {
-            setProfile(prof)
-            setClinic(prof.clinic)
+            const typedProfile = prof as ProfileSummary
+            setProfile(typedProfile)
+            setClinic(typedProfile.clinic)
 
             // Subscription
             const { data: sub } = await supabase
               .from('subscriptions')
               .select('*')
-              .eq('clinic_id', prof.clinic_id)
+              .eq('clinic_id', typedProfile.clinic_id)
               .single()
 
             if (sub) {
-              setSubscription(sub)
+              setSubscription(sub as SubscriptionSummary)
             }
           }
         }

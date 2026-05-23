@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Sparkles, Check, X, ArrowLeft, Loader2, CreditCard, ExternalLink } from 'lucide-react'
+import { Sparkles, Check, X, ArrowLeft, Loader2, CreditCard } from 'lucide-react'
 
 const PLANS = {
   essential: {
@@ -47,6 +47,11 @@ const PLANS = {
   },
 }
 
+interface SubscriptionState {
+  plan: string
+  status: string
+}
+
 export default function PlanosPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -55,7 +60,7 @@ export default function PlanosPage() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly')
   const [loadingUser, setLoadingUser] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
-  const [subscription, setSubscription] = useState<any>(null)
+  const [subscription, setSubscription] = useState<SubscriptionState | null>(null)
   const [loadingCheckout, setLoadingCheckout] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState(false)
   const [canceledMsg, setCanceledMsg] = useState(false)
@@ -81,7 +86,7 @@ export default function PlanosPage() {
               .single()
 
             if (sub) {
-              setSubscription(sub)
+              setSubscription(sub as SubscriptionState)
             }
           }
         }

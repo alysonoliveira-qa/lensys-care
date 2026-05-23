@@ -23,10 +23,10 @@ export async function POST(request: Request) {
       sent: result.sent,
       failed: result.failed,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Daily alert dispatch route failed:', error)
     return NextResponse.json(
-      { error: 'SERVER_ERROR', message: error.message || 'Falha ao rodar cron de disparos.' },
+      { error: 'SERVER_ERROR', message: error instanceof Error ? error.message : 'Falha ao rodar cron de disparos.' },
       { status: 500 }
     )
   }

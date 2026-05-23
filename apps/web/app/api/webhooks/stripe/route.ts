@@ -5,7 +5,6 @@ import { prisma } from '@/lib/db'
 import { Plan, SubscriptionStatus, PaymentStatus } from '@prisma/client'
 import type Stripe from 'stripe'
 
-// Standard Stripe subscription status mapper to Prisma SubscriptionStatus
 function mapStripeStatus(stripeStatus: string): SubscriptionStatus {
   switch (stripeStatus) {
     case 'active':
@@ -27,7 +26,7 @@ export async function POST(request: Request) {
   let payload = ''
   try {
     payload = await request.text()
-  } catch (err: any) {
+  } catch {
     return NextResponse.json({ error: 'READ_BODY_FAILED', message: 'Falha ao ler corpo da requisição.' }, { status: 400 })
   }
 
@@ -40,12 +39,13 @@ export async function POST(request: Request) {
   let event: Stripe.Event
   try {
     event = await constructWebhookEvent(payload, sig)
-  } catch (err: any) {
-    console.error('Webhook signature verification failed:', err.message)
-    return NextResponse.json({ error: 'VERIFICATION_FAILED', message: err.message }, { status: 400 })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Falha na verificação da assinatura.'
+    console.error('Webhook signature verification failed:', message)
+    return NextResponse.json({ error: 'VERIFICATION_FAILED', message }, { status: 400 })
   }
 
-  console.log(`🔔 Stripe Webhook Received event: ${event.type}`)
+  console.log(`Stripe Webhook Received event: ${event.type}`)
 
   try {
     switch (event.type) {
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
               payment_provider: 'stripe',
             },
           })
-          console.log(`✅ Subscription activated for clinic: ${clinicId}`)
+          console.log(`Subscription activated for clinic: ${clinicId}`)
         }
         break
       }
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
         const subscription = event.data.object as Stripe.Subscription
         const clinicId = subscription.metadata?.clinicId
 
-        let updateData = {
+        const updateData = {
           status: mapStripeStatus(subscription.status),
           current_period_end: new Date(subscription.current_period_end * 1000),
           cancel_at_period_end: subscription.cancel_at_period_end,
@@ -106,14 +106,13 @@ export async function POST(request: Request) {
             where: { clinic_id: clinicId },
             data: updateData,
           })
-          console.log(`✅ Subscription updated for clinic: ${clinicId} via metadata`)
+          console.log(`Subscription updated for clinic: ${clinicId} via metadata`)
         } else {
-          // Fallback look up by subscription ID
           await prisma.subscription.update({
             where: { stripe_subscription_id: subscription.id },
             data: updateData,
           })
-          console.log(`✅ Subscription updated for stripe ID: ${subscription.id} via lookup`)
+          console.log(`Subscription updated for stripe ID: ${subscription.id} via lookup`)
         }
         break
       }
@@ -122,7 +121,7 @@ export async function POST(request: Request) {
         const subscription = event.data.object as Stripe.Subscription
         const clinicId = subscription.metadata?.clinicId
 
-        let downgradeData = {
+        const downgradeData = {
           plan: Plan.ESSENTIAL,
           status: SubscriptionStatus.CANCELED,
           stripe_subscription_id: null,
@@ -136,13 +135,13 @@ export async function POST(request: Request) {
             where: { clinic_id: clinicId },
             data: downgradeData,
           })
-          console.log(`✅ Subscription deleted/downgraded for clinic: ${clinicId}`)
+          console.log(`Subscription deleted/downgraded for clinic: ${clinicId}`)
         } else {
           await prisma.subscription.update({
             where: { stripe_subscription_id: subscription.id },
             data: downgradeData,
           })
-          console.log(`✅ Subscription deleted/downgraded for stripe ID: ${subscription.id}`)
+          console.log(`Subscription deleted/downgraded for stripe ID: ${subscription.id}`)
         }
         break
       }
@@ -173,7 +172,7 @@ export async function POST(request: Request) {
             paid_at: new Date(),
           },
         })
-        console.log(`✅ Payment logged as SUCCEEDED for clinic: ${customer.clinic_id}`)
+        console.log(`Payment logged as SUCCEEDED for clinic: ${customer.clinic_id}`)
         break
       }
 
@@ -203,23 +202,25 @@ export async function POST(request: Request) {
           },
         })
 
-        // Mark subscription status as PAST_DUE
         await prisma.subscription.update({
           where: { clinic_id: customer.clinic_id },
           data: { status: SubscriptionStatus.PAST_DUE },
         })
 
-        console.log(`❌ Payment logged as FAILED for clinic: ${customer.clinic_id}`)
+        console.log(`Payment logged as FAILED for clinic: ${customer.clinic_id}`)
         break
       }
 
       default:
-        console.log(`ℹ️ Webhook event ignored: ${event.type}`)
+        console.log(`Webhook event ignored: ${event.type}`)
     }
 
     return NextResponse.json({ received: true })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error processing webhook event ${event.type}:`, error)
-    return NextResponse.json({ error: 'PROCESSING_FAILED', message: error.message }, { status: 500 })
+    return NextResponse.json({
+      error: 'PROCESSING_FAILED',
+      message: error instanceof Error ? error.message : 'Falha ao processar webhook.',
+    }, { status: 500 })
   }
 }

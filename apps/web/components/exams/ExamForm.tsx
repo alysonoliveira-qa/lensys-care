@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useAgeGroup } from '@/hooks/useAgeGroup'
-import { Sparkles, Loader2, ArrowLeft, ClipboardCheck, AlertCircle } from 'lucide-react'
+import { Sparkles, Loader2, ClipboardCheck, AlertCircle } from 'lucide-react'
 
 export interface PatientData {
   id: string
@@ -26,31 +26,22 @@ export default function ExamForm({ patient }: ExamFormProps) {
   const router = useRouter()
 
   const [examDate, setExamDate] = useState(new Date().toISOString().split('T')[0])
-
-  // Right Eye (OD)
   const [odSph, setOdSph] = useState('')
   const [odCyl, setOdCyl] = useState('')
   const [odAxis, setOdAxis] = useState('')
   const [odVa, setOdVa] = useState('')
-
-  // Left Eye (OE)
   const [oeSph, setOeSph] = useState('')
   const [oeCyl, setOeCyl] = useState('')
   const [oeAxis, setOeAxis] = useState('')
   const [oeVa, setOeVa] = useState('')
-
-  // Secondary Measurements
   const [addition, setAddition] = useState('')
   const [pd, setPd] = useState('')
   const [prescriptionNotes, setPrescriptionNotes] = useState('')
-
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Real-time suggested addition helper
   const { age, ageGroup, suggestedAddition } = useAgeGroup(patient.dob.toString())
 
-  // Pre-fill suggested addition if patient age is >= 40 on mount/change
   useEffect(() => {
     if (suggestedAddition > 0) {
       setAddition(suggestedAddition.toString())
@@ -71,7 +62,6 @@ export default function ExamForm({ patient }: ExamFormProps) {
     setLoading(true)
     setError(null)
 
-    // Form value parsing & bounds validations
     try {
       const response = await fetch('/api/exams', {
         method: 'POST',
@@ -101,9 +91,9 @@ export default function ExamForm({ patient }: ExamFormProps) {
 
       router.push(`/patients/${patient.id}`)
       router.refresh()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
-      setError(err.message || 'Erro ao registrar exame refrativo.')
+      setError(err instanceof Error ? err.message : 'Erro ao registrar exame refrativo.')
     } finally {
       setLoading(false)
     }
@@ -118,12 +108,11 @@ export default function ExamForm({ patient }: ExamFormProps) {
         </div>
       )}
 
-      {/* Patient Header Display */}
       <Card className="bg-slate-900 border-slate-800 text-white relative overflow-hidden shadow-md">
         <div className="absolute right-[-10%] top-[-30%] w-44 h-44 rounded-full bg-violet-600/15 blur-2xl pointer-events-none" />
         <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Prontuário de Refracão</span>
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Prontuário de Refração</span>
             <h3 className="text-xl font-bold text-slate-100">{patient.full_name}</h3>
             <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold">
               <span>{age} anos ({new Date(patient.dob).toLocaleDateString('pt-BR')})</span>
@@ -144,7 +133,6 @@ export default function ExamForm({ patient }: ExamFormProps) {
         </CardContent>
       </Card>
 
-      {/* Main Refractive Grid (OD / OE) */}
       <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm">
         <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800/80">
           <CardTitle className="text-base font-bold">Graduação Refrativa (OD / OE)</CardTitle>
@@ -163,105 +151,38 @@ export default function ExamForm({ patient }: ExamFormProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {/* Right eye */}
                 <tr>
                   <td className="py-4 px-4 font-bold text-slate-500 text-left bg-slate-50/20 dark:bg-slate-950/10 w-32">
                     OD (Direito)
                   </td>
                   <td className="py-4 px-2">
-                    <Input
-                      type="number"
-                      step="0.25"
-                      min="-20"
-                      max="20"
-                      placeholder="0.00"
-                      value={odSph}
-                      onChange={(e) => setOdSph(e.target.value)}
-                      className="w-24 mx-auto text-center font-bold"
-                    />
+                    <Input type="number" step="0.25" min="-20" max="20" placeholder="0.00" value={odSph} onChange={(e) => setOdSph(e.target.value)} className="w-24 mx-auto text-center font-bold" />
                   </td>
                   <td className="py-4 px-2">
-                    <Input
-                      type="number"
-                      step="0.25"
-                      min="-10"
-                      max="0"
-                      placeholder="0.00"
-                      value={odCyl}
-                      onChange={(e) => setOdCyl(e.target.value)}
-                      className="w-24 mx-auto text-center"
-                    />
+                    <Input type="number" step="0.25" min="-10" max="0" placeholder="0.00" value={odCyl} onChange={(e) => setOdCyl(e.target.value)} className="w-24 mx-auto text-center" />
                   </td>
                   <td className="py-4 px-2">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="180"
-                      placeholder="Eixo"
-                      value={odAxis}
-                      onChange={(e) => setOdAxis(e.target.value)}
-                      className="w-20 mx-auto text-center"
-                    />
+                    <Input type="number" min="0" max="180" placeholder="Eixo" value={odAxis} onChange={(e) => setOdAxis(e.target.value)} className="w-20 mx-auto text-center" />
                   </td>
                   <td className="py-4 px-2">
-                    <Input
-                      type="text"
-                      placeholder="ex: 20/20"
-                      value={odVa}
-                      onChange={(e) => setOdVa(e.target.value)}
-                      className="w-24 mx-auto text-center font-bold text-indigo-600 dark:text-indigo-400"
-                    />
+                    <Input type="text" placeholder="ex: 20/20" value={odVa} onChange={(e) => setOdVa(e.target.value)} className="w-24 mx-auto text-center font-bold text-indigo-600 dark:text-indigo-400" />
                   </td>
                 </tr>
-
-                {/* Left eye */}
                 <tr>
                   <td className="py-4 px-4 font-bold text-slate-500 text-left bg-slate-50/20 dark:bg-slate-950/10 w-32">
                     OE (Esquerdo)
                   </td>
                   <td className="py-4 px-2">
-                    <Input
-                      type="number"
-                      step="0.25"
-                      min="-20"
-                      max="20"
-                      placeholder="0.00"
-                      value={oeSph}
-                      onChange={(e) => setOeSph(e.target.value)}
-                      className="w-24 mx-auto text-center font-bold"
-                    />
+                    <Input type="number" step="0.25" min="-20" max="20" placeholder="0.00" value={oeSph} onChange={(e) => setOeSph(e.target.value)} className="w-24 mx-auto text-center font-bold" />
                   </td>
                   <td className="py-4 px-2">
-                    <Input
-                      type="number"
-                      step="0.25"
-                      min="-10"
-                      max="0"
-                      placeholder="0.00"
-                      value={oeCyl}
-                      onChange={(e) => setOeCyl(e.target.value)}
-                      className="w-24 mx-auto text-center"
-                    />
+                    <Input type="number" step="0.25" min="-10" max="0" placeholder="0.00" value={oeCyl} onChange={(e) => setOeCyl(e.target.value)} className="w-24 mx-auto text-center" />
                   </td>
                   <td className="py-4 px-2">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="180"
-                      placeholder="Eixo"
-                      value={oeAxis}
-                      onChange={(e) => setOeAxis(e.target.value)}
-                      className="w-20 mx-auto text-center"
-                    />
+                    <Input type="number" min="0" max="180" placeholder="Eixo" value={oeAxis} onChange={(e) => setOeAxis(e.target.value)} className="w-20 mx-auto text-center" />
                   </td>
                   <td className="py-4 px-2">
-                    <Input
-                      type="text"
-                      placeholder="ex: 20/20"
-                      value={oeVa}
-                      onChange={(e) => setOeVa(e.target.value)}
-                      className="w-24 mx-auto text-center font-bold text-indigo-600 dark:text-indigo-400"
-                    />
+                    <Input type="text" placeholder="ex: 20/20" value={oeVa} onChange={(e) => setOeVa(e.target.value)} className="w-24 mx-auto text-center font-bold text-indigo-600 dark:text-indigo-400" />
                   </td>
                 </tr>
               </tbody>
@@ -270,9 +191,7 @@ export default function ExamForm({ patient }: ExamFormProps) {
         </CardContent>
       </Card>
 
-      {/* Secondary Parameters Card & Addition Autopopulate Helper */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* DP & Addition Form */}
         <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 md:col-span-2 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base font-bold">Medidas de Suporte</CardTitle>
@@ -282,32 +201,14 @@ export default function ExamForm({ patient }: ExamFormProps) {
               <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Adição por Presbiopia (ADD)
               </label>
-              <Input
-                type="number"
-                step="0.25"
-                min="0"
-                max="4"
-                placeholder="+0.00"
-                value={addition}
-                onChange={(e) => setAddition(e.target.value)}
-                className="bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800 font-bold"
-              />
+              <Input type="number" step="0.25" min="0" max="4" placeholder="+0.00" value={addition} onChange={(e) => setAddition(e.target.value)} className="bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800 font-bold" />
             </div>
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Distância Pupilar (DP) em mm
               </label>
-              <Input
-                type="number"
-                step="0.5"
-                min="45"
-                max="80"
-                placeholder="ex: 63.5"
-                value={pd}
-                onChange={(e) => setPd(e.target.value)}
-                className="bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800 font-semibold"
-              />
+              <Input type="number" step="0.5" min="45" max="80" placeholder="ex: 63.5" value={pd} onChange={(e) => setPd(e.target.value)} className="bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800 font-semibold" />
             </div>
 
             <div className="space-y-2 sm:col-span-2">
@@ -325,7 +226,6 @@ export default function ExamForm({ patient }: ExamFormProps) {
           </CardContent>
         </Card>
 
-        {/* Dynamic Presbyopia addition recommendation display */}
         <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 md:col-span-1 shadow-sm flex flex-col justify-between">
           <CardHeader className="pb-2">
             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Assistente Clínico</span>
@@ -368,7 +268,6 @@ export default function ExamForm({ patient }: ExamFormProps) {
         </Card>
       </div>
 
-      {/* Action Footer */}
       <div className="flex justify-end gap-3 border-t border-slate-200 dark:border-slate-800 pt-6">
         <Link href={`/patients/${patient.id}`}>
           <Button type="button" variant="outline" className="h-10 px-6 font-semibold border-slate-200 dark:border-slate-800" disabled={loading}>

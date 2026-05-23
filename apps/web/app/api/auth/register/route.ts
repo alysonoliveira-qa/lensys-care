@@ -104,7 +104,7 @@ export async function POST(request: Request) {
         slug: result.clinic.slug,
       },
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Registration transaction failed:', error)
     return NextResponse.json(
       { error: 'SERVER_ERROR', message: 'Ocorreu um erro interno ao processar seu cadastro.' },

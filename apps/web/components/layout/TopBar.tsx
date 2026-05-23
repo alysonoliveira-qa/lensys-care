@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Search, Bell, Sparkles, AlertCircle } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Search, Bell } from 'lucide-react'
 
 export default function TopBar() {
   const router = useRouter()

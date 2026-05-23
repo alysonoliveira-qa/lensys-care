@@ -3,10 +3,11 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Users, Search, Plus, Calendar, Mail, Phone, ChevronLeft, ChevronRight, FileText } from 'lucide-react'
+import type { Prisma } from '@prisma/client'
 
 interface PatientsPageProps {
   searchParams?: {
@@ -42,7 +43,7 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
   const skip = (page - 1) * limit
 
   // Query conditions
-  const whereClause: any = {
+  const whereClause: Prisma.PatientWhereInput = {
     clinic_id: clinicId,
   }
 

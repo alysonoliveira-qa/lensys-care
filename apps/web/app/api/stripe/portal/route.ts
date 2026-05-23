@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { stripe } from '@/lib/stripe/client'
 import { prisma } from '@/lib/db'
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -38,10 +38,10 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json({ url: session.url })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Stripe portal error:', error)
     return NextResponse.json(
-      { error: 'STRIPE_ERROR', message: error.message || 'Falha ao abrir portal financeiro.' },
+      { error: 'STRIPE_ERROR', message: error instanceof Error ? error.message : 'Falha ao abrir portal financeiro.' },
       { status: 500 }
     )
   }

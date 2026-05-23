@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
-import { hasFeature, requireFeature } from '@/lib/features'
+import { requireFeature } from '@/lib/features'
 import { sendSMS } from '@/lib/messaging'
 
 export async function POST(request: Request) {
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     // Plan Gating: require the 'sms' feature (will throw a typed Response if ESSENTIAL)
     try {
       await requireFeature(clinicId, 'sms')
-    } catch (responseError: any) {
+    } catch (responseError: unknown) {
       if (responseError instanceof Response) {
         return responseError
       }
@@ -46,10 +46,10 @@ export async function POST(request: Request) {
     await sendSMS(to, message)
 
     return NextResponse.json({ success: true, message: 'Mensagem de SMS disparada com sucesso.' })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Manual SMS message send failed:', error)
     return NextResponse.json(
-      { error: 'SERVER_ERROR', message: error.message || 'Falha ao disparar SMS.' },
+      { error: 'SERVER_ERROR', message: error instanceof Error ? error.message : 'Falha ao disparar SMS.' },
       { status: 500 }
     )
   }

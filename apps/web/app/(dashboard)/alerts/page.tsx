@@ -3,11 +3,11 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import AlertActionsList from '@/components/alerts/AlertActionsList'
-import { Bell, Calendar, Eye, Mail, Phone, RefreshCw, Sparkles, Filter } from 'lucide-react'
+import type { AlertData } from '@/components/alerts/AlertActionsList'
+import { Bell, Filter } from 'lucide-react'
 import { AlertStatus } from '@prisma/client'
 
 interface AlertsPageProps {
@@ -99,7 +99,7 @@ export default async function AlertsPage({ searchParams }: AlertsPageProps) {
       {/* Alerts Table with Action Component */}
       <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800">
         <CardContent className="p-0">
-          <AlertActionsList alerts={alerts as any[]} activeStatus={activeStatus} />
+          <AlertActionsList alerts={alerts as AlertData[]} activeStatus={activeStatus} />
         </CardContent>
       </Card>
     </div>

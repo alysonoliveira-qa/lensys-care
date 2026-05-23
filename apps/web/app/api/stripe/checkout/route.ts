@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     const clinic = profile.clinic
 
     // Find or create Stripe customer
-    let stripeCustomer = await prisma.stripeCustomer.findUnique({
+    const stripeCustomer = await prisma.stripeCustomer.findUnique({
       where: { clinic_id: clinic.id },
     })
 
@@ -88,10 +88,10 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json({ url: session.url })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Stripe checkout error:', error)
     return NextResponse.json(
-      { error: 'STRIPE_ERROR', message: error.message || 'Falha ao iniciar checkout.' },
+      { error: 'STRIPE_ERROR', message: error instanceof Error ? error.message : 'Falha ao iniciar checkout.' },
       { status: 500 }
     )
   }

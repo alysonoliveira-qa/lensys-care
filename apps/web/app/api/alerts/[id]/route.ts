@@ -1,11 +1,26 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { prisma } from '@/lib/db'
 import {
   sendAlertEmail,
   sendAlertWhatsApp,
   sendAlertSMS
 } from '@/lib/alerts'
+
+type AlertAction = 'dismiss' | 'resend'
+
+interface AlertRecord {
+  id: string
+  patient_id: string
+  exam_id: string
+  due_date: string
+  channel: 'EMAIL' | 'WHATSAPP' | 'SMS'
+  patients: {
+    full_name: string
+    email: string | null
+    phone: string | null
+    clinic_id: string
+  }
+}
 
 export async function POST(
   request: Request,
@@ -13,7 +28,7 @@ export async function POST(
 ) {
   try {
     const alertId = params.id
-    const body = await request.json()
+    const body = await request.json() as { action?: AlertAction }
     const { action } = body // 'dismiss' | 'resend'
 
     if (!alertId || !action) {
@@ -64,7 +79,7 @@ export async function POST(
       }
 
       // 3. Dispatch based on channel
-      const alertTyped = alert as any
+      const alertTyped = alert as AlertRecord
       if (alertTyped.channel === 'EMAIL') {
         await sendAlertEmail(alertTyped)
       } else if (alertTyped.channel === 'WHATSAPP') {
@@ -85,10 +100,10 @@ export async function POST(
     }
 
     return NextResponse.json({ error: 'INVALID_ACTION', message: 'Ação não suportada.' }, { status: 400 })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Alert action error:', error)
     return NextResponse.json(
-      { error: 'SERVER_ERROR', message: error.message || 'Falha ao processar ação do alerta.' },
+      { error: 'SERVER_ERROR', message: error instanceof Error ? error.message : 'Falha ao processar ação do alerta.' },
       { status: 500 }
     )
   }

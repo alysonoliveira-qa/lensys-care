@@ -30,7 +30,7 @@ interface AlertActionsListProps {
 
 export default function AlertActionsList({ alerts, activeStatus }: AlertActionsListProps) {
   const router = useRouter()
-  const [actionLoading, setActionLoading] = useState<string | null>(null) // Stores alertId currently running action
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [successAlert, setSuccessAlert] = useState<string | null>(null)
 
   const handleAction = async (alertId: string, action: 'dismiss' | 'resend') => {
@@ -52,11 +52,9 @@ export default function AlertActionsList({ alerts, activeStatus }: AlertActionsL
 
       setSuccessAlert(alertId)
       setTimeout(() => setSuccessAlert(null), 3000)
-
-      // Refresh page to sync server state
       router.refresh()
-    } catch (err: any) {
-      alert(err.message || 'Erro ao realizar ação. Tente novamente.')
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Erro ao realizar ação. Tente novamente.')
     } finally {
       setActionLoading(null)
     }
@@ -88,7 +86,6 @@ export default function AlertActionsList({ alerts, activeStatus }: AlertActionsL
 
                 return (
                   <tr key={alert.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-950/10 transition-colors">
-                    {/* Patient detail */}
                     <td className="py-4 px-6">
                       <div className="font-bold text-slate-800 dark:text-slate-100">{alert.patient.full_name}</div>
                       <div className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5 font-semibold">
@@ -106,39 +103,33 @@ export default function AlertActionsList({ alerts, activeStatus }: AlertActionsL
                         )}
                       </div>
                     </td>
-
-                    {/* Due date */}
                     <td className="py-4 px-6 text-slate-600 dark:text-slate-300 font-semibold">
                       <span className="flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5 text-slate-400" />
                         {new Date(alert.due_date).toLocaleDateString('pt-BR')}
                       </span>
                     </td>
-
-                    {/* Dispatch channel */}
                     <td className="py-4 px-6">
                       <Badge variant="secondary" className="text-[9px] uppercase py-0.5 px-2">
                         {alert.channel}
                       </Badge>
                     </td>
-
-                    {/* Status with helper labels */}
                     <td className="py-4 px-6">
                       <Badge
                         variant={
                           alert.status === 'PENDING'
                             ? 'warning'
                             : alert.status === 'SENT'
-                            ? 'success'
-                            : 'secondary'
+                              ? 'success'
+                              : 'secondary'
                         }
                         className="text-[9px] font-bold py-0.5 px-2"
                       >
                         {alert.status === 'PENDING'
                           ? 'Pendente'
                           : alert.status === 'SENT'
-                          ? 'Enviado'
-                          : 'Dispensado'}
+                            ? 'Enviado'
+                            : 'Dispensado'}
                       </Badge>
                       {alert.sent_at && (
                         <span className="text-[9px] text-slate-400 block mt-1">
@@ -146,8 +137,6 @@ export default function AlertActionsList({ alerts, activeStatus }: AlertActionsL
                         </span>
                       )}
                     </td>
-
-                    {/* Real-time actions */}
                     <td className="py-4 px-6 text-right space-x-1.5">
                       <Link href={`/patients/${alert.patient_id}`} passHref>
                         <Button size="sm" variant="outline" className="h-8 text-xs font-bold border-slate-200 dark:border-slate-800" title="Ver ficha">
@@ -157,7 +146,6 @@ export default function AlertActionsList({ alerts, activeStatus }: AlertActionsL
 
                       {activeStatus === 'PENDING' && (
                         <>
-                          {/* Dismiss Button */}
                           <Button
                             size="sm"
                             variant="outline"
@@ -173,7 +161,6 @@ export default function AlertActionsList({ alerts, activeStatus }: AlertActionsL
                             )}
                           </Button>
 
-                          {/* Trigger Resend/Recall */}
                           <Button
                             size="sm"
                             className="h-8 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 flex items-center gap-1 inline-flex"

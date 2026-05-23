@@ -11,7 +11,6 @@ import {
   Heading,
   Hr,
   Html,
-  Img,
   Preview,
   Section,
   Text,

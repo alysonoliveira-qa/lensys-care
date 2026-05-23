@@ -68,9 +68,9 @@ export default function RegisterPage() {
       // 3. Redirect to dashboard
       router.push('/dashboard')
       router.refresh()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
-      setError(err.message || 'Erro de conexão. Tente novamente mais tarde.')
+      setError(err instanceof Error ? err.message : 'Erro de conexão. Tente novamente mais tarde.')
       setLoading(false)
     }
   }

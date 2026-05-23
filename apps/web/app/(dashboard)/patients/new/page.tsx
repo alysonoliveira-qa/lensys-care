@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useAgeGroup } from '@/hooks/useAgeGroup'
 import { ArrowLeft, Loader2, Sparkles, UserPlus } from 'lucide-react'
@@ -22,7 +22,6 @@ export default function NewPatientPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Use hook to compute age group & addition in real time as DOB changes!
   const { age, ageGroup, suggestedAddition } = useAgeGroup(dob)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,9 +55,9 @@ export default function NewPatientPage() {
 
       router.push(`/patients/${data.patient.id}`)
       router.refresh()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
-      setError(err.message || 'Erro de conexão. Tente novamente.')
+      setError(err instanceof Error ? err.message : 'Erro de conexão. Tente novamente.')
     } finally {
       setLoading(false)
     }
@@ -66,7 +65,6 @@ export default function NewPatientPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 select-none">
-      {/* Navigation and Title */}
       <div className="flex flex-col gap-2">
         <Link href="/patients" className="inline-flex items-center text-sm font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white gap-1 transition-colors">
           <ArrowLeft className="h-4 w-4" />
@@ -91,7 +89,6 @@ export default function NewPatientPage() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Patient Name */}
               <div className="space-y-2 md:col-span-2">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Nome Completo do Paciente *
@@ -107,7 +104,6 @@ export default function NewPatientPage() {
                 />
               </div>
 
-              {/* Date of birth */}
               <div className="space-y-2 md:col-span-1">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Data de Nascimento *
@@ -122,7 +118,6 @@ export default function NewPatientPage() {
                 />
               </div>
 
-              {/* Real-time age calculator box */}
               <div className="space-y-2 md:col-span-1 flex flex-col justify-end">
                 {dob && age !== null && ageGroup ? (
                   <div className="p-3.5 rounded-xl border border-indigo-500/10 bg-indigo-500/5 flex items-center justify-between animate-fadeIn h-10">
@@ -140,7 +135,6 @@ export default function NewPatientPage() {
                 )}
               </div>
 
-              {/* Suggestions banner */}
               {dob && age !== null && age >= 40 && (
                 <div className="md:col-span-2 p-3.5 rounded-xl border border-emerald-500/15 bg-emerald-500/5 flex items-center gap-2.5 text-xs text-emerald-700 dark:text-emerald-400 font-semibold animate-fadeIn">
                   <Sparkles className="h-4.5 w-4.5 text-emerald-500 flex-shrink-0" />
@@ -150,7 +144,6 @@ export default function NewPatientPage() {
                 </div>
               )}
 
-              {/* Patient Phone */}
               <div className="space-y-2 md:col-span-1">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Celular / WhatsApp
@@ -165,7 +158,6 @@ export default function NewPatientPage() {
                 />
               </div>
 
-              {/* Patient Email */}
               <div className="space-y-2 md:col-span-1">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   E-mail
@@ -180,7 +172,6 @@ export default function NewPatientPage() {
                 />
               </div>
 
-              {/* Notes */}
               <div className="space-y-2 md:col-span-2">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Observações Clínicas Gerais

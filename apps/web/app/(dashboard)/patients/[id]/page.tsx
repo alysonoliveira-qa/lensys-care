@@ -3,7 +3,7 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { getAgeGroupInfo, calculateAge } from '@/lib/refraction'
@@ -14,11 +14,6 @@ import {
   Phone,
   Mail,
   FileText,
-  Clock,
-  CheckCircle,
-  Eye,
-  Activity,
-  AlertCircle
 } from 'lucide-react'
 
 interface PatientDetailPageProps {
