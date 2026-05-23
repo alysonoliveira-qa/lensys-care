@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { prisma } from '@/lib/db'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 
 const Plan = {
   ESSENTIAL: 'ESSENTIAL',
@@ -56,6 +57,9 @@ type RegisterTransactionClient = {
 }
 
 export async function POST(request: Request) {
+  let createdAuthUserId: string | null = null
+  let supabaseAdmin: ReturnType<typeof createAdminClient> | null = null
+
   try {
     const body = await request.json()
     const { email, password, clinicName, ownerName, phone } = body
@@ -67,7 +71,19 @@ export async function POST(request: Request) {
       )
     }
 
-    // 1. Generate unique clinic slug from clinicName
+    // 1. Reuse an authenticated, unprovisioned user to recover incomplete registrations.
+    const supabase = createServerClient()
+    const { data: { user: signedInUser } } = await supabase.auth.getUser()
+    const normalizedEmail = email.trim().toLowerCase()
+
+    if (signedInUser?.email && signedInUser.email.toLowerCase() !== normalizedEmail) {
+      return NextResponse.json(
+        { error: 'SIGNED_IN_AS_ANOTHER_USER', message: 'Saia da conta atual antes de cadastrar outro e-mail.' },
+        { status: 409 }
+      )
+    }
+
+    // 2. Generate unique clinic slug from clinicName
     let slug = clinicName
       .toLowerCase()
       .normalize('NFD')
@@ -81,8 +97,8 @@ export async function POST(request: Request) {
       slug = `${slug}-${Math.floor(1000 + Math.random() * 9000)}`
     }
 
-    // 2. Initialize Supabase Admin client
-    const supabaseAdmin = createClient(
+    // 3. Initialize Supabase Admin client
+    supabaseAdmin = createAdminClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
       {
@@ -93,25 +109,44 @@ export async function POST(request: Request) {
       }
     )
 
-    // 3. Create auth user in Supabase (automatically confirmed)
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { full_name: ownerName },
-    })
+    let userId = signedInUser?.id
 
-    if (authError || !authData.user) {
-      console.error('Supabase Auth error during registration:', authError)
-      return NextResponse.json(
-        { error: 'AUTH_CREATION_FAILED', message: authError?.message || 'Falha ao criar credenciais.' },
-        { status: 400 }
-      )
+    if (!userId) {
+      // 4. Create a confirmed Auth user when this is a new registration.
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email: normalizedEmail,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: ownerName },
+      })
+
+      if (authError || !authData.user) {
+        console.error('Supabase Auth error during registration:', authError)
+        return NextResponse.json(
+          {
+            error: 'AUTH_CREATION_FAILED',
+            message: authError?.message || 'Falha ao criar credenciais. Se você já possui conta, faça login para concluir o cadastro.',
+          },
+          { status: 400 }
+        )
+      }
+
+      userId = authData.user.id
+      createdAuthUserId = userId
+    } else {
+      const existingProfile = await prisma.profile.findUnique({ where: { id: userId } })
+
+      if (existingProfile) {
+        return NextResponse.json(
+          { error: 'PROFILE_ALREADY_EXISTS', message: 'Esta conta já possui uma clínica cadastrada.' },
+          { status: 409 }
+        )
+      }
     }
 
-    const userId = authData.user.id
+    const userIdToProvision = userId
 
-    // 4. Create Clinic, Profile and Subscription in a single transaction
+    // 5. Create Clinic, Profile and Subscription in a single transaction
     const result = await prisma.$transaction(async (tx) => {
       const txClient = tx as unknown as RegisterTransactionClient
 
@@ -126,7 +161,7 @@ export async function POST(request: Request) {
 
       const profile = await txClient.profile.create({
         data: {
-          id: userId,
+          id: userIdToProvision,
           clinic_id: clinic.id,
           full_name: ownerName,
           role: 'OWNER',
@@ -149,8 +184,8 @@ export async function POST(request: Request) {
       success: true,
       message: 'Cadastro realizado com sucesso.',
       user: {
-        id: userId,
-        email: authData.user.email,
+        id: userIdToProvision,
+        email: normalizedEmail,
       },
       clinic: {
         id: result.clinic.id,
@@ -160,6 +195,14 @@ export async function POST(request: Request) {
     })
   } catch (error: unknown) {
     console.error('Registration transaction failed:', error)
+
+    if (createdAuthUserId && supabaseAdmin) {
+      const { error: rollbackError } = await supabaseAdmin.auth.admin.deleteUser(createdAuthUserId)
+      if (rollbackError) {
+        console.error('Failed to roll back Auth user after registration error:', rollbackError)
+      }
+    }
+
     return NextResponse.json(
       { error: 'SERVER_ERROR', message: 'Ocorreu um erro interno ao processar seu cadastro.' },
       { status: 500 }
