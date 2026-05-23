@@ -3,7 +3,7 @@
 // Alert business logic: creation, cancellation, and dispatch (email + messaging).
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { sendEmail } from '@/lib/email/resend'
 import { renderExamReminderEmail } from '@/lib/email/templates/exam-reminder'
 import { sendWhatsApp, sendSMS } from '@/lib/messaging'
@@ -29,12 +29,12 @@ export async function createAlertForExam(params: {
   examDate: Date
   patientId: string
   channel?: 'EMAIL' | 'WHATSAPP' | 'SMS'
+  supabase: SupabaseClient
 }): Promise<void> {
-  const { examId, examDate, patientId, channel = 'EMAIL' } = params
-  const supabase = getServiceClient()
+  const { examId, examDate, patientId, channel = 'EMAIL', supabase } = params
 
   // Cancel old pending alerts (also handled by DB trigger, belt-and-suspenders)
-  await cancelPreviousAlerts(patientId, examId)
+  await cancelPreviousAlerts(supabase, patientId, examId)
 
   const dueDate = new Date(examDate)
   dueDate.setDate(dueDate.getDate() + 365)
@@ -57,11 +57,10 @@ export async function createAlertForExam(params: {
  * Called when a new exam is recorded for the same patient.
  */
 export async function cancelPreviousAlerts(
+  supabase: SupabaseClient,
   patientId: string,
   excludeExamId?: string
 ): Promise<void> {
-  const supabase = getServiceClient()
-
   let query = supabase
     .from('alerts')
     .update({ status: 'DISMISSED' })

@@ -68,6 +68,7 @@ export async function POST(request: Request) {
       examDate: new Date(examDate),
       patientId,
       channel: 'EMAIL',
+      supabase,
     })
 
     return NextResponse.json({ success: true, exam })
