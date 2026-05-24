@@ -53,45 +53,19 @@ function VisualAcuityField({
   customMode,
   onCustomModeChange,
 }: VisualAcuityFieldProps) {
-  if (customMode) {
-    return (
-      <div className="space-y-1.5">
-        <Input
-          type="text"
-          placeholder="ex: 20/15"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-28 mx-auto text-center font-bold text-indigo-600 dark:text-indigo-400"
-        />
-        <button
-          type="button"
-          onClick={() => {
-            onCustomModeChange(false)
-            if (!isCommonVisualAcuity(value)) {
-              onChange('20/20')
-            }
-          }}
-          className="text-[10px] font-semibold text-slate-500 hover:text-indigo-500 transition-colors"
-        >
-          Usar valores comuns
-        </button>
-      </div>
-    )
-  }
+  const selectedValue = customMode || !isCommonVisualAcuity(value) ? CUSTOM_VISUAL_ACUITY_OPTION : value
 
   return (
     <div className="space-y-1.5">
       <select
-        value={isCommonVisualAcuity(value) ? value : CUSTOM_VISUAL_ACUITY_OPTION}
+        value={selectedValue}
         onChange={(e) => {
           if (e.target.value === CUSTOM_VISUAL_ACUITY_OPTION) {
             onCustomModeChange(true)
-            if (isCommonVisualAcuity(value)) {
-              onChange('')
-            }
             return
           }
 
+          onCustomModeChange(false)
           onChange(e.target.value)
         }}
         className="h-10 w-28 rounded-md border border-slate-200 bg-slate-50 px-3 text-center text-sm font-bold text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-950/20 dark:text-indigo-400"
@@ -101,9 +75,25 @@ function VisualAcuityField({
             {option}
           </option>
         ))}
-        <option value={CUSTOM_VISUAL_ACUITY_OPTION}>Outro</option>
+        <option value={CUSTOM_VISUAL_ACUITY_OPTION}>Outro/manual</option>
       </select>
-      <div className="text-[10px] font-semibold text-slate-400">Padrão: 20/20</div>
+
+      {customMode ? (
+        <>
+          <Input
+            type="text"
+            placeholder="ex: 20/15"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-28 mx-auto text-center font-bold text-indigo-600 dark:text-indigo-400"
+          />
+          <div className="text-[10px] font-semibold text-slate-500 text-center">
+            Você pode voltar aos valores comuns quando quiser.
+          </div>
+        </>
+      ) : (
+        <div className="text-[10px] font-semibold text-slate-400">Padrão: 20/20</div>
+      )}
     </div>
   )
 }
