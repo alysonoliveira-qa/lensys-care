@@ -237,7 +237,7 @@ export default function ExamForm({ patient }: ExamFormProps) {
           <CardContent className="space-y-4 pb-6 flex-grow flex flex-col justify-between">
             <div className="space-y-3.5 pt-2">
               <p className="text-xs text-slate-500 leading-relaxed">
-                Optotech auto-calcula o valor da adição refrativa sugerida baseando-se na idade atual do paciente ({age} anos).
+                Lensys Care calcula automaticamente o valor da adição refrativa sugerida com base na idade atual do paciente ({age} anos).
               </p>
 
               <div className="p-3 bg-slate-50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800 rounded-xl space-y-1.5 text-xs">

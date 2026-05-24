@@ -88,9 +88,9 @@ export default function RegisterPage() {
             <Sparkles className="h-6 w-6 text-white" />
           </div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight">
-            Opto<span className="text-indigo-400">Tech</span>
+            Lensys <span className="text-indigo-400">Care</span>
           </h1>
-          <p className="text-sm text-slate-400 mt-1">Primeiro mês grátis sem compromisso</p>
+          <p className="text-sm text-slate-400 mt-1">Sistema de gestão para optometria clínica</p>
         </div>
 
         <Card glass className="border-slate-800 bg-slate-900/60 shadow-2xl">

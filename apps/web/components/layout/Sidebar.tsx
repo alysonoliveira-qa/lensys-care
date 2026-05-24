@@ -103,7 +103,7 @@ export default function Sidebar() {
         </div>
         <div className="flex flex-col min-w-0">
           <span className="text-white font-extrabold text-sm tracking-tight leading-none">
-            Opto<span className="text-indigo-400">Tech</span>
+            Lensys <span className="text-indigo-400">Care</span>
           </span>
           <span className="text-[10px] text-slate-500 truncate font-semibold mt-1">
             {clinic?.name || 'Carregando clínica...'}
