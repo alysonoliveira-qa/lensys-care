@@ -73,7 +73,7 @@ function VisualAcuityField({
   const selectedValue = customMode || !isCommonVisualAcuity(value) ? CUSTOM_VISUAL_ACUITY_OPTION : value
 
   return (
-    <div className="space-y-1.5">
+    <div className="flex min-w-[13rem] items-center justify-center gap-2">
       <select
         value={selectedValue}
         onChange={(e) => {
@@ -85,31 +85,29 @@ function VisualAcuityField({
           onCustomModeChange(false)
           onChange(e.target.value)
         }}
-        className="h-10 w-28 rounded-md border border-slate-200 bg-slate-50 px-3 text-center text-sm font-bold text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-950/20 dark:text-indigo-400"
+        className="h-10 w-36 min-w-[9rem] rounded-md border border-slate-200 bg-slate-50 px-2 text-center text-sm font-bold text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-950/20 dark:text-indigo-400"
       >
         {VISUAL_ACUITY_OPTIONS.map((option) => (
           <option key={option} value={option}>
             {option}
           </option>
         ))}
-        <option value={CUSTOM_VISUAL_ACUITY_OPTION}>Outro/manual</option>
+        <option value={CUSTOM_VISUAL_ACUITY_OPTION}>Manual</option>
       </select>
 
       {customMode ? (
-        <>
+        <div className="flex flex-col items-start gap-1">
           <Input
             type="text"
             placeholder="ex: 20/15"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="w-28 mx-auto text-center font-bold text-indigo-600 dark:text-indigo-400"
+            className="h-10 w-24 text-center font-bold text-indigo-600 dark:text-indigo-400"
           />
-          <div className="text-[10px] font-semibold text-slate-500 text-center">
-            Você pode voltar aos valores comuns quando quiser.
-          </div>
-        </>
+          <div className="text-[10px] font-semibold text-slate-500">Valor livre</div>
+        </div>
       ) : (
-        <div className="text-[10px] font-semibold text-slate-400">Padrão: 20/20</div>
+        <div className="whitespace-nowrap text-[10px] font-semibold text-slate-400">Padrão: 20/20</div>
       )}
     </div>
   )
@@ -250,7 +248,7 @@ export default function ExamForm({ patient, exam }: ExamFormProps) {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 <tr>
-                  <td className="py-4 px-4 font-bold text-slate-500 text-left bg-slate-50/20 dark:bg-slate-950/10 w-32">
+                  <td className="w-32 bg-slate-50/20 py-4 px-4 text-left font-bold text-slate-500 dark:bg-slate-950/10">
                     OD (Direito)
                   </td>
                   <td className="py-4 px-2">
@@ -262,7 +260,7 @@ export default function ExamForm({ patient, exam }: ExamFormProps) {
                   <td className="py-4 px-2">
                     <Input type="number" min="0" max="180" placeholder="Eixo" value={odAxis} onChange={(e) => setOdAxis(e.target.value)} className="w-20 mx-auto text-center" />
                   </td>
-                  <td className="py-4 px-2">
+                  <td className="py-4 px-2 align-middle">
                     <VisualAcuityField
                       value={odVa}
                       onChange={setOdVa}
@@ -272,7 +270,7 @@ export default function ExamForm({ patient, exam }: ExamFormProps) {
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-4 px-4 font-bold text-slate-500 text-left bg-slate-50/20 dark:bg-slate-950/10 w-32">
+                  <td className="w-32 bg-slate-50/20 py-4 px-4 text-left font-bold text-slate-500 dark:bg-slate-950/10">
                     OE (Esquerdo)
                   </td>
                   <td className="py-4 px-2">
@@ -284,7 +282,7 @@ export default function ExamForm({ patient, exam }: ExamFormProps) {
                   <td className="py-4 px-2">
                     <Input type="number" min="0" max="180" placeholder="Eixo" value={oeAxis} onChange={(e) => setOeAxis(e.target.value)} className="w-20 mx-auto text-center" />
                   </td>
-                  <td className="py-4 px-2">
+                  <td className="py-4 px-2 align-middle">
                     <VisualAcuityField
                       value={oeVa}
                       onChange={setOeVa}
@@ -306,21 +304,21 @@ export default function ExamForm({ patient, exam }: ExamFormProps) {
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 Adição por Presbiopia (ADD)
               </label>
               <Input type="number" step="0.25" min="0" max="4" placeholder="+0.00" value={addition} onChange={(e) => setAddition(e.target.value)} className="bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800 font-bold" />
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 Distância Pupilar (DP) em mm
               </label>
               <Input type="number" step="0.5" min="45" max="80" placeholder="ex: 63.5" value={pd} onChange={(e) => setPd(e.target.value)} className="bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800 font-semibold" />
             </div>
 
             <div className="space-y-2 sm:col-span-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 Observações de Receituário
               </label>
               <textarea
@@ -336,7 +334,7 @@ export default function ExamForm({ patient, exam }: ExamFormProps) {
 
         <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 md:col-span-1 shadow-sm flex flex-col justify-between">
           <CardHeader className="pb-2">
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Assistente Clínico</span>
+            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Assistente Clínico</span>
             <CardTitle className="text-sm font-extrabold flex items-center gap-1">
               <Sparkles className="h-4.5 w-4.5 text-indigo-500" />
               <span>Cálculo de Adição</span>
@@ -366,7 +364,7 @@ export default function ExamForm({ patient, exam }: ExamFormProps) {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full text-xs font-bold border-indigo-500/30 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/20 h-9"
+                className="w-full h-9 text-xs font-bold border-indigo-500/30 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/20"
                 onClick={applySuggestedAddition}
               >
                 Aplicar Adição Sugerida
