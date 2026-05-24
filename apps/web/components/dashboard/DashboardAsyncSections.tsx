@@ -173,7 +173,7 @@ export async function RecentPatientsPanel({ clinicId }: ClinicPanelProps) {
                     <td className="py-3">{new Date(patient.dob).toLocaleDateString('pt-BR')}</td>
                     <td className="py-3 text-xs">{patient.phone || patient.email || '-'}</td>
                     <td className="py-3 text-right">
-                      <Link href={`/patients/${patient.id}`}>
+                      <Link href={`/patients/${patient.id}`} prefetch={false}>
                         <Button size="sm" variant="outline" className="h-7 text-[10px] font-bold">
                           Ficha
                         </Button>
@@ -250,7 +250,7 @@ export async function UpcomingRecallsPanel({ clinicId }: ClinicPanelProps) {
                 </Badge>
               </div>
               <div className="flex justify-end gap-1.5 pt-1">
-                <Link href={`/patients/${alert.patient_id}`} className="w-full">
+                <Link href={`/patients/${alert.patient_id}`} className="w-full" prefetch={false}>
                   <Button size="sm" className="w-full h-7 text-[10px] font-bold bg-indigo-600 hover:bg-indigo-500">
                     Disparar Manual
                   </Button>
