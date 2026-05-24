@@ -10,6 +10,24 @@ import { Badge } from '@/components/ui/badge'
 import { useAgeGroup } from '@/hooks/useAgeGroup'
 import { Sparkles, Loader2, ClipboardCheck, AlertCircle } from 'lucide-react'
 
+const VISUAL_ACUITY_OPTIONS = [
+  '20/20',
+  '20/25',
+  '20/30',
+  '20/40',
+  '20/50',
+  '20/60',
+  '20/80',
+  '20/100',
+  '20/200',
+] as const
+
+const CUSTOM_VISUAL_ACUITY_OPTION = '__custom__'
+
+function isCommonVisualAcuity(value: string) {
+  return VISUAL_ACUITY_OPTIONS.includes(value as (typeof VISUAL_ACUITY_OPTIONS)[number])
+}
+
 export interface PatientData {
   id: string
   full_name: string
@@ -22,6 +40,74 @@ interface ExamFormProps {
   patient: PatientData
 }
 
+interface VisualAcuityFieldProps {
+  value: string
+  onChange: (value: string) => void
+  customMode: boolean
+  onCustomModeChange: (value: boolean) => void
+}
+
+function VisualAcuityField({
+  value,
+  onChange,
+  customMode,
+  onCustomModeChange,
+}: VisualAcuityFieldProps) {
+  if (customMode) {
+    return (
+      <div className="space-y-1.5">
+        <Input
+          type="text"
+          placeholder="ex: 20/15"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-28 mx-auto text-center font-bold text-indigo-600 dark:text-indigo-400"
+        />
+        <button
+          type="button"
+          onClick={() => {
+            onCustomModeChange(false)
+            if (!isCommonVisualAcuity(value)) {
+              onChange('20/20')
+            }
+          }}
+          className="text-[10px] font-semibold text-slate-500 hover:text-indigo-500 transition-colors"
+        >
+          Usar valores comuns
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <select
+        value={isCommonVisualAcuity(value) ? value : CUSTOM_VISUAL_ACUITY_OPTION}
+        onChange={(e) => {
+          if (e.target.value === CUSTOM_VISUAL_ACUITY_OPTION) {
+            onCustomModeChange(true)
+            if (isCommonVisualAcuity(value)) {
+              onChange('')
+            }
+            return
+          }
+
+          onChange(e.target.value)
+        }}
+        className="h-10 w-28 rounded-md border border-slate-200 bg-slate-50 px-3 text-center text-sm font-bold text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-950/20 dark:text-indigo-400"
+      >
+        {VISUAL_ACUITY_OPTIONS.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+        <option value={CUSTOM_VISUAL_ACUITY_OPTION}>Outro</option>
+      </select>
+      <div className="text-[10px] font-semibold text-slate-400">Padrão: 20/20</div>
+    </div>
+  )
+}
+
 export default function ExamForm({ patient }: ExamFormProps) {
   const router = useRouter()
 
@@ -29,11 +115,13 @@ export default function ExamForm({ patient }: ExamFormProps) {
   const [odSph, setOdSph] = useState('')
   const [odCyl, setOdCyl] = useState('')
   const [odAxis, setOdAxis] = useState('')
-  const [odVa, setOdVa] = useState('')
+  const [odVa, setOdVa] = useState('20/20')
   const [oeSph, setOeSph] = useState('')
   const [oeCyl, setOeCyl] = useState('')
   const [oeAxis, setOeAxis] = useState('')
-  const [oeVa, setOeVa] = useState('')
+  const [oeVa, setOeVa] = useState('20/20')
+  const [odVaCustomMode, setOdVaCustomMode] = useState(false)
+  const [oeVaCustomMode, setOeVaCustomMode] = useState(false)
   const [addition, setAddition] = useState('')
   const [pd, setPd] = useState('')
   const [prescriptionNotes, setPrescriptionNotes] = useState('')
@@ -165,7 +253,12 @@ export default function ExamForm({ patient }: ExamFormProps) {
                     <Input type="number" min="0" max="180" placeholder="Eixo" value={odAxis} onChange={(e) => setOdAxis(e.target.value)} className="w-20 mx-auto text-center" />
                   </td>
                   <td className="py-4 px-2">
-                    <Input type="text" placeholder="ex: 20/20" value={odVa} onChange={(e) => setOdVa(e.target.value)} className="w-24 mx-auto text-center font-bold text-indigo-600 dark:text-indigo-400" />
+                    <VisualAcuityField
+                      value={odVa}
+                      onChange={setOdVa}
+                      customMode={odVaCustomMode}
+                      onCustomModeChange={setOdVaCustomMode}
+                    />
                   </td>
                 </tr>
                 <tr>
@@ -182,7 +275,12 @@ export default function ExamForm({ patient }: ExamFormProps) {
                     <Input type="number" min="0" max="180" placeholder="Eixo" value={oeAxis} onChange={(e) => setOeAxis(e.target.value)} className="w-20 mx-auto text-center" />
                   </td>
                   <td className="py-4 px-2">
-                    <Input type="text" placeholder="ex: 20/20" value={oeVa} onChange={(e) => setOeVa(e.target.value)} className="w-24 mx-auto text-center font-bold text-indigo-600 dark:text-indigo-400" />
+                    <VisualAcuityField
+                      value={oeVa}
+                      onChange={setOeVa}
+                      customMode={oeVaCustomMode}
+                      onCustomModeChange={setOeVaCustomMode}
+                    />
                   </td>
                 </tr>
               </tbody>
