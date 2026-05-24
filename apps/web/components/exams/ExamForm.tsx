@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useAgeGroup } from '@/hooks/useAgeGroup'
-import { Sparkles, Loader2, ClipboardCheck, AlertCircle } from 'lucide-react'
+import { Sparkles, Loader2, ClipboardCheck, AlertCircle, History } from 'lucide-react'
 
 const VISUAL_ACUITY_OPTIONS = [
   '20/20',
@@ -55,6 +55,7 @@ export interface EditableExamData {
 interface ExamFormProps {
   patient: PatientData
   exam?: EditableExamData
+  previousExam?: Omit<EditableExamData, 'id' | 'examDate'> | null
 }
 
 interface VisualAcuityFieldProps {
@@ -62,6 +63,7 @@ interface VisualAcuityFieldProps {
   onChange: (value: string) => void
   customMode: boolean
   onCustomModeChange: (value: boolean) => void
+  referenceValue?: string | null
 }
 
 function VisualAcuityField({
@@ -69,8 +71,14 @@ function VisualAcuityField({
   onChange,
   customMode,
   onCustomModeChange,
+  referenceValue,
 }: VisualAcuityFieldProps) {
-  const selectedValue = customMode || !isCommonVisualAcuity(value) ? CUSTOM_VISUAL_ACUITY_OPTION : value
+  const showingReference = Boolean(referenceValue && !value)
+  const selectedValue = showingReference
+    ? ''
+    : customMode || !isCommonVisualAcuity(value)
+      ? CUSTOM_VISUAL_ACUITY_OPTION
+      : value
 
   return (
     <div className="flex min-w-[13rem] items-center justify-center gap-2">
@@ -85,8 +93,17 @@ function VisualAcuityField({
           onCustomModeChange(false)
           onChange(e.target.value)
         }}
-        className="h-10 w-36 min-w-[9rem] rounded-md border border-slate-200 bg-slate-50 px-2 text-center text-sm font-bold text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-950/20 dark:text-indigo-400"
+        className={`h-10 w-36 min-w-[9rem] rounded-md border border-slate-200 bg-slate-50 px-2 text-center text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-950/20 ${
+          showingReference
+            ? 'text-amber-600 dark:text-amber-400'
+            : 'text-indigo-600 dark:text-indigo-400'
+        }`}
       >
+        {showingReference && (
+          <option value="" disabled>
+            Ref. {referenceValue}
+          </option>
+        )}
         {VISUAL_ACUITY_OPTIONS.map((option) => (
           <option key={option} value={option}>
             {option}
@@ -112,19 +129,20 @@ function VisualAcuityField({
   )
 }
 
-export default function ExamForm({ patient, exam }: ExamFormProps) {
+export default function ExamForm({ patient, exam, previousExam }: ExamFormProps) {
   const router = useRouter()
   const isEditing = Boolean(exam)
+  const hasPreviousExam = !isEditing && Boolean(previousExam)
 
   const [examDate, setExamDate] = useState(exam?.examDate ?? new Date().toISOString().split('T')[0])
   const [odSph, setOdSph] = useState(exam?.odSph ?? '')
   const [odCyl, setOdCyl] = useState(exam?.odCyl ?? '')
   const [odAxis, setOdAxis] = useState(exam?.odAxis?.toString() ?? '')
-  const [odVa, setOdVa] = useState(exam?.odVa ?? '20/20')
+  const [odVa, setOdVa] = useState(exam?.odVa ?? (hasPreviousExam && previousExam?.odVa ? '' : '20/20'))
   const [oeSph, setOeSph] = useState(exam?.oeSph ?? '')
   const [oeCyl, setOeCyl] = useState(exam?.oeCyl ?? '')
   const [oeAxis, setOeAxis] = useState(exam?.oeAxis?.toString() ?? '')
-  const [oeVa, setOeVa] = useState(exam?.oeVa ?? '20/20')
+  const [oeVa, setOeVa] = useState(exam?.oeVa ?? (hasPreviousExam && previousExam?.oeVa ? '' : '20/20'))
   const [odVaCustomMode, setOdVaCustomMode] = useState(Boolean(exam?.odVa && !isCommonVisualAcuity(exam.odVa)))
   const [oeVaCustomMode, setOeVaCustomMode] = useState(Boolean(exam?.oeVa && !isCommonVisualAcuity(exam.oeVa)))
   const [addition, setAddition] = useState(exam?.addition ?? '')
@@ -143,6 +161,25 @@ export default function ExamForm({ patient, exam }: ExamFormProps) {
 
   const applySuggestedAddition = () => {
     setAddition(suggestedAddition.toString())
+  }
+
+  const applyPreviousExam = () => {
+    if (!previousExam) {
+      return
+    }
+
+    setOdSph(previousExam.odSph ?? '')
+    setOdCyl(previousExam.odCyl ?? '')
+    setOdAxis(previousExam.odAxis?.toString() ?? '')
+    setOdVa(previousExam.odVa ?? '')
+    setOeSph(previousExam.oeSph ?? '')
+    setOeCyl(previousExam.oeCyl ?? '')
+    setOeAxis(previousExam.oeAxis?.toString() ?? '')
+    setOeVa(previousExam.oeVa ?? '')
+    setOdVaCustomMode(Boolean(previousExam.odVa && !isCommonVisualAcuity(previousExam.odVa)))
+    setOeVaCustomMode(Boolean(previousExam.oeVa && !isCommonVisualAcuity(previousExam.oeVa)))
+    setAddition(previousExam.addition ?? '')
+    setPd(previousExam.pd ?? '')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -232,6 +269,22 @@ export default function ExamForm({ patient, exam }: ExamFormProps) {
         <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-800/80">
           <CardTitle className="text-base font-bold">Graduação Refrativa (OD / OE)</CardTitle>
           <CardDescription className="text-slate-400 text-xs">Preencha os valores esféricos, cilíndricos e eixos de cada olho.</CardDescription>
+          {hasPreviousExam && (
+            <div className="mt-3 flex flex-col gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+                <History className="h-4 w-4 shrink-0" />
+                <span className="font-semibold">Último exame encontrado. Os valores anteriores aparecem como referência.</span>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-8 shrink-0 border-amber-500/30 px-3 text-xs font-bold text-amber-700 hover:bg-amber-500/10 dark:text-amber-300"
+                onClick={applyPreviousExam}
+              >
+                Usar exame anterior como base
+              </Button>
+            </div>
+          )}
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -251,13 +304,13 @@ export default function ExamForm({ patient, exam }: ExamFormProps) {
                     OD (Direito)
                   </td>
                   <td className="py-4 px-2">
-                    <Input type="number" step="0.25" min="-20" max="20" placeholder="0.00" value={odSph} onChange={(e) => setOdSph(e.target.value)} className="w-24 mx-auto text-center font-bold" />
+                    <Input type="number" step="0.25" min="-20" max="20" placeholder={hasPreviousExam && previousExam?.odSph ? previousExam.odSph : '0.00'} value={odSph} onChange={(e) => setOdSph(e.target.value)} className={`w-24 mx-auto text-center font-bold ${hasPreviousExam && previousExam?.odSph ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80' : ''}`} />
                   </td>
                   <td className="py-4 px-2">
-                    <Input type="number" step="0.25" min="-10" max="0" placeholder="0.00" value={odCyl} onChange={(e) => setOdCyl(e.target.value)} className="w-24 mx-auto text-center" />
+                    <Input type="number" step="0.25" min="-10" max="0" placeholder={hasPreviousExam && previousExam?.odCyl ? previousExam.odCyl : '0.00'} value={odCyl} onChange={(e) => setOdCyl(e.target.value)} className={`w-24 mx-auto text-center ${hasPreviousExam && previousExam?.odCyl ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80' : ''}`} />
                   </td>
                   <td className="py-4 px-2">
-                    <Input type="number" min="0" max="180" placeholder="Eixo" value={odAxis} onChange={(e) => setOdAxis(e.target.value)} className="w-20 mx-auto text-center" />
+                    <Input type="number" min="0" max="180" placeholder={hasPreviousExam && previousExam?.odAxis !== null && previousExam?.odAxis !== undefined ? previousExam.odAxis.toString() : 'Eixo'} value={odAxis} onChange={(e) => setOdAxis(e.target.value)} className={`w-20 mx-auto text-center ${hasPreviousExam && previousExam?.odAxis !== null && previousExam?.odAxis !== undefined ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80' : ''}`} />
                   </td>
                   <td className="py-4 px-2 align-middle">
                     <VisualAcuityField
@@ -265,6 +318,7 @@ export default function ExamForm({ patient, exam }: ExamFormProps) {
                       onChange={setOdVa}
                       customMode={odVaCustomMode}
                       onCustomModeChange={setOdVaCustomMode}
+                      referenceValue={hasPreviousExam ? previousExam?.odVa : null}
                     />
                   </td>
                 </tr>
@@ -273,13 +327,13 @@ export default function ExamForm({ patient, exam }: ExamFormProps) {
                     OE (Esquerdo)
                   </td>
                   <td className="py-4 px-2">
-                    <Input type="number" step="0.25" min="-20" max="20" placeholder="0.00" value={oeSph} onChange={(e) => setOeSph(e.target.value)} className="w-24 mx-auto text-center font-bold" />
+                    <Input type="number" step="0.25" min="-20" max="20" placeholder={hasPreviousExam && previousExam?.oeSph ? previousExam.oeSph : '0.00'} value={oeSph} onChange={(e) => setOeSph(e.target.value)} className={`w-24 mx-auto text-center font-bold ${hasPreviousExam && previousExam?.oeSph ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80' : ''}`} />
                   </td>
                   <td className="py-4 px-2">
-                    <Input type="number" step="0.25" min="-10" max="0" placeholder="0.00" value={oeCyl} onChange={(e) => setOeCyl(e.target.value)} className="w-24 mx-auto text-center" />
+                    <Input type="number" step="0.25" min="-10" max="0" placeholder={hasPreviousExam && previousExam?.oeCyl ? previousExam.oeCyl : '0.00'} value={oeCyl} onChange={(e) => setOeCyl(e.target.value)} className={`w-24 mx-auto text-center ${hasPreviousExam && previousExam?.oeCyl ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80' : ''}`} />
                   </td>
                   <td className="py-4 px-2">
-                    <Input type="number" min="0" max="180" placeholder="Eixo" value={oeAxis} onChange={(e) => setOeAxis(e.target.value)} className="w-20 mx-auto text-center" />
+                    <Input type="number" min="0" max="180" placeholder={hasPreviousExam && previousExam?.oeAxis !== null && previousExam?.oeAxis !== undefined ? previousExam.oeAxis.toString() : 'Eixo'} value={oeAxis} onChange={(e) => setOeAxis(e.target.value)} className={`w-20 mx-auto text-center ${hasPreviousExam && previousExam?.oeAxis !== null && previousExam?.oeAxis !== undefined ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80' : ''}`} />
                   </td>
                   <td className="py-4 px-2 align-middle">
                     <VisualAcuityField
@@ -287,6 +341,7 @@ export default function ExamForm({ patient, exam }: ExamFormProps) {
                       onChange={setOeVa}
                       customMode={oeVaCustomMode}
                       onCustomModeChange={setOeVaCustomMode}
+                      referenceValue={hasPreviousExam ? previousExam?.oeVa : null}
                     />
                   </td>
                 </tr>
@@ -306,14 +361,14 @@ export default function ExamForm({ patient, exam }: ExamFormProps) {
               <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 Adição por Presbiopia (ADD)
               </label>
-              <Input type="number" step="0.25" min="0" max="4" placeholder="+0.00" value={addition} onChange={(e) => setAddition(e.target.value)} className="bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800 font-bold" />
+              <Input type="number" step="0.25" min="0" max="4" placeholder={hasPreviousExam && previousExam?.addition ? previousExam.addition : '+0.00'} value={addition} onChange={(e) => setAddition(e.target.value)} className={`bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800 font-bold ${hasPreviousExam && previousExam?.addition ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80' : ''}`} />
             </div>
 
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 Distância Pupilar (DP) em mm
               </label>
-              <Input type="number" step="0.5" min="45" max="80" placeholder="ex: 63.5" value={pd} onChange={(e) => setPd(e.target.value)} className="bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800 font-semibold" />
+              <Input type="number" step="0.5" min="45" max="80" placeholder={hasPreviousExam && previousExam?.pd ? previousExam.pd : 'ex: 63.5'} value={pd} onChange={(e) => setPd(e.target.value)} className={`bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800 font-semibold ${hasPreviousExam && previousExam?.pd ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80' : ''}`} />
             </div>
 
             <div className="space-y-2 sm:col-span-2">
