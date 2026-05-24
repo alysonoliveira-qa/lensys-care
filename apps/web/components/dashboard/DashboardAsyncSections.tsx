@@ -12,8 +12,11 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowRight } from 'lucide-react'
 
-type PatientDobRecord = {
-  dob: Date
+type AgeGroupCounts = {
+  infant: number
+  young: number
+  presbyopia: number
+  elderly: number
 }
 
 type RecentPatient = {
@@ -63,28 +66,24 @@ export function DashboardPanelFallback({ title, description }: DashboardPanelFal
 
 export async function AgeDistributionPanel({ clinicId, totalPatients }: AgeDistributionPanelProps) {
   const timer = startPerformanceTimer('page /dashboard.section.age_distribution')
+  const currentYear = new Date().getFullYear()
   const queryStartedAt = startPerformanceStep()
-  const patientsDob = await prisma.patient.findMany({
-    where: { clinic_id: clinicId },
-    select: { dob: true },
-  })
-  logPerformanceStep(timer, 'prisma.patient_dob', queryStartedAt)
-
-  const ageGroups = {
-    infant: 0,
-    young: 0,
-    presbyopia: 0,
-    elderly: 0,
-  }
-
-  const today = new Date()
-  patientsDob.forEach((patient: PatientDobRecord) => {
-    const age = today.getFullYear() - patient.dob.getFullYear()
-    if (age < 18) ageGroups.infant++
-    else if (age < 40) ageGroups.young++
-    else if (age < 60) ageGroups.presbyopia++
-    else ageGroups.elderly++
-  })
+  const [ageGroups] = await prisma.$queryRaw<AgeGroupCounts[]>`
+    SELECT
+      COUNT(*) FILTER (WHERE ${currentYear} - EXTRACT(YEAR FROM dob) < 18)::integer AS infant,
+      COUNT(*) FILTER (
+        WHERE ${currentYear} - EXTRACT(YEAR FROM dob) >= 18
+          AND ${currentYear} - EXTRACT(YEAR FROM dob) < 40
+      )::integer AS young,
+      COUNT(*) FILTER (
+        WHERE ${currentYear} - EXTRACT(YEAR FROM dob) >= 40
+          AND ${currentYear} - EXTRACT(YEAR FROM dob) < 60
+      )::integer AS presbyopia,
+      COUNT(*) FILTER (WHERE ${currentYear} - EXTRACT(YEAR FROM dob) >= 60)::integer AS elderly
+    FROM patients
+    WHERE clinic_id = ${clinicId}::uuid
+  `
+  logPerformanceStep(timer, 'prisma.age_group_counts', queryStartedAt)
 
   const maxGroupValue = Math.max(...Object.values(ageGroups), 1)
   endPerformanceTimer(timer)
