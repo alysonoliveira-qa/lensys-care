@@ -21,15 +21,16 @@ export const revalidate = 0
 
 export default async function AlertsPage({ searchParams }: AlertsPageProps) {
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data, error } = await supabase.auth.getClaims()
+  const userId = data?.claims.sub
 
-  if (!user) {
+  if (error || !userId) {
     redirect('/login')
   }
 
   // Load clinic details
   const profile = await prisma.profile.findUnique({
-    where: { id: user.id },
+    where: { id: userId },
     select: { clinic_id: true },
   })
 

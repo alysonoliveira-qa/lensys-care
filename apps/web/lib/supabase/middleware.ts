@@ -71,13 +71,13 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // Refresh session if expired
+  // Validate the access token while allowing refreshed cookies to propagate.
   const authStartedAt = startPerformanceStep()
-  const { data: { user } } = await supabase.auth.getUser()
-  logPerformanceStep(timer, 'auth.getUser', authStartedAt)
+  const { data, error } = await supabase.auth.getClaims()
+  logPerformanceStep(timer, 'auth.getClaims', authStartedAt)
 
   // Route protection
-  if (!user) {
+  if (error || !data?.claims.sub) {
     // Redirect to login if trying to access dashboard/protected pages
     const url = request.nextUrl.clone()
     url.pathname = '/login'

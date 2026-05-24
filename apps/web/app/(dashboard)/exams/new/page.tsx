@@ -14,9 +14,9 @@ export const revalidate = 0
 
 export default async function NewExamPage({ searchParams }: NewExamPageProps) {
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data, error } = await supabase.auth.getClaims()
 
-  if (!user) {
+  if (error || !data?.claims.sub) {
     redirect('/login')
   }
 

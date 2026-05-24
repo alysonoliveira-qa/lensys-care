@@ -42,10 +42,11 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
   const timer = startPerformanceTimer('page /patients/[id]')
   const supabase = createClient()
   const authStartedAt = startPerformanceStep()
-  const { data: { user } } = await supabase.auth.getUser()
-  logPerformanceStep(timer, 'auth.getUser', authStartedAt)
+  const { data, error } = await supabase.auth.getClaims()
+  const userId = data?.claims.sub
+  logPerformanceStep(timer, 'auth.getClaims', authStartedAt)
 
-  if (!user) {
+  if (error || !userId) {
     endPerformanceTimer(timer, 'redirect_login')
     redirect('/login')
   }
@@ -56,7 +57,7 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
       id: params.id,
       clinic: {
         profiles: {
-          some: { id: user.id },
+          some: { id: userId },
         },
       },
     },

@@ -51,17 +51,18 @@ export default async function DashboardPage() {
   const timer = startPerformanceTimer('page /dashboard')
   const supabase = createClient()
   const authStartedAt = startPerformanceStep()
-  const { data: { user } } = await supabase.auth.getUser()
-  logPerformanceStep(timer, 'auth.getUser', authStartedAt)
+  const { data, error } = await supabase.auth.getClaims()
+  const userId = data?.claims.sub
+  logPerformanceStep(timer, 'auth.getClaims', authStartedAt)
 
-  if (!user) {
+  if (error || !userId) {
     endPerformanceTimer(timer, 'redirect_login')
     redirect('/login')
   }
 
   const profileStartedAt = startPerformanceStep()
   const profile = await prisma.profile.findUnique({
-    where: { id: user.id },
+    where: { id: userId },
     select: {
       full_name: true,
       clinic: {

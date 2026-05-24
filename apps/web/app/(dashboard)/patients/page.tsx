@@ -52,10 +52,11 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
   const timer = startPerformanceTimer('page /patients')
   const supabase = createClient()
   const authStartedAt = startPerformanceStep()
-  const { data: { user } } = await supabase.auth.getUser()
-  logPerformanceStep(timer, 'auth.getUser', authStartedAt)
+  const { data, error } = await supabase.auth.getClaims()
+  const userId = data?.claims.sub
+  logPerformanceStep(timer, 'auth.getClaims', authStartedAt)
 
-  if (!user) {
+  if (error || !userId) {
     endPerformanceTimer(timer, 'redirect_login')
     redirect('/login')
   }
@@ -63,7 +64,7 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
   // Load clinic details
   const profileStartedAt = startPerformanceStep()
   const profile = await prisma.profile.findUnique({
-    where: { id: user.id },
+    where: { id: userId },
     select: { clinic_id: true },
   })
   logPerformanceStep(timer, 'prisma.profile_clinic', profileStartedAt)

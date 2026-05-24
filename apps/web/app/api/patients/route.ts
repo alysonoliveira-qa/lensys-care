@@ -15,10 +15,11 @@ export async function POST(request: Request) {
   try {
     const supabase = createClient()
     const authStartedAt = startPerformanceStep()
-    const { data: { user } } = await supabase.auth.getUser()
-    logPerformanceStep(timer, 'auth.getUser', authStartedAt)
+    const { data, error } = await supabase.auth.getClaims()
+    const userId = data?.claims.sub
+    logPerformanceStep(timer, 'auth.getClaims', authStartedAt)
 
-    if (!user) {
+    if (error || !userId) {
       return NextResponse.json({ error: 'UNAUTHORIZED', message: 'Faça login para continuar.' }, { status: 401 })
     }
 
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
 
     const profileStartedAt = startPerformanceStep()
     const profile = await prisma.profile.findUnique({
-      where: { id: user.id },
+      where: { id: userId },
       select: { clinic_id: true },
     })
     logPerformanceStep(timer, 'prisma.profile_clinic', profileStartedAt)
