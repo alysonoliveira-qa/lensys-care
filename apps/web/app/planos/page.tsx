@@ -8,24 +8,24 @@ const plans = [
   {
     name: 'Essencial',
     price: 'R$ 79,90',
-    description: 'Para organizar a rotina clínica com segurança e simplicidade.',
+    description: 'Para consultórios e profissionais que querem organizar a rotina clínica com clareza e agilidade.',
     features: [
-      'Cadastro e acompanhamento de pacientes',
-      'Prontuário e evolução clínica',
+      'Pacientes e histórico clínico',
       'Registro de exames e refração',
-      'Alertas de retorno',
+      'Evolução clínica centralizada',
+      'Alertas de retorno e renovação',
     ],
     featured: false,
   },
   {
     name: 'Conecta',
     price: 'R$ 149,90',
-    description: 'Para clínicas que desejam ampliar relacionamento e acompanhamento.',
+    description: 'Para operações que desejam ampliar acompanhamento, recorrência e visão da rotina clínica.',
     features: [
       'Tudo do plano Essencial',
-      'Fluxos de contato com pacientes',
-      'Organização de recalls clínicos',
-      'Visão ampliada da operação',
+      'Mais apoio à rotina de relacionamento',
+      'Fluxos de retorno e acompanhamento',
+      'Maior visão operacional da clínica',
     ],
     featured: true,
   },
@@ -64,12 +64,11 @@ export function PlansContent({ embedded = false }: { embedded?: boolean }) {
           <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
             Planos para sua{' '}
             <span className="bg-gradient-to-r from-violet-300 to-indigo-300 bg-clip-text text-transparent">
-              prática clínica
+              rotina clínica
             </span>
           </h1>
           <p className="mt-5 text-base leading-7 text-slate-400 sm:text-lg">
-            Escolha o plano ideal para organizar atendimentos, exames e acompanhamento dos seus
-            pacientes.
+            Escolha o plano ideal para organizar pacientes, exames, retornos e a evolução clínica da sua operação.
           </p>
           <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-300">
             <ShieldCheck className="h-4 w-4" />
@@ -100,7 +99,7 @@ export function PlansContent({ embedded = false }: { embedded?: boolean }) {
                   </CardTitle>
                   {!plan.featured && (
                     <Badge variant="secondary" className="border-slate-700 bg-slate-800 text-slate-300">
-                      Essencial
+                      Base
                     </Badge>
                   )}
                 </div>
@@ -147,9 +146,10 @@ export function PlansContent({ embedded = false }: { embedded?: boolean }) {
           ))}
         </section>
 
-        <p className="mt-10 text-center text-sm text-slate-500">
-          Demonstração dos planos. Nenhuma cobrança é realizada nesta etapa.
-        </p>
+        <div className="mt-10 text-center text-sm text-slate-500 space-y-2">
+          <p>Durante a fase de validação, o acesso ao sistema está gratuito.</p>
+          <p>A cobrança dos planos será ativada após a fase de validação.</p>
+        </div>
       </div>
     </main>
   )
