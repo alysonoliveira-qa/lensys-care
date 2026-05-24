@@ -168,7 +168,7 @@ export async function sendAlertSMS(alert: AlertWithRelations): Promise<void> {
     return
   }
 
-  const message = `OptoTech: Olá ${patient.full_name}, sua renovação de óculos está chegando. Agende sua consulta!`
+  const message = `Lensys Care: Olá ${patient.full_name}, sua renovação de óculos está chegando. Agende sua consulta!`
   await sendSMS(patient.phone, message)
 }
 

@@ -1,8 +1,3 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// lib/email/templates/exam-reminder.tsx
-// React Email template for the 1-year exam renewal reminder.
-// ─────────────────────────────────────────────────────────────────────────────
-
 import {
   Body,
   Button,
@@ -24,11 +19,8 @@ interface ExamReminderEmailProps {
   appUrl?: string
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.optotech.com.br'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.lensyscare.com.br'
 
-/**
- * Formats a Date as "DD de MMMM de YYYY" in Brazilian Portuguese.
- */
 function formatDatePTBR(date: Date): string {
   return date.toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -40,7 +32,7 @@ function formatDatePTBR(date: Date): string {
 export function ExamReminderEmail({
   patientName,
   dueDate,
-  clinicName = 'sua clínica óptica',
+  clinicName = 'sua clínica',
   clinicPhone,
   appUrl = APP_URL,
 }: ExamReminderEmailProps) {
@@ -50,42 +42,35 @@ export function ExamReminderEmail({
     <Html lang="pt-BR">
       <Head />
       <Preview>
-        Lembrete: sua consulta de renovação de óculos está se aproximando —{' '}
-        {formattedDate}
+        Lembrete: sua consulta de renovação de óculos está se aproximando — {formattedDate}
       </Preview>
       <Body style={styles.body}>
         <Container style={styles.container}>
-          {/* Header */}
           <Section style={styles.header}>
-            <Text style={styles.logo}>👁️ OptoTech</Text>
+            <Text style={styles.logo}>👁️ Lensys Care</Text>
           </Section>
 
-          {/* Main content */}
           <Section style={styles.content}>
-            <Heading style={styles.heading}>
-              Olá, {patientName}!
-            </Heading>
+            <Heading style={styles.heading}>Olá, {patientName}!</Heading>
 
             <Text style={styles.paragraph}>
-              Este é um lembrete de {clinicName} sobre a renovação anual
-              dos seus óculos ou lentes de contato.
+              Este é um lembrete de {clinicName} sobre a renovação anual dos seus óculos
+              ou lentes de contato.
             </Text>
 
             <Section style={styles.alertBox}>
               <Text style={styles.alertText}>
-                📅 Sua consulta de renovação está prevista para:{' '}
-                <strong>{formattedDate}</strong>
+                📅 Sua consulta de renovação está prevista para: <strong>{formattedDate}</strong>
               </Text>
             </Section>
 
             <Text style={styles.paragraph}>
-              Manter a sua prescrição atualizada é essencial para a saúde dos
-              seus olhos. Com o tempo, a visão pode mudar e uma receita
-              desatualizada pode causar fadiga ocular, dores de cabeça e
-              dificuldade de enxergar com clareza.
+              Manter a sua prescrição atualizada é essencial para a saúde dos seus olhos.
+              Com o tempo, a visão pode mudar e uma receita desatualizada pode causar
+              fadiga ocular, dores de cabeça e dificuldade de enxergar com clareza.
             </Text>
 
-            <Button style={styles.button} href={`${appUrl}`}>
+            <Button style={styles.button} href={appUrl}>
               Agendar minha consulta
             </Button>
 
@@ -98,15 +83,13 @@ export function ExamReminderEmail({
 
           <Hr style={styles.divider} />
 
-          {/* Footer */}
           <Section style={styles.footer}>
             <Text style={styles.footerText}>
-              Você está recebendo este e-mail porque é paciente de{' '}
-              {clinicName}. Se não deseja mais receber lembretes, entre em
-              contato com sua clínica.
+              Você está recebendo este e-mail porque é paciente de {clinicName}. Se não deseja
+              mais receber lembretes, entre em contato com sua clínica.
             </Text>
             <Text style={styles.footerText}>
-              © {new Date().getFullYear()} OptoTech — Sistema para Optometristas
+              © {new Date().getFullYear()} Lensys Care — Sistema de gestão para optometria clínica
             </Text>
           </Section>
         </Container>
@@ -115,12 +98,6 @@ export function ExamReminderEmail({
   )
 }
 
-// ─── Render helper ────────────────────────────────────────────────────────────
-
-/**
- * Renders the ExamReminderEmail component to an HTML string.
- * Used by sendAlertEmail() in lib/alerts.ts.
- */
 export async function renderExamReminderEmail(props: {
   patientName: string
   dueDate: Date
@@ -130,9 +107,6 @@ export async function renderExamReminderEmail(props: {
   const { render } = await import('@react-email/render')
   return render(<ExamReminderEmail {...props} />)
 }
-
-// ─── Inline styles ────────────────────────────────────────────────────────────
-// Using CSSProperties-compatible objects for React Email compatibility
 
 const styles = {
   body: {

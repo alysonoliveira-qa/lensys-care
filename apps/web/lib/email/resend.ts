@@ -8,7 +8,7 @@ import { Resend } from 'resend'
 // Singleton instance — created once per cold start
 export const resend = new Resend(process.env.RESEND_API_KEY || 're_placeholder')
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? 'noreply@optotech.com.br'
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? 'noreply@lensyscare.com.br'
 
 interface SendEmailOptions {
   to: string | string[]
