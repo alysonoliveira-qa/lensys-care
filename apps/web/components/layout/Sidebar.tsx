@@ -13,6 +13,7 @@ import {
   LogOut,
   Sparkles,
   User,
+  Loader2,
 } from 'lucide-react'
 
 interface ClinicSummary {
@@ -39,6 +40,11 @@ export default function Sidebar() {
   const [clinic, setClinic] = useState<ClinicSummary | null>(null)
   const [profile, setProfile] = useState<ProfileSummary | null>(null)
   const [subscription, setSubscription] = useState<SubscriptionSummary | null>(null)
+  const [pendingPath, setPendingPath] = useState<string | null>(null)
+
+  useEffect(() => {
+    setPendingPath(null)
+  }, [pathname])
 
   useEffect(() => {
     async function loadData() {
@@ -115,17 +121,31 @@ export default function Sidebar() {
       <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
         {menuItems.map((item) => {
           const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path))
+          const isPending = pendingPath === item.path
           const Icon = item.icon
           return (
-            <Link key={item.path} href={item.path}>
+            <Link
+              key={item.path}
+              href={item.path}
+              aria-busy={isPending}
+              onClick={() => {
+                if (!isActive) {
+                  setPendingPath(item.path)
+                }
+              }}
+            >
               <span
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
                   isActive
                     ? 'bg-indigo-600/15 border-l-4 border-indigo-500 text-white font-bold'
                     : 'hover:bg-slate-800/50 hover:text-slate-200'
-                }`}
+                  }`}
               >
-                <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
+                {isPending ? (
+                  <Loader2 className="h-4.5 w-4.5 animate-spin text-indigo-400" />
+                ) : (
+                  <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
+                )}
                 <span>{item.label}</span>
               </span>
             </Link>
