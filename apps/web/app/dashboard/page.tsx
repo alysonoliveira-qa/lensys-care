@@ -61,48 +61,52 @@ export default async function DashboardPage() {
   const clinic = profile.clinic
   const isConecta = clinic.subscription?.plan === 'CONECTA' && clinic.subscription?.status !== 'CANCELED'
 
-  const totalPatients = await prisma.patient.count({
-    where: { clinic_id: clinic.id },
-  })
-
-  const totalExams = await prisma.exam.count({
-    where: { patient: { clinic_id: clinic.id } },
-  })
-
-  const pendingAlerts = await prisma.alert.count({
-    where: {
-      status: 'PENDING',
-      patient: { clinic_id: clinic.id },
-    },
-  })
-
-  const sentAlerts = await prisma.alert.count({
-    where: {
-      status: 'SENT',
-      patient: { clinic_id: clinic.id },
-    },
-  })
-
-  const recentPatients = await prisma.patient.findMany({
-    where: { clinic_id: clinic.id },
-    orderBy: { created_at: 'desc' },
-    take: 5,
-  })
-
-  const recentAlerts = await prisma.alert.findMany({
-    where: {
-      status: 'PENDING',
-      patient: { clinic_id: clinic.id },
-    },
-    include: { patient: true },
-    orderBy: { due_date: 'asc' },
-    take: 5,
-  })
-
-  const patientsDob = await prisma.patient.findMany({
-    where: { clinic_id: clinic.id },
-    select: { dob: true },
-  })
+  const [
+    totalPatients,
+    totalExams,
+    pendingAlerts,
+    sentAlerts,
+    recentPatients,
+    recentAlerts,
+    patientsDob,
+  ] = await Promise.all([
+    prisma.patient.count({
+      where: { clinic_id: clinic.id },
+    }),
+    prisma.exam.count({
+      where: { patient: { clinic_id: clinic.id } },
+    }),
+    prisma.alert.count({
+      where: {
+        status: 'PENDING',
+        patient: { clinic_id: clinic.id },
+      },
+    }),
+    prisma.alert.count({
+      where: {
+        status: 'SENT',
+        patient: { clinic_id: clinic.id },
+      },
+    }),
+    prisma.patient.findMany({
+      where: { clinic_id: clinic.id },
+      orderBy: { created_at: 'desc' },
+      take: 5,
+    }),
+    prisma.alert.findMany({
+      where: {
+        status: 'PENDING',
+        patient: { clinic_id: clinic.id },
+      },
+      include: { patient: true },
+      orderBy: { due_date: 'asc' },
+      take: 5,
+    }),
+    prisma.patient.findMany({
+      where: { clinic_id: clinic.id },
+      select: { dob: true },
+    }),
+  ])
 
   const ageGroups = {
     infant: 0,
