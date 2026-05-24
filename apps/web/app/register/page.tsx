@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
-import { Sparkles, Loader2, User, Mail, ShieldAlert, Building2, Phone } from 'lucide-react'
+import { ArrowLeft, Sparkles, Loader2, User, Mail, ShieldAlert, Building2, Phone } from 'lucide-react'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -82,6 +82,16 @@ export default function RegisterPage() {
       <div className="absolute bottom-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-violet-600/10 blur-[120px] pointer-events-none" />
 
       <div className="w-full max-w-lg z-10 transition-all duration-300 transform scale-100 hover:scale-[1.005]">
+        <div className="mb-5 flex justify-center">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm font-medium text-slate-400 transition-colors hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar ao início
+          </Link>
+        </div>
+
         {/* Brand header */}
         <div className="flex flex-col items-center mb-6">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20 mb-3 animate-pulse">
