@@ -36,8 +36,25 @@ export interface PatientData {
   email: string | null
 }
 
+export interface EditableExamData {
+  id: string
+  examDate: string
+  odSph: string | null
+  odCyl: string | null
+  odAxis: number | null
+  odVa: string | null
+  oeSph: string | null
+  oeCyl: string | null
+  oeAxis: number | null
+  oeVa: string | null
+  addition: string | null
+  pd: string | null
+  prescriptionNotes: string | null
+}
+
 interface ExamFormProps {
   patient: PatientData
+  exam?: EditableExamData
 }
 
 interface VisualAcuityFieldProps {
@@ -98,33 +115,34 @@ function VisualAcuityField({
   )
 }
 
-export default function ExamForm({ patient }: ExamFormProps) {
+export default function ExamForm({ patient, exam }: ExamFormProps) {
   const router = useRouter()
+  const isEditing = Boolean(exam)
 
-  const [examDate, setExamDate] = useState(new Date().toISOString().split('T')[0])
-  const [odSph, setOdSph] = useState('')
-  const [odCyl, setOdCyl] = useState('')
-  const [odAxis, setOdAxis] = useState('')
-  const [odVa, setOdVa] = useState('20/20')
-  const [oeSph, setOeSph] = useState('')
-  const [oeCyl, setOeCyl] = useState('')
-  const [oeAxis, setOeAxis] = useState('')
-  const [oeVa, setOeVa] = useState('20/20')
-  const [odVaCustomMode, setOdVaCustomMode] = useState(false)
-  const [oeVaCustomMode, setOeVaCustomMode] = useState(false)
-  const [addition, setAddition] = useState('')
-  const [pd, setPd] = useState('')
-  const [prescriptionNotes, setPrescriptionNotes] = useState('')
+  const [examDate, setExamDate] = useState(exam?.examDate ?? new Date().toISOString().split('T')[0])
+  const [odSph, setOdSph] = useState(exam?.odSph ?? '')
+  const [odCyl, setOdCyl] = useState(exam?.odCyl ?? '')
+  const [odAxis, setOdAxis] = useState(exam?.odAxis?.toString() ?? '')
+  const [odVa, setOdVa] = useState(exam?.odVa ?? '20/20')
+  const [oeSph, setOeSph] = useState(exam?.oeSph ?? '')
+  const [oeCyl, setOeCyl] = useState(exam?.oeCyl ?? '')
+  const [oeAxis, setOeAxis] = useState(exam?.oeAxis?.toString() ?? '')
+  const [oeVa, setOeVa] = useState(exam?.oeVa ?? '20/20')
+  const [odVaCustomMode, setOdVaCustomMode] = useState(Boolean(exam?.odVa && !isCommonVisualAcuity(exam.odVa)))
+  const [oeVaCustomMode, setOeVaCustomMode] = useState(Boolean(exam?.oeVa && !isCommonVisualAcuity(exam.oeVa)))
+  const [addition, setAddition] = useState(exam?.addition ?? '')
+  const [pd, setPd] = useState(exam?.pd ?? '')
+  const [prescriptionNotes, setPrescriptionNotes] = useState(exam?.prescriptionNotes ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const { age, ageGroup, suggestedAddition } = useAgeGroup(patient.dob.toString())
 
   useEffect(() => {
-    if (suggestedAddition > 0) {
+    if (!isEditing && suggestedAddition > 0) {
       setAddition(suggestedAddition.toString())
     }
-  }, [suggestedAddition])
+  }, [isEditing, suggestedAddition])
 
   const applySuggestedAddition = () => {
     setAddition(suggestedAddition.toString())
@@ -141,8 +159,8 @@ export default function ExamForm({ patient }: ExamFormProps) {
     setError(null)
 
     try {
-      const response = await fetch('/api/exams', {
-        method: 'POST',
+      const response = await fetch(exam ? `/api/exams/${exam.id}` : '/api/exams', {
+        method: exam ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           patientId: patient.id,
@@ -164,14 +182,14 @@ export default function ExamForm({ patient }: ExamFormProps) {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.message || 'Falha ao lançar exame.')
+        throw new Error(data.message || (exam ? 'Falha ao salvar alterações.' : 'Falha ao lançar exame.'))
       }
 
       router.push(`/patients/${patient.id}`)
       router.refresh()
     } catch (err: unknown) {
       console.error(err)
-      setError(err instanceof Error ? err.message : 'Erro ao registrar exame refrativo.')
+      setError(err instanceof Error ? err.message : exam ? 'Erro ao editar exame refrativo.' : 'Erro ao registrar exame refrativo.')
     } finally {
       setLoading(false)
     }
@@ -190,7 +208,9 @@ export default function ExamForm({ patient }: ExamFormProps) {
         <div className="absolute right-[-10%] top-[-30%] w-44 h-44 rounded-full bg-violet-600/15 blur-2xl pointer-events-none" />
         <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Prontuário de Refração</span>
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              {isEditing ? 'Editar Exame Refrativo' : 'Prontuário de Refração'}
+            </span>
             <h3 className="text-xl font-bold text-slate-100">{patient.full_name}</h3>
             <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold">
               <span>{age} anos ({new Date(patient.dob).toLocaleDateString('pt-BR')})</span>
@@ -370,12 +390,12 @@ export default function ExamForm({ patient }: ExamFormProps) {
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Lançando exame...
+              {isEditing ? 'Salvando...' : 'Lançando exame...'}
             </>
           ) : (
             <>
               <ClipboardCheck className="h-4.5 w-4.5" />
-              Finalizar e Registrar Exame
+              {isEditing ? 'Salvar alterações' : 'Finalizar e Registrar Exame'}
             </>
           )}
         </Button>
