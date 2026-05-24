@@ -111,7 +111,7 @@ export default function RegisterPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleRegister} className="space-y-4">
+            <form onSubmit={handleRegister} className="space-y-4" data-cy="register-form">
               {error && (
                 <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium text-center flex items-center justify-center gap-2 animate-shake">
                   <ShieldAlert className="h-4 w-4" />
@@ -176,6 +176,7 @@ export default function RegisterPage() {
                     <Input
                       type="text"
                       placeholder="Seu nome completo"
+                      data-cy="register-name-input"
                       value={ownerName}
                       onChange={(e) => setOwnerName(e.target.value)}
                       className="bg-slate-950/50 border-slate-800 text-white placeholder-slate-500 focus:border-violet-500/50 focus:ring-violet-500/20 h-10 pl-9"
@@ -194,6 +195,7 @@ export default function RegisterPage() {
                     <Input
                       type="email"
                       placeholder="exemplo@clinicamail.com"
+                      data-cy="register-email-input"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="bg-slate-950/50 border-slate-800 text-white placeholder-slate-500 focus:border-violet-500/50 focus:ring-violet-500/20 h-10 pl-9"
@@ -211,6 +213,7 @@ export default function RegisterPage() {
                   <Input
                     type="password"
                     placeholder="Mínimo 6 caracteres"
+                    data-cy="register-password-input"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="bg-slate-950/50 border-slate-800 text-white placeholder-slate-500 focus:border-violet-500/50 focus:ring-violet-500/20 h-10"
@@ -225,6 +228,7 @@ export default function RegisterPage() {
                 variant="premium"
                 className="w-full h-11 text-base font-semibold transition-all duration-200 mt-6"
                 disabled={loading}
+                data-cy="register-submit-button"
               >
                 {loading ? (
                   <>

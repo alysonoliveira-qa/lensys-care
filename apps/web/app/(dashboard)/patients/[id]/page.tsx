@@ -123,7 +123,7 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
           Voltar para Pacientes
         </Link>
         <Link href={`/exams/new?patientId=${patient.id}`}>
-          <Button className="bg-indigo-600 hover:bg-indigo-500 font-bold gap-2 shadow-lg shadow-indigo-500/10">
+          <Button className="bg-indigo-600 hover:bg-indigo-500 font-bold gap-2 shadow-lg shadow-indigo-500/10" data-cy="new-exam-button">
             <FilePlus2 className="h-4.5 w-4.5" />
             Lancar Novo Exame
           </Button>

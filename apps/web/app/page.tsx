@@ -56,7 +56,7 @@ export default function Home() {
 
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button asChild variant="premium" size="lg" className="w-full sm:w-auto">
-                <Link href="/login">Entrar</Link>
+                <Link href="/login" data-cy="landing-login-link">Entrar</Link>
               </Button>
               <Button
                 asChild
@@ -64,7 +64,7 @@ export default function Home() {
                 size="lg"
                 className="w-full border-slate-700 bg-slate-900/50 text-white hover:border-indigo-400/40 hover:bg-slate-800 hover:text-white sm:w-auto"
               >
-                <Link href="/register">Criar conta</Link>
+                <Link href="/register" data-cy="landing-register-link">Criar conta</Link>
               </Button>
               <Button
                 asChild
@@ -72,7 +72,7 @@ export default function Home() {
                 size="lg"
                 className="w-full text-slate-300 hover:bg-slate-900 hover:text-white sm:w-auto"
               >
-                <Link href="/planos">Ver planos</Link>
+                <Link href="/planos" data-cy="landing-plans-link">Ver planos</Link>
               </Button>
             </div>
           </div>

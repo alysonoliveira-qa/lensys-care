@@ -90,7 +90,7 @@ export default function NewPatientPage() {
 
       <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800">
         <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" data-cy="patient-form">
             {error && (
               <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold text-center">
                 {error}
@@ -104,6 +104,7 @@ export default function NewPatientPage() {
                 </label>
                 <Input
                   type="text"
+                  data-cy="patient-name-input"
                   placeholder="ex: João da Silva Santos"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
@@ -119,6 +120,7 @@ export default function NewPatientPage() {
                 </label>
                 <Input
                   type="date"
+                  data-cy="patient-birthdate-input"
                   value={dob}
                   onChange={(e) => setDob(e.target.value)}
                   className="bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800 h-10"
@@ -160,6 +162,7 @@ export default function NewPatientPage() {
                 </label>
                 <Input
                   type="tel"
+                  data-cy="patient-phone-input"
                   placeholder="ex: (11) 99999-9999"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
@@ -174,6 +177,7 @@ export default function NewPatientPage() {
                 </label>
                 <Input
                   type="email"
+                  data-cy="patient-email-input"
                   placeholder="ex: joao@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -187,6 +191,7 @@ export default function NewPatientPage() {
                   Observações Clínicas Gerais
                 </label>
                 <textarea
+                  data-cy="patient-notes-input"
                   placeholder="Insira patologias prévias, histórico familiar ou outras notas clínicas relevantes..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
@@ -203,7 +208,7 @@ export default function NewPatientPage() {
                   Cancelar
                 </Button>
               </Link>
-              <Button type="submit" className="h-10 px-8 font-bold bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-500/10" disabled={loading}>
+              <Button type="submit" className="h-10 px-8 font-bold bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-500/10" disabled={loading} data-cy="save-patient-button">
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

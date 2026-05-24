@@ -131,7 +131,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" data-cy="dashboard-summary-cards">
         <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total de Pacientes</span>

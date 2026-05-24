@@ -94,7 +94,7 @@ export async function AgeDistributionPanel({ clinicId, totalPatients }: AgeDistr
         <CardTitle className="text-lg font-bold">Distribuição de Pacientes por Faixa Etária</CardTitle>
         <CardDescription className="text-slate-400 text-xs">Análise demográfica para adequação de serviços e presbiopia.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4" data-cy="alerts-list">
         {[
           { label: 'Infantil / Adolescente (< 18 anos)', value: ageGroups.infant, color: 'bg-blue-500' },
           { label: 'Adulto Jovem (18 - 39 anos)', value: ageGroups.young, color: 'bg-emerald-500' },

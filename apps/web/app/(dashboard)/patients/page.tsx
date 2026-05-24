@@ -129,7 +129,7 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
           </p>
         </div>
         <Link href="/patients/new">
-          <Button className="bg-indigo-600 hover:bg-indigo-500 font-bold gap-2 shadow-lg shadow-indigo-500/10">
+          <Button className="bg-indigo-600 hover:bg-indigo-500 font-bold gap-2 shadow-lg shadow-indigo-500/10" data-cy="new-patient-button">
             <Plus className="h-4.5 w-4.5" />
             Cadastrar Paciente
           </Button>
@@ -166,7 +166,7 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
               <span>Nenhum paciente cadastrado ou correspondente à busca.</span>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" data-cy="patients-list">
               <table className="w-full text-sm text-left">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-slate-800 text-xs text-slate-400 font-bold uppercase tracking-wider bg-slate-50/50 dark:bg-slate-950/40">
@@ -181,7 +181,7 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
                   {patients.map((p: PatientListItem) => {
                     const lastExam = p.exams[0]
                     return (
-                      <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/10 transition-colors">
+                      <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/10 transition-colors" data-cy="patient-card">
                         <td className="py-4 px-6 font-bold text-slate-800 dark:text-slate-100">{p.full_name}</td>
                         <td className="py-4 px-6 text-slate-600 dark:text-slate-300 font-medium">
                           <span className="flex items-center gap-1.5">
@@ -215,7 +215,7 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
                           )}
                         </td>
                         <td className="py-4 px-6 text-right">
-                          <Link href={`/patients/${p.id}`}>
+                          <Link href={`/patients/${p.id}`} data-cy="patient-record-link">
                             <Button size="sm" variant="outline" className="h-8 font-bold border-slate-200 dark:border-slate-800">
                               Ver Ficha
                             </Button>

@@ -45,6 +45,7 @@ export default function DeleteExamButton({ examId, onDeleted }: DeleteExamButton
       className="h-7 gap-1.5 px-2 text-[11px] text-slate-400 hover:bg-red-500/10 hover:text-red-400"
       onClick={handleDelete}
       disabled={deleting}
+      data-cy="delete-exam-button"
     >
       <Trash2 className="h-3.5 w-3.5" />
       {deleting ? 'Excluindo...' : 'Excluir exame'}

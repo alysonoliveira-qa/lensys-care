@@ -113,7 +113,7 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4" data-cy="login-form">
               {error && (
                 <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium text-center animate-shake">
                   {error}
@@ -127,6 +127,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
+                  data-cy="login-email-input"
                   placeholder="exemplo@clinicamail.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -146,6 +147,7 @@ export default function LoginPage() {
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
+                    data-cy="login-password-input"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -168,6 +170,7 @@ export default function LoginPage() {
                 variant="premium"
                 className="w-full h-11 text-base font-semibold transition-all duration-200 mt-2"
                 disabled={loading}
+                data-cy="login-submit-button"
               >
                 {loading ? (
                   <>

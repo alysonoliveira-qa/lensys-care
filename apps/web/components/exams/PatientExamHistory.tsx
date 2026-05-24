@@ -47,7 +47,7 @@ export default function PatientExamHistory({ exams: initialExams, patientId }: P
         <FileText className="h-10 w-10 text-slate-300 dark:text-slate-700" />
         <span>Nenhum exame refrativo registrado para este paciente.</span>
         <Link href={`/exams/new?patientId=${patientId}`} className="mt-2">
-          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500 font-bold">
+          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-500 font-bold" data-cy="start-first-exam-button">
             Iniciar Primeiro Exame
           </Button>
         </Link>
@@ -58,7 +58,7 @@ export default function PatientExamHistory({ exams: initialExams, patientId }: P
   return (
     <>
       {exams.map((exam) => (
-        <Card key={exam.id} className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+        <Card key={exam.id} className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-md transition-shadow" data-cy="exam-history-card">
           <div className="bg-slate-50/50 dark:bg-slate-950/40 px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-indigo-400" />
@@ -76,6 +76,7 @@ export default function PatientExamHistory({ exams: initialExams, patientId }: P
                   variant="ghost"
                   size="sm"
                   className="h-7 gap-1.5 px-2 text-[11px] text-slate-400 hover:bg-indigo-500/10 hover:text-indigo-500"
+                  data-cy="edit-exam-button"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                   Editar
@@ -87,6 +88,7 @@ export default function PatientExamHistory({ exams: initialExams, patientId }: P
                   variant="ghost"
                   size="sm"
                   className="h-7 gap-1.5 px-2 text-[11px] text-slate-400 hover:bg-indigo-500/10 hover:text-indigo-500"
+                  data-cy="print-exam-button"
                 >
                   <Printer className="h-3.5 w-3.5" />
                   Imprimir

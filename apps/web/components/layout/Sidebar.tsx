@@ -89,10 +89,10 @@ export default function Sidebar() {
   }
 
   const menuItems = [
-    { label: 'Painel Geral', icon: LayoutDashboard, path: '/dashboard' },
-    { label: 'Pacientes', icon: Users, path: '/patients' },
-    { label: 'Alertas de Renovação', icon: Bell, path: '/alerts' },
-    { label: 'Planos & Preços', icon: CreditCard, path: '/dashboard/planos' },
+    { label: 'Painel Geral', icon: LayoutDashboard, path: '/dashboard', dataCy: 'sidebar-dashboard-link' },
+    { label: 'Pacientes', icon: Users, path: '/patients', dataCy: 'sidebar-patients-link' },
+    { label: 'Alertas de Renovação', icon: Bell, path: '/alerts', dataCy: 'sidebar-alerts-link' },
+    { label: 'Planos & Preços', icon: CreditCard, path: '/dashboard/planos', dataCy: 'sidebar-plans-link' },
   ]
 
   const isConecta = subscription?.plan === 'CONECTA' && subscription?.status !== 'CANCELED'
@@ -128,6 +128,7 @@ export default function Sidebar() {
               key={item.path}
               href={item.path}
               aria-busy={isPending}
+              data-cy={item.dataCy}
               onClick={() => {
                 if (!isActive) {
                   setPendingPath(item.path)
@@ -191,6 +192,7 @@ export default function Sidebar() {
           onClick={handleLogout}
           className="text-slate-500 hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-slate-800/40"
           title="Sair"
+          data-cy="logout-button"
         >
           <LogOut className="h-4.5 w-4.5" />
         </button>
