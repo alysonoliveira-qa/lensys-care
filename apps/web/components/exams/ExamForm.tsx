@@ -96,15 +96,14 @@ function VisualAcuityField({
       </select>
 
       {customMode ? (
-        <div className="flex flex-col items-start gap-1">
+        <div className="flex items-center gap-2">
           <Input
             type="text"
-            placeholder="ex: 20/15"
+            placeholder="20/20"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="h-10 w-24 text-center font-bold text-indigo-600 dark:text-indigo-400"
+            className="h-10 w-24 text-center font-bold text-indigo-600 placeholder:text-slate-400 dark:text-indigo-400 dark:placeholder:text-slate-500"
           />
-          <div className="text-[10px] font-semibold text-slate-500">Valor livre</div>
         </div>
       ) : (
         <div className="whitespace-nowrap text-[10px] font-semibold text-slate-400">Padrão: 20/20</div>
