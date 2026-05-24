@@ -3,6 +3,12 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
+import {
+  endPerformanceTimer,
+  logPerformanceStep,
+  startPerformanceStep,
+  startPerformanceTimer,
+} from '@/lib/performance'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -33,13 +39,18 @@ interface PatientDetailPageProps {
 export const revalidate = 0
 
 export default async function PatientDetailPage({ params }: PatientDetailPageProps) {
+  const timer = startPerformanceTimer('page /patients/[id]')
   const supabase = createClient()
+  const authStartedAt = startPerformanceStep()
   const { data: { user } } = await supabase.auth.getUser()
+  logPerformanceStep(timer, 'auth.getUser', authStartedAt)
 
   if (!user) {
+    endPerformanceTimer(timer, 'redirect_login')
     redirect('/login')
   }
 
+  const patientStartedAt = startPerformanceStep()
   const patient = await prisma.patient.findFirst({
     where: {
       id: params.id,
@@ -92,14 +103,17 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
       },
     },
   })
+  logPerformanceStep(timer, 'prisma.patient_exams_alerts', patientStartedAt)
 
   if (!patient) {
+    endPerformanceTimer(timer, 'not_found_or_out_of_clinic')
     notFound()
   }
 
   const age = calculateAge(patient.dob)
   const ageGroupInfo = getAgeGroupInfo(patient.dob)
 
+  endPerformanceTimer(timer)
   return (
     <div className="space-y-8 select-none">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

@@ -2,17 +2,28 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
 import { createAlertForExam } from '@/lib/alerts'
+import {
+  endPerformanceTimer,
+  logPerformanceStep,
+  startPerformanceStep,
+  startPerformanceTimer,
+} from '@/lib/performance'
 
 export async function POST(request: Request) {
+  const timer = startPerformanceTimer('api POST /api/exams')
   try {
     const supabase = createClient()
+    const authStartedAt = startPerformanceStep()
     const { data: { user } } = await supabase.auth.getUser()
+    logPerformanceStep(timer, 'auth.getUser', authStartedAt)
 
     if (!user) {
       return NextResponse.json({ error: 'UNAUTHORIZED', message: 'Faça login para continuar.' }, { status: 401 })
     }
 
+    const bodyStartedAt = startPerformanceStep()
     const body = await request.json()
+    logPerformanceStep(timer, 'request.json', bodyStartedAt)
     const {
       patientId,
       examDate,
@@ -34,14 +45,17 @@ export async function POST(request: Request) {
     }
 
     // Load examiner profile
+    const examinerStartedAt = startPerformanceStep()
     const examiner = await prisma.profile.findUnique({
       where: { id: user.id },
     })
+    logPerformanceStep(timer, 'prisma.examiner_profile', examinerStartedAt)
 
     if (!examiner) {
       return NextResponse.json({ error: 'EXAMINER_NOT_FOUND', message: 'Perfil do examinador não encontrado.' }, { status: 404 })
     }
 
+    const examStartedAt = startPerformanceStep()
     const exam = await prisma.exam.create({
       data: {
         patient_id: patientId,
@@ -60,9 +74,11 @@ export async function POST(request: Request) {
         prescription_notes: prescriptionNotes || null,
       },
     })
+    logPerformanceStep(timer, 'prisma.exam_create', examStartedAt)
 
     // Create the automatically scheduled alert for 365 days after the exam
     // Default to EMAIL channel. (Clinic can choose to dismiss or manually trigger SMS/WhatsApp if CONECTA)
+    const alertStartedAt = startPerformanceStep()
     await createAlertForExam({
       examId: exam.id,
       examDate: new Date(examDate),
@@ -70,6 +86,7 @@ export async function POST(request: Request) {
       channel: 'EMAIL',
       supabase,
     })
+    logPerformanceStep(timer, 'supabase.alert_create', alertStartedAt)
 
     return NextResponse.json({ success: true, exam })
   } catch (error: unknown) {
@@ -78,5 +95,7 @@ export async function POST(request: Request) {
       { error: 'SERVER_ERROR', message: error instanceof Error ? error.message : 'Falha ao lançar exame refrativo.' },
       { status: 500 }
     )
+  } finally {
+    endPerformanceTimer(timer)
   }
 }

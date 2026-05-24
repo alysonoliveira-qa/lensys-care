@@ -5,6 +5,12 @@
 
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import {
+  endPerformanceTimer,
+  logPerformanceStep,
+  startPerformanceStep,
+  startPerformanceTimer,
+} from '@/lib/performance'
 
 export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname
@@ -39,6 +45,7 @@ export async function updateSession(request: NextRequest) {
     return response
   }
 
+  const timer = startPerformanceTimer(`middleware ${pathname}`)
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
@@ -65,15 +72,19 @@ export async function updateSession(request: NextRequest) {
   )
 
   // Refresh session if expired
+  const authStartedAt = startPerformanceStep()
   const { data: { user } } = await supabase.auth.getUser()
+  logPerformanceStep(timer, 'auth.getUser', authStartedAt)
 
   // Route protection
   if (!user) {
     // Redirect to login if trying to access dashboard/protected pages
     const url = request.nextUrl.clone()
     url.pathname = '/login'
+    endPerformanceTimer(timer, 'redirect_login')
     return NextResponse.redirect(url)
   }
 
+  endPerformanceTimer(timer, 'allowed')
   return response
 }

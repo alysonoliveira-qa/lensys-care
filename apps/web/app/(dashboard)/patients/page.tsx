@@ -3,6 +3,12 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
+import {
+  endPerformanceTimer,
+  logPerformanceStep,
+  startPerformanceStep,
+  startPerformanceTimer,
+} from '@/lib/performance'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -43,20 +49,27 @@ type PatientListItem = {
 export const revalidate = 0
 
 export default async function PatientsPage({ searchParams }: PatientsPageProps) {
+  const timer = startPerformanceTimer('page /patients')
   const supabase = createClient()
+  const authStartedAt = startPerformanceStep()
   const { data: { user } } = await supabase.auth.getUser()
+  logPerformanceStep(timer, 'auth.getUser', authStartedAt)
 
   if (!user) {
+    endPerformanceTimer(timer, 'redirect_login')
     redirect('/login')
   }
 
   // Load clinic details
+  const profileStartedAt = startPerformanceStep()
   const profile = await prisma.profile.findUnique({
     where: { id: user.id },
     select: { clinic_id: true },
   })
+  logPerformanceStep(timer, 'prisma.profile_clinic', profileStartedAt)
 
   if (!profile) {
+    endPerformanceTimer(timer, 'redirect_login_no_profile')
     redirect('/login')
   }
 
@@ -78,6 +91,7 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
     ]
   }
 
+  const patientQueriesStartedAt = startPerformanceStep()
   const [patients, totalCount] = await Promise.all([
     prisma.patient.findMany({
       where: whereClause,
@@ -95,9 +109,11 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
       where: whereClause,
     }),
   ])
+  logPerformanceStep(timer, 'prisma.list_and_count_parallel', patientQueriesStartedAt)
 
   const totalPages = Math.ceil(totalCount / limit)
 
+  endPerformanceTimer(timer)
   return (
     <div className="space-y-6 select-none">
       {/* Header */}

@@ -3,6 +3,12 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
+import {
+  endPerformanceTimer,
+  logPerformanceStep,
+  startPerformanceStep,
+  startPerformanceTimer,
+} from '@/lib/performance'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -42,25 +48,33 @@ type RecentAlert = {
 export const revalidate = 0
 
 export default async function DashboardPage() {
+  const timer = startPerformanceTimer('page /dashboard')
   const supabase = createClient()
+  const authStartedAt = startPerformanceStep()
   const { data: { user } } = await supabase.auth.getUser()
+  logPerformanceStep(timer, 'auth.getUser', authStartedAt)
 
   if (!user) {
+    endPerformanceTimer(timer, 'redirect_login')
     redirect('/login')
   }
 
+  const profileStartedAt = startPerformanceStep()
   const profile = await prisma.profile.findUnique({
     where: { id: user.id },
     include: { clinic: { include: { subscription: true } } },
   })
+  logPerformanceStep(timer, 'prisma.profile_and_clinic', profileStartedAt)
 
   if (!profile) {
+    endPerformanceTimer(timer, 'redirect_login_no_profile')
     redirect('/login')
   }
 
   const clinic = profile.clinic
   const isConecta = clinic.subscription?.plan === 'CONECTA' && clinic.subscription?.status !== 'CANCELED'
 
+  const dashboardQueriesStartedAt = startPerformanceStep()
   const [
     totalPatients,
     totalExams,
@@ -107,6 +121,7 @@ export default async function DashboardPage() {
       select: { dob: true },
     }),
   ])
+  logPerformanceStep(timer, 'prisma.dashboard_queries_parallel', dashboardQueriesStartedAt)
 
   const ageGroups = {
     infant: 0,
@@ -126,6 +141,7 @@ export default async function DashboardPage() {
 
   const maxGroupValue = Math.max(...Object.values(ageGroups), 1)
 
+  endPerformanceTimer(timer)
   return (
     <div className="space-y-8 select-none">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
