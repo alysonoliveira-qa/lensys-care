@@ -28,6 +28,13 @@ import {
   UserCheck
 } from 'lucide-react'
 
+type DashboardMetrics = {
+  totalPatients: number
+  totalExams: number
+  pendingAlerts: number
+  sentAlerts: number
+}
+
 export const revalidate = 0
 
 export default async function DashboardPage() {
@@ -73,30 +80,33 @@ export default async function DashboardPage() {
   const isConecta = clinic.subscription?.plan === 'CONECTA' && clinic.subscription?.status !== 'CANCELED'
 
   const dashboardQueriesStartedAt = startPerformanceStep()
-  const [
-    totalPatients,
-    totalExams,
-    alertCounts,
-  ] = await Promise.all([
-    prisma.patient.count({
-      where: { clinic_id: clinic.id },
-    }),
-    prisma.exam.count({
-      where: { patient: { clinic_id: clinic.id } },
-    }),
-    prisma.alert.groupBy({
-      by: ['status'],
-      where: {
-        status: { in: ['PENDING', 'SENT'] },
-        patient: { clinic_id: clinic.id },
-      },
-      _count: true,
-    }),
-  ])
+  const [metrics] = await prisma.$queryRaw<DashboardMetrics[]>`
+    SELECT
+      (SELECT COUNT(*)::integer FROM patients WHERE clinic_id = ${clinic.id}::uuid) AS "totalPatients",
+      (
+        SELECT COUNT(*)::integer
+        FROM exams
+        INNER JOIN patients ON patients.id = exams.patient_id
+        WHERE patients.clinic_id = ${clinic.id}::uuid
+      ) AS "totalExams",
+      (
+        SELECT COUNT(*)::integer
+        FROM alerts
+        INNER JOIN patients ON patients.id = alerts.patient_id
+        WHERE patients.clinic_id = ${clinic.id}::uuid
+          AND alerts.status = 'PENDING'
+      ) AS "pendingAlerts",
+      (
+        SELECT COUNT(*)::integer
+        FROM alerts
+        INNER JOIN patients ON patients.id = alerts.patient_id
+        WHERE patients.clinic_id = ${clinic.id}::uuid
+          AND alerts.status = 'SENT'
+      ) AS "sentAlerts"
+  `
   logPerformanceStep(timer, 'prisma.dashboard_queries_parallel', dashboardQueriesStartedAt)
 
-  const pendingAlerts = alertCounts.find((alert) => alert.status === 'PENDING')?._count ?? 0
-  const sentAlerts = alertCounts.find((alert) => alert.status === 'SENT')?._count ?? 0
+  const { totalPatients, totalExams, pendingAlerts, sentAlerts } = metrics
 
   endPerformanceTimer(timer, 'initial_content_ready')
   return (
