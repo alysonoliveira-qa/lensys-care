@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button'
 
 interface DeleteExamButtonProps {
   examId: string
+  onDeleted?: (examId: string) => void
 }
 
-export default function DeleteExamButton({ examId }: DeleteExamButtonProps) {
+export default function DeleteExamButton({ examId, onDeleted }: DeleteExamButtonProps) {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
 
@@ -28,6 +29,7 @@ export default function DeleteExamButton({ examId }: DeleteExamButtonProps) {
         throw new Error(data.message || 'Nao foi possivel excluir o exame.')
       }
 
+      onDeleted?.(examId)
       router.refresh()
     } catch (error: unknown) {
       window.alert(error instanceof Error ? error.message : 'Nao foi possivel excluir o exame.')
