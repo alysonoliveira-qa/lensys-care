@@ -10,6 +10,9 @@ import { Badge } from '@/components/ui/badge'
 import { useAgeGroup } from '@/hooks/useAgeGroup'
 import { ArrowLeft, Loader2, Sparkles, UserPlus } from 'lucide-react'
 
+const TODAY = new Date().toISOString().split('T')[0]
+const FUTURE_DOB_MESSAGE = 'A data de nascimento não pode ser futura.'
+
 export default function NewPatientPage() {
   const router = useRouter()
 
@@ -26,8 +29,14 @@ export default function NewPatientPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
     if (!fullName || !dob) {
       setError('Por favor, preencha todos os campos obrigatórios.')
+      return
+    }
+
+    if (dob > TODAY) {
+      setError(FUTURE_DOB_MESSAGE)
       return
     }
 
@@ -75,7 +84,7 @@ export default function NewPatientPage() {
           <span>Cadastrar Novo Paciente</span>
         </h2>
         <p className="text-sm text-slate-500">
-          Preencha os dados cadastrais básico do paciente para iniciar o prontuário.
+          Preencha os dados cadastrais básicos do paciente para iniciar o prontuário.
         </p>
       </div>
 
@@ -113,6 +122,7 @@ export default function NewPatientPage() {
                   value={dob}
                   onChange={(e) => setDob(e.target.value)}
                   className="bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800 h-10"
+                  max={TODAY}
                   required
                   disabled={loading}
                 />

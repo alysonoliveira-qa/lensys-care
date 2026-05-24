@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
 
+const FUTURE_DOB_MESSAGE = 'A data de nascimento não pode ser futura.'
+
 export async function POST(request: Request) {
   try {
     const supabase = createClient()
@@ -18,7 +20,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'MISSING_FIELDS', message: 'Nome completo e data de nascimento são obrigatórios.' }, { status: 400 })
     }
 
-    // Load user clinic
+    const birthDate = new Date(dob)
+    const today = new Date()
+    birthDate.setHours(0, 0, 0, 0)
+    today.setHours(0, 0, 0, 0)
+
+    if (Number.isNaN(birthDate.getTime())) {
+      return NextResponse.json({ error: 'INVALID_DOB', message: 'Data de nascimento inválida.' }, { status: 400 })
+    }
+
+    if (birthDate > today) {
+      return NextResponse.json({ error: 'FUTURE_DOB', message: FUTURE_DOB_MESSAGE }, { status: 400 })
+    }
+
     const profile = await prisma.profile.findUnique({
       where: { id: user.id },
       select: { clinic_id: true },
@@ -32,7 +46,7 @@ export async function POST(request: Request) {
       data: {
         clinic_id: profile.clinic_id,
         full_name: fullName,
-        dob: new Date(dob),
+        dob: birthDate,
         phone,
         email,
         notes,
