@@ -62,7 +62,21 @@ export default async function DashboardPage() {
   const profileStartedAt = startPerformanceStep()
   const profile = await prisma.profile.findUnique({
     where: { id: user.id },
-    include: { clinic: { include: { subscription: true } } },
+    select: {
+      full_name: true,
+      clinic: {
+        select: {
+          id: true,
+          name: true,
+          subscription: {
+            select: {
+              plan: true,
+              status: true,
+            },
+          },
+        },
+      },
+    },
   })
   logPerformanceStep(timer, 'prisma.profile_and_clinic', profileStartedAt)
 
@@ -76,45 +90,53 @@ export default async function DashboardPage() {
 
   const dashboardQueriesStartedAt = startPerformanceStep()
   const [
-    totalPatients,
     totalExams,
-    pendingAlerts,
-    sentAlerts,
+    alertCounts,
     recentPatients,
     recentAlerts,
     patientsDob,
   ] = await Promise.all([
-    prisma.patient.count({
-      where: { clinic_id: clinic.id },
-    }),
     prisma.exam.count({
       where: { patient: { clinic_id: clinic.id } },
     }),
-    prisma.alert.count({
+    prisma.alert.groupBy({
+      by: ['status'],
       where: {
-        status: 'PENDING',
+        status: { in: ['PENDING', 'SENT'] },
         patient: { clinic_id: clinic.id },
       },
-    }),
-    prisma.alert.count({
-      where: {
-        status: 'SENT',
-        patient: { clinic_id: clinic.id },
-      },
+      _count: true,
     }),
     prisma.patient.findMany({
       where: { clinic_id: clinic.id },
       orderBy: { created_at: 'desc' },
       take: 5,
+      select: {
+        id: true,
+        full_name: true,
+        dob: true,
+        phone: true,
+        email: true,
+      },
     }),
     prisma.alert.findMany({
       where: {
         status: 'PENDING',
         patient: { clinic_id: clinic.id },
       },
-      include: { patient: true },
       orderBy: { due_date: 'asc' },
       take: 5,
+      select: {
+        id: true,
+        patient_id: true,
+        due_date: true,
+        channel: true,
+        patient: {
+          select: {
+            full_name: true,
+          },
+        },
+      },
     }),
     prisma.patient.findMany({
       where: { clinic_id: clinic.id },
@@ -122,6 +144,10 @@ export default async function DashboardPage() {
     }),
   ])
   logPerformanceStep(timer, 'prisma.dashboard_queries_parallel', dashboardQueriesStartedAt)
+
+  const totalPatients = patientsDob.length
+  const pendingAlerts = alertCounts.find((alert) => alert.status === 'PENDING')?._count ?? 0
+  const sentAlerts = alertCounts.find((alert) => alert.status === 'SENT')?._count ?? 0
 
   const ageGroups = {
     infant: 0,
