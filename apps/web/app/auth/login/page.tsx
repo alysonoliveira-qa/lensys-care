@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Eye, EyeOff, Sparkles, Loader2 } from 'lucide-react'
+import { LOGIN_REDIRECT_PERFORMANCE_KEY } from '@/components/performance/LoginDestinationPerformance'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -21,7 +22,13 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    const loginAttemptId = crypto.randomUUID().slice(0, 8)
+    const loginStartedAt = performance.now()
+    const loginStartedAtEpochMs = Date.now()
+    console.info(`[perf][${loginAttemptId}] client login /auth/login.submit_started: 0.0ms`)
+
     if (!email || !password) {
+      console.info(`[perf][${loginAttemptId}] client login /auth/login.validation_failed: ${(performance.now() - loginStartedAt).toFixed(1)}ms`)
       setError('Por favor, preencha todos os campos.')
       return
     }
@@ -30,22 +37,40 @@ export default function LoginPage() {
     setError(null)
 
     try {
+      const signInStartedAt = performance.now()
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
+      console.info(
+        `[perf][${loginAttemptId}] client login /auth/login.auth.signInWithPassword: ${(performance.now() - signInStartedAt).toFixed(1)}ms`
+      )
 
       if (signInError) {
+        console.info(`[perf][${loginAttemptId}] client login /auth/login.total (auth_error): ${(performance.now() - loginStartedAt).toFixed(1)}ms`)
         setError(
           signInError.status === 400
             ? 'Credenciais inválidas. Verifique seu e-mail e senha.'
             : signInError.message
         )
       } else {
+        window.sessionStorage.setItem(
+          LOGIN_REDIRECT_PERFORMANCE_KEY,
+          JSON.stringify({
+            id: loginAttemptId,
+            source: '/auth/login',
+            destination: '/dashboard',
+            startedAt: loginStartedAtEpochMs,
+          })
+        )
+        console.info(
+          `[perf][${loginAttemptId}] client login /auth/login.redirect_requested /dashboard: ${(performance.now() - loginStartedAt).toFixed(1)}ms`
+        )
         router.push('/dashboard')
         router.refresh()
       }
     } catch {
+      console.info(`[perf][${loginAttemptId}] client login /auth/login.total (exception): ${(performance.now() - loginStartedAt).toFixed(1)}ms`)
       setError('Ocorreu um erro ao fazer login. Tente novamente.')
     } finally {
       setLoading(false)

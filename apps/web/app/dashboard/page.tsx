@@ -12,6 +12,7 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import LoginDestinationPerformance from '@/components/performance/LoginDestinationPerformance'
 import {
   Users,
   ClipboardList,
@@ -171,6 +172,7 @@ export default async function DashboardPage() {
   endPerformanceTimer(timer)
   return (
     <div className="space-y-8 select-none">
+      <LoginDestinationPerformance />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
         <div>
           <h2 className="text-3xl font-extrabold tracking-tight">
