@@ -23,6 +23,13 @@ const VISUAL_ACUITY_OPTIONS = [
 ] as const
 
 const CUSTOM_VISUAL_ACUITY_OPTION = '__custom__'
+const PRESCRIPTION_NOTE_TEMPLATES = [
+  'Não fazer em policarbonato.',
+  'Sugiro lentes Hoya, Zeiss, Essilor, Freestyle ou Haytek.',
+  'Recomendo lentes com antirreflexo.',
+  'Retorno recomendado em 12 meses.',
+  'Orientar paciente sobre adaptação das lentes.',
+] as const
 
 function isCommonVisualAcuity(value: string) {
   return VISUAL_ACUITY_OPTIONS.includes(value as (typeof VISUAL_ACUITY_OPTIONS)[number])
@@ -148,6 +155,7 @@ export default function ExamForm({ patient, exam, previousExam }: ExamFormProps)
   const [addition, setAddition] = useState(exam?.addition ?? '')
   const [pd, setPd] = useState(exam?.pd ?? '')
   const [prescriptionNotes, setPrescriptionNotes] = useState(exam?.prescriptionNotes ?? '')
+  const [selectedNoteTemplate, setSelectedNoteTemplate] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -180,6 +188,17 @@ export default function ExamForm({ patient, exam, previousExam }: ExamFormProps)
     setOeVaCustomMode(Boolean(previousExam.oeVa && !isCommonVisualAcuity(previousExam.oeVa)))
     setAddition(previousExam.addition ?? '')
     setPd(previousExam.pd ?? '')
+  }
+
+  const applyPrescriptionNoteTemplate = (template: string) => {
+    setPrescriptionNotes((currentNotes) => {
+      if (!currentNotes.trim()) {
+        return template
+      }
+
+      return `${currentNotes.trimEnd()}\n${template}`
+    })
+    setSelectedNoteTemplate('')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -375,6 +394,29 @@ export default function ExamForm({ patient, exam, previousExam }: ExamFormProps)
               <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 Observações de Receituário
               </label>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-[10px] font-semibold text-slate-400">
+                  Inserir observação padrão
+                </div>
+                <select
+                  value={selectedNoteTemplate}
+                  onChange={(e) => {
+                    const template = e.target.value
+                    setSelectedNoteTemplate(template)
+                    if (template) {
+                      applyPrescriptionNoteTemplate(template)
+                    }
+                  }}
+                  className="h-9 rounded-md border border-slate-200 bg-slate-50 px-3 text-xs text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-950/20 dark:text-slate-300"
+                >
+                  <option value="">Selecionar</option>
+                  {PRESCRIPTION_NOTE_TEMPLATES.map((template) => (
+                    <option key={template} value={template}>
+                      {template}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <textarea
                 placeholder="Insira detalhes sobre lentes indicadas (multifocais, antirreflexo, etc.) ou notas de montagem..."
                 value={prescriptionNotes}
