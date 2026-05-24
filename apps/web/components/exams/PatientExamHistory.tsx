@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import DeleteExamButton from '@/components/exams/DeleteExamButton'
-import { Calendar, FileText, Pencil } from 'lucide-react'
+import { Calendar, FileText, Pencil, Printer } from 'lucide-react'
 
 type DecimalLike = number | string | { toString(): string; valueOf(): string | number }
 
@@ -79,6 +79,17 @@ export default function PatientExamHistory({ exams: initialExams, patientId }: P
                 >
                   <Pencil className="h-3.5 w-3.5" />
                   Editar
+                </Button>
+              </Link>
+              <Link href={`/exams/${exam.id}/print`} prefetch={false}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 gap-1.5 px-2 text-[11px] text-slate-400 hover:bg-indigo-500/10 hover:text-indigo-500"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  Imprimir
                 </Button>
               </Link>
               <DeleteExamButton

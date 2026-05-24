@@ -1,0 +1,32 @@
+.page {
+  min-height: 100vh;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.document {
+  max-width: 190mm;
+  margin: 0 auto;
+  background: #ffffff;
+}
+
+@page {
+  size: A4;
+  margin: 14mm;
+}
+
+@media print {
+  .page {
+    min-height: 0;
+    padding: 0 !important;
+  }
+
+  .document {
+    max-width: none;
+    margin: 0;
+  }
+
+  .noPrint {
+    display: none !important;
+  }
+}
