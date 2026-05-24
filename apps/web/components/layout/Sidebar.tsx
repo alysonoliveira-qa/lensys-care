@@ -86,7 +86,7 @@ export default function Sidebar() {
     { label: 'Painel Geral', icon: LayoutDashboard, path: '/dashboard' },
     { label: 'Pacientes', icon: Users, path: '/patients' },
     { label: 'Alertas de Renovação', icon: Bell, path: '/alerts' },
-    { label: 'Planos & Preços', icon: CreditCard, path: '/planos' },
+    { label: 'Planos & Preços', icon: CreditCard, path: '/dashboard/planos' },
   ]
 
   const isConecta = subscription?.plan === 'CONECTA' && subscription?.status !== 'CANCELED'
@@ -143,7 +143,7 @@ export default function Sidebar() {
             </Badge>
           </div>
           {!isConecta && (
-            <Link href="/planos" className="w-full text-center">
+            <Link href="/dashboard/planos" className="w-full text-center">
               <span className="text-[10px] text-indigo-400 hover:text-indigo-300 font-bold hover:underline">
                 Upgrade para WhatsApp/SMS →
               </span>
