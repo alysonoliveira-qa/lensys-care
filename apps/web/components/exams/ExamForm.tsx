@@ -23,6 +23,11 @@ const VISUAL_ACUITY_OPTIONS = [
 ] as const
 
 const CUSTOM_VISUAL_ACUITY_OPTION = '__custom__'
+const QUICK_PRESCRIPTION_NOTES = {
+  antirreflexo: 'Antirreflexo.',
+  filtroAzul: 'Filtro azul.',
+  fotossensivel: 'Fotossensível.',
+} as const
 const PRESCRIPTION_NOTE_TEMPLATES = [
   'Não fazer em policarbonato.',
   'Sugiro lentes Hoya, Zeiss, Essilor, Freestyle ou Haytek.',
@@ -156,6 +161,11 @@ export default function ExamForm({ patient, exam, previousExam }: ExamFormProps)
   const [pd, setPd] = useState(exam?.pd ?? '')
   const [prescriptionNotes, setPrescriptionNotes] = useState(exam?.prescriptionNotes ?? '')
   const [selectedNoteTemplate, setSelectedNoteTemplate] = useState('')
+  const [quickNoteSelections, setQuickNoteSelections] = useState({
+    antirreflexo: Boolean(exam?.prescriptionNotes?.includes(QUICK_PRESCRIPTION_NOTES.antirreflexo)),
+    filtroAzul: Boolean(exam?.prescriptionNotes?.includes(QUICK_PRESCRIPTION_NOTES.filtroAzul)),
+    fotossensivel: Boolean(exam?.prescriptionNotes?.includes(QUICK_PRESCRIPTION_NOTES.fotossensivel)),
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -199,6 +209,35 @@ export default function ExamForm({ patient, exam, previousExam }: ExamFormProps)
       return `${currentNotes.trimEnd()}\n${template}`
     })
     setSelectedNoteTemplate('')
+  }
+
+  const toggleQuickPrescriptionNote = (
+    key: keyof typeof QUICK_PRESCRIPTION_NOTES,
+    checked: boolean
+  ) => {
+    const note = QUICK_PRESCRIPTION_NOTES[key]
+
+    setQuickNoteSelections((currentSelections) => ({
+      ...currentSelections,
+      [key]: checked,
+    }))
+
+    setPrescriptionNotes((currentNotes) => {
+      const lines = currentNotes
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+
+      if (checked) {
+        if (lines.includes(note)) {
+          return currentNotes
+        }
+
+        return lines.length === 0 ? note : `${currentNotes.trimEnd()}\n${note}`
+      }
+
+      return lines.filter((line) => line !== note).join('\n')
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -394,6 +433,36 @@ export default function ExamForm({ patient, exam, previousExam }: ExamFormProps)
               <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 Observações de Receituário
               </label>
+              <div className="flex flex-wrap items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-800 dark:bg-slate-950/20">
+                <span className="font-semibold text-slate-500">Opções rápidas:</span>
+                <label className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={quickNoteSelections.antirreflexo}
+                    onChange={(e) => toggleQuickPrescriptionNote('antirreflexo', e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  Antirreflexo
+                </label>
+                <label className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={quickNoteSelections.filtroAzul}
+                    onChange={(e) => toggleQuickPrescriptionNote('filtroAzul', e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  Filtro azul
+                </label>
+                <label className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={quickNoteSelections.fotossensivel}
+                    onChange={(e) => toggleQuickPrescriptionNote('fotossensivel', e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  Fotossensível
+                </label>
+              </div>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-[10px] font-semibold text-slate-400">
                   Inserir observação padrão
