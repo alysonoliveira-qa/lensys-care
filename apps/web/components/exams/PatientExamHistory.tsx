@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -36,6 +36,10 @@ interface PatientExamHistoryProps {
 
 export default function PatientExamHistory({ exams: initialExams, patientId }: PatientExamHistoryProps) {
   const [exams, setExams] = useState(initialExams)
+
+  useEffect(() => {
+    setExams(initialExams)
+  }, [initialExams])
 
   if (exams.length === 0) {
     return (
