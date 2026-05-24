@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import DeleteExamButton from '@/components/exams/DeleteExamButton'
 import { getAgeGroupInfo, calculateAge } from '@/lib/refraction'
 import {
   ArrowLeft,
@@ -231,8 +232,11 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
                         Exame Realizado em: {new Date(exam.exam_date).toLocaleDateString('pt-BR')}
                       </span>
                     </div>
-                    <div className="text-slate-400 font-semibold">
-                      Examinado por: {exam.examiner.full_name} {exam.examiner.crm ? `(${exam.examiner.crm})` : ''}
+                    <div className="flex items-center gap-3">
+                      <div className="text-slate-400 font-semibold">
+                        Examinado por: {exam.examiner.full_name} {exam.examiner.crm ? `(${exam.examiner.crm})` : ''}
+                      </div>
+                      <DeleteExamButton examId={exam.id} />
                     </div>
                   </div>
 
