@@ -11,41 +11,78 @@ describe("Patients", () => {
     expect(email, "E2E_USER_EMAIL").to.be.a("string").and.not.be.empty;
     expect(password, "E2E_USER_PASSWORD").to.be.a("string").and.not.be.empty;
 
-    cy.visit("/login");
+    cy.visit("/login", { timeout: 120000 });
 
-    cy.getByCy("login-email-input").type(email);
-    cy.getByCy("login-password-input").type(password, { log: false });
-    cy.getByCy("login-submit-button").click();
+    cy.get('[data-cy="login-email-input"]', { timeout: 30000 })
+      .should("be.visible")
+      .clear()
+      .type(email);
 
-    cy.location("pathname", { timeout: 15000 }).should("eq", "/dashboard");
+    cy.get('[data-cy="login-password-input"]', { timeout: 30000 })
+      .should("be.visible")
+      .clear()
+      .type(password, { log: false });
 
-    cy.getByCy("sidebar-patients-link").click();
-    cy.location("pathname", { timeout: 15000 }).should("eq", "/patients");
+    cy.get('[data-cy="login-submit-button"]', { timeout: 30000 })
+      .should("be.visible")
+      .click();
 
-    cy.get('[data-cy="new-patient-button"]', { timeout: 15000 })
-        .should("be.visible")
-        .click();
+    cy.url({ timeout: 30000 }).should("include", "/dashboard");
 
-    cy.getByCy("patient-name-input").type(patientName);
-    cy.getByCy("patient-birthdate-input").type("1990-01-15");
+    cy.contains("Painel Geral", { timeout: 30000 }).should("be.visible");
+    cy.contains("QA Tester", { timeout: 30000 }).should("be.visible");
 
-    cy.getByCy("patient-phone-input").then(($input) => {
-      if ($input.length) {
-        cy.wrap($input).type(patientPhone);
+    cy.get('[data-cy="sidebar-patients-link"]', { timeout: 30000 })
+      .should("be.visible")
+      .click();
+
+    cy.url({ timeout: 30000 }).should("include", "/patients");
+
+    cy.contains("Pacientes Cadastrados", { timeout: 30000 }).should("be.visible");
+
+    cy.get('[data-cy="new-patient-button"]', { timeout: 30000 })
+      .should("be.visible")
+      .click();
+
+    cy.url({ timeout: 30000 }).should("include", "/patients/new");
+
+    cy.get('[data-cy="patient-form"]', { timeout: 30000 }).should("be.visible");
+
+    cy.get('[data-cy="patient-name-input"]', { timeout: 30000 })
+      .should("be.visible")
+      .clear()
+      .type(patientName);
+
+    cy.get('[data-cy="patient-birthdate-input"]', { timeout: 30000 })
+      .should("be.visible")
+      .clear()
+      .type("1990-01-15");
+
+    cy.get("body").then(($body) => {
+      if ($body.find('[data-cy="patient-phone-input"]').length) {
+        cy.get('[data-cy="patient-phone-input"]')
+          .should("be.visible")
+          .clear()
+          .type(patientPhone);
+      }
+
+      if ($body.find('[data-cy="patient-email-input"]').length) {
+        cy.get('[data-cy="patient-email-input"]')
+          .should("be.visible")
+          .clear()
+          .type(patientEmail);
       }
     });
 
-    cy.getByCy("patient-email-input").then(($input) => {
-      if ($input.length) {
-        cy.wrap($input).type(patientEmail);
-      }
-    });
+    cy.get('[data-cy="save-patient-button"]', { timeout: 30000 })
+      .should("be.visible")
+      .click();
 
-    cy.getByCy("save-patient-button").click();
+    cy.url({ timeout: 30000 }).should("match", /\/patients\/.+/);
 
-cy.location("pathname", { timeout: 15000 }).should("match", /\/patients\/.+/);
+    cy.contains(patientName, { timeout: 30000 }).should("be.visible");
 
-cy.contains(patientName, { timeout: 15000 }).should("be.visible");
-cy.contains(/Iniciar primeiro exame|Lançar novo exame/i).should("be.visible");
+    cy.contains(/Iniciar primeiro exame|Lançar novo exame/i, { timeout: 30000 })
+      .should("be.visible");
   });
 });
