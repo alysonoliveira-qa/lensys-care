@@ -16,6 +16,9 @@ build/
 .env.local
 .env.*.local
 
+# Environment tests
+cypress.env.json
+
 # Prisma
 packages/db/prisma/migrations/*.sql.bak
 
