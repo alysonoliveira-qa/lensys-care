@@ -168,11 +168,11 @@ export default function Sidebar() {
       setProfile((currentProfile) =>
         currentProfile
           ? {
-              ...currentProfile,
-              preferred_name: data.profile.preferred_name,
-              full_name: data.profile.full_name,
-              role: data.profile.role,
-            }
+            ...currentProfile,
+            preferred_name: data.profile.preferred_name,
+            full_name: data.profile.full_name,
+            role: data.profile.role,
+          }
           : currentProfile
       )
       setProfileSaveSuccess('Perfil atualizado com sucesso.')
@@ -243,11 +243,10 @@ export default function Sidebar() {
                 }}
               >
                 <span
-                  className={`flex cursor-pointer items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 ${
-                    isActive
+                  className={`flex cursor-pointer items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 ${isActive
                       ? 'border-l-4 border-indigo-500 bg-indigo-600/15 font-bold text-white'
                       : 'hover:bg-slate-800/50 hover:text-slate-200'
-                  }`}
+                    }`}
                 >
                   {isPending ? (
                     <Loader2 className="h-4.5 w-4.5 animate-spin text-indigo-400" />
@@ -347,7 +346,7 @@ export default function Sidebar() {
                 data-cy="preferred-name-input"
               />
               <p className="text-xs text-slate-500">
-                Se ficar em branco, o sistema usa nome completo, e-mail ou "Usuário".
+                Se ficar em branco, o sistema usa nome completo, e-mail ou &Usuário&.
               </p>
             </div>
 
