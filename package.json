@@ -23,9 +23,11 @@
     "prepare": "husky"
   },
   "devDependencies": {
+    "cypress": "^15.15.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.2.10",
     "prettier": "^3.4.2",
+    "start-server-and-test": "^3.0.5",
     "turbo": "^2.3.3"
   },
   "lint-staged": {
