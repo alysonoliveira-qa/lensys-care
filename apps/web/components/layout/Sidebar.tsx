@@ -79,7 +79,11 @@ export default function Sidebar() {
         console.error('Error loading sidebar data:', err)
       }
     }
+
     loadData()
+
+    window.addEventListener('subscription-updated', loadData)
+    return () => window.removeEventListener('subscription-updated', loadData)
   }, [supabase])
 
   const handleLogout = async () => {

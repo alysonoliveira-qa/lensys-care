@@ -75,7 +75,7 @@ export default function UpgradeGate({ feature, title, description }: UpgradeGate
 
         {/* CTA */}
         <div className="flex-shrink-0 w-full md:w-auto flex md:flex-col justify-center items-center">
-          <Link href="/planos" passHref>
+          <Link href="/dashboard/planos" passHref>
             <Button variant="premium" className="group shadow-md hover:shadow-lg transition-all duration-200">
               Ativar Plano Conecta
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />

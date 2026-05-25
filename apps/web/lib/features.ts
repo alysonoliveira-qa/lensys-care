@@ -83,7 +83,7 @@ export async function getFeatureResult(clinicId: string): Promise<FeatureCheckRe
     available: true,
     plan: subscription?.plan ?? 'ESSENTIAL',
     status: subscription?.status ?? 'ACTIVE',
-    upgradeUrl: '/planos',
+    upgradeUrl: '/dashboard/planos',
   }
 
   featureCache.set(clinicId, result)
@@ -105,7 +105,7 @@ export async function requireFeature(clinicId: string, feature: Feature): Promis
       JSON.stringify({
         error: 'FEATURE_NOT_AVAILABLE',
         feature,
-        upgrade_url: '/planos',
+        upgrade_url: '/dashboard/planos',
         message: `Este recurso está disponível apenas no plano Conecta.`,
       }),
       {

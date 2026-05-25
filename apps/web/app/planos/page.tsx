@@ -31,36 +31,31 @@ const plans = [
   },
 ]
 
-export function PlansContent({ embedded = false }: { embedded?: boolean }) {
+export default function PlanosPage() {
   return (
     <main
-      className={`relative overflow-hidden bg-slate-950 px-4 text-white selection:bg-indigo-500/30 ${
-        embedded ? 'min-h-full rounded-2xl py-8' : 'min-h-screen py-8 sm:py-12'
-      }`}
+      className="relative min-h-screen overflow-hidden bg-slate-950 px-4 py-8 text-white selection:bg-indigo-500/30 sm:py-12"
+      data-cy="public-plans-page"
     >
       <div className="pointer-events-none absolute left-[-20%] top-[-20%] h-[60%] w-[60%] rounded-full bg-violet-600/10 blur-[120px]" />
       <div className="pointer-events-none absolute bottom-[-20%] right-[-20%] h-[60%] w-[60%] rounded-full bg-indigo-600/10 blur-[120px]" />
 
       <div className="relative z-10 mx-auto max-w-5xl">
         <header className="flex items-center justify-between">
-          {embedded ? (
-            <span className="text-sm font-medium text-slate-400">Planos da sua clínica</span>
-          ) : (
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-sm font-medium text-slate-400 transition-colors hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Voltar para o início
-            </Link>
-          )}
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm font-medium text-slate-400 transition-colors hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar para o início
+          </Link>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-400/20 bg-indigo-500/10 px-3 py-1.5 text-xs font-semibold text-indigo-200">
             <Sparkles className="h-3.5 w-3.5" />
             Lensys Care
           </span>
         </header>
 
-        <section className={`mx-auto max-w-2xl pb-12 text-center ${embedded ? 'pt-10' : 'pt-14 sm:pt-16'}`}>
+        <section className="mx-auto max-w-2xl pb-12 pt-14 text-center sm:pt-16">
           <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
             Planos para sua{' '}
             <span className="bg-gradient-to-r from-violet-300 to-indigo-300 bg-clip-text text-transparent">
@@ -80,6 +75,7 @@ export function PlansContent({ embedded = false }: { embedded?: boolean }) {
           {plans.map((plan) => (
             <Card
               key={plan.name}
+              data-cy={plan.featured ? 'connect-plan-card' : 'essential-plan-card'}
               className={`relative flex flex-col overflow-hidden bg-slate-900/60 shadow-2xl ${
                 plan.featured
                   ? 'border-indigo-500/40 shadow-indigo-950/40'
@@ -131,7 +127,7 @@ export function PlansContent({ embedded = false }: { embedded?: boolean }) {
 
               <CardFooter className="p-7 pt-8">
                 <Button
-                  type="button"
+                  asChild
                   variant={plan.featured ? 'premium' : 'outline'}
                   className={`h-11 w-full text-sm font-semibold ${
                     plan.featured
@@ -139,7 +135,7 @@ export function PlansContent({ embedded = false }: { embedded?: boolean }) {
                       : 'border-slate-700 bg-slate-950/40 text-white hover:border-indigo-400/40 hover:bg-slate-800 hover:text-white'
                   }`}
                 >
-                  Começar teste grátis
+                  <Link href="/register">Começar teste grátis</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -153,8 +149,4 @@ export function PlansContent({ embedded = false }: { embedded?: boolean }) {
       </div>
     </main>
   )
-}
-
-export default function PlanosPage() {
-  return <PlansContent />
 }
