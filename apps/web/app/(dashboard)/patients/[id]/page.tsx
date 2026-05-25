@@ -16,6 +16,7 @@ import PatientExamHistory from '@/components/exams/PatientExamHistory'
 import { getAgeGroupInfo, calculateAge } from '@/lib/refraction'
 import {
   ArrowLeft,
+  Edit3,
   FilePlus2,
   Calendar,
   Phone,
@@ -122,12 +123,24 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
           <ArrowLeft className="h-4 w-4" />
           Voltar para Pacientes
         </Link>
-        <Link href={`/exams/new?patientId=${patient.id}`}>
-          <Button className="bg-indigo-600 hover:bg-indigo-500 font-bold gap-2 shadow-lg shadow-indigo-500/10" data-cy="new-exam-button">
-            <FilePlus2 className="h-4.5 w-4.5" />
-            Lancar Novo Exame
-          </Button>
-        </Link>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Link href={`/patients/${patient.id}/edit`}>
+            <Button
+              variant="outline"
+              className="gap-2 border-slate-200 font-bold dark:border-slate-800"
+              data-cy="edit-patient-button"
+            >
+              <Edit3 className="h-4.5 w-4.5" />
+              Editar Paciente
+            </Button>
+          </Link>
+          <Link href={`/exams/new?patientId=${patient.id}`}>
+            <Button className="bg-indigo-600 hover:bg-indigo-500 font-bold gap-2 shadow-lg shadow-indigo-500/10" data-cy="new-exam-button">
+              <FilePlus2 className="h-4.5 w-4.5" />
+              Lancar Novo Exame
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

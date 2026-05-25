@@ -80,3 +80,100 @@ export async function POST(request: Request) {
     endPerformanceTimer(timer)
   }
 }
+
+export async function PATCH(request: Request) {
+  const timer = startPerformanceTimer('api PATCH /api/patients')
+  try {
+    const supabase = createClient()
+    const authStartedAt = startPerformanceStep()
+    const { data, error } = await supabase.auth.getClaims()
+    const userId = data?.claims.sub
+    logPerformanceStep(timer, 'auth.getClaims', authStartedAt)
+
+    if (error || !userId) {
+      return NextResponse.json({ error: 'UNAUTHORIZED', message: 'Faca login para continuar.' }, { status: 401 })
+    }
+
+    const bodyStartedAt = startPerformanceStep()
+    const body = await request.json()
+    logPerformanceStep(timer, 'request.json', bodyStartedAt)
+    const { patientId, fullName, dob, phone, email, notes } = body
+
+    if (!patientId || !fullName || !dob) {
+      return NextResponse.json(
+        { error: 'MISSING_FIELDS', message: 'Paciente, nome completo e data de nascimento sao obrigatorios.' },
+        { status: 400 }
+      )
+    }
+
+    const birthDate = new Date(dob)
+    const today = new Date()
+    birthDate.setHours(0, 0, 0, 0)
+    today.setHours(0, 0, 0, 0)
+
+    if (Number.isNaN(birthDate.getTime())) {
+      return NextResponse.json({ error: 'INVALID_DOB', message: 'Data de nascimento invalida.' }, { status: 400 })
+    }
+
+    if (birthDate > today) {
+      return NextResponse.json({ error: 'FUTURE_DOB', message: FUTURE_DOB_MESSAGE }, { status: 400 })
+    }
+
+    const profileStartedAt = startPerformanceStep()
+    const profile = await prisma.profile.findUnique({
+      where: { id: userId },
+      select: { clinic_id: true },
+    })
+    logPerformanceStep(timer, 'prisma.profile_clinic', profileStartedAt)
+
+    if (!profile) {
+      return NextResponse.json({ error: 'PROFILE_NOT_FOUND', message: 'Perfil clinico nao encontrado.' }, { status: 404 })
+    }
+
+    const patientStartedAt = startPerformanceStep()
+    const existingPatient = await prisma.patient.findFirst({
+      where: {
+        id: patientId,
+        clinic_id: profile.clinic_id,
+      },
+      select: {
+        id: true,
+      },
+    })
+
+    if (!existingPatient) {
+      logPerformanceStep(timer, 'prisma.patient_update', patientStartedAt)
+      return NextResponse.json(
+        { error: 'PATIENT_NOT_FOUND', message: 'Paciente nao encontrado ou sem permissao para editar.' },
+        { status: 404 }
+      )
+    }
+
+    const patient = await prisma.patient.update({
+      where: {
+        id: existingPatient.id,
+      },
+      data: {
+        full_name: fullName,
+        dob: birthDate,
+        phone,
+        email,
+        notes,
+      },
+      select: {
+        id: true,
+      },
+    })
+    logPerformanceStep(timer, 'prisma.patient_update', patientStartedAt)
+
+    return NextResponse.json({ success: true, patient })
+  } catch (error: unknown) {
+    console.error('Patient update error:', error)
+    return NextResponse.json(
+      { error: 'SERVER_ERROR', message: error instanceof Error ? error.message : 'Falha ao atualizar paciente.' },
+      { status: 500 }
+    )
+  } finally {
+    endPerformanceTimer(timer)
+  }
+}

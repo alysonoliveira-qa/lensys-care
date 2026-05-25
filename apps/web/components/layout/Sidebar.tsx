@@ -9,17 +9,21 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { getDisplayName, getRoleLabel } from '@/lib/profile'
 import {
-  LayoutDashboard,
-  Users,
   Bell,
   CreditCard,
+  LayoutDashboard,
+  Loader2,
   LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PencilLine,
   Sparkles,
   User,
-  Loader2,
-  PencilLine,
+  Users,
   X,
 } from 'lucide-react'
+
+const SIDEBAR_STORAGE_KEY = 'lensys-care-sidebar-collapsed'
 
 interface ClinicSummary {
   name: string
@@ -54,6 +58,8 @@ export default function Sidebar() {
   const [isSavingProfile, setIsSavingProfile] = useState(false)
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null)
   const [profileSaveSuccess, setProfileSaveSuccess] = useState<string | null>(null)
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [hasLoadedCollapsePreference, setHasLoadedCollapsePreference] = useState(false)
 
   const clearProfileSuccessCloseTimer = () => {
     if (profileSuccessCloseTimerRef.current) {
@@ -65,6 +71,19 @@ export default function Sidebar() {
   useEffect(() => {
     setPendingPath(null)
   }, [pathname])
+
+  useEffect(() => {
+    try {
+      const storedValue = window.localStorage.getItem(SIDEBAR_STORAGE_KEY)
+      if (storedValue === 'true') {
+        setIsCollapsed(true)
+      }
+    } catch (error) {
+      console.error('Error reading sidebar preference:', error)
+    } finally {
+      setHasLoadedCollapsePreference(true)
+    }
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -118,8 +137,8 @@ export default function Sidebar() {
         if (sub) {
           setSubscription(sub as SubscriptionSummary)
         }
-      } catch (err) {
-        console.error('Error loading sidebar data:', err)
+      } catch (error) {
+        console.error('Error loading sidebar data:', error)
       }
     }
 
@@ -138,6 +157,20 @@ export default function Sidebar() {
     await supabase.auth.signOut()
     router.push('/login')
     router.refresh()
+  }
+
+  const handleToggleCollapse = () => {
+    setIsCollapsed((currentValue) => {
+      const nextValue = !currentValue
+
+      try {
+        window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(nextValue))
+      } catch (error) {
+        console.error('Error saving sidebar preference:', error)
+      }
+
+      return nextValue
+    })
   }
 
   const handleOpenProfileModal = () => {
@@ -178,17 +211,17 @@ export default function Sidebar() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.message || 'Não foi possível atualizar o perfil.')
+        throw new Error(data.message || 'Nao foi possivel atualizar o perfil.')
       }
 
       setProfile((currentProfile) =>
         currentProfile
           ? {
-            ...currentProfile,
-            preferred_name: data.profile.preferred_name,
-            full_name: data.profile.full_name,
-            role: data.profile.role,
-          }
+              ...currentProfile,
+              preferred_name: data.profile.preferred_name,
+              full_name: data.profile.full_name,
+              role: data.profile.role,
+            }
           : currentProfile
       )
       setProfileSaveSuccess('Perfil atualizado com sucesso.')
@@ -202,7 +235,7 @@ export default function Sidebar() {
       }, 850)
     } catch (error) {
       console.error('Error updating profile:', error)
-      setProfileSaveError(error instanceof Error ? error.message : 'Não foi possível atualizar o perfil.')
+      setProfileSaveError(error instanceof Error ? error.message : 'Nao foi possivel atualizar o perfil.')
     } finally {
       setIsSavingProfile(false)
     }
@@ -211,8 +244,8 @@ export default function Sidebar() {
   const menuItems = [
     { label: 'Painel Geral', icon: LayoutDashboard, path: '/dashboard', dataCy: 'sidebar-dashboard-link' },
     { label: 'Pacientes', icon: Users, path: '/patients', dataCy: 'sidebar-patients-link' },
-    { label: 'Alertas de Renovação', icon: Bell, path: '/alerts', dataCy: 'sidebar-alerts-link' },
-    { label: 'Planos & Preços', icon: CreditCard, path: '/dashboard/planos', dataCy: 'sidebar-plans-link' },
+    { label: 'Alertas de Renovacao', icon: Bell, path: '/alerts', dataCy: 'sidebar-alerts-link' },
+    { label: 'Planos e Precos', icon: CreditCard, path: '/dashboard/planos', dataCy: 'sidebar-plans-link' },
   ]
 
   const isConecta = subscription?.plan === 'CONECTA' && subscription?.status !== 'CANCELED'
@@ -226,27 +259,47 @@ export default function Sidebar() {
     [authEmail, profile?.full_name, profile?.preferred_name]
   )
   const roleLabel = getRoleLabel(profile?.role)
+  const isDesktopCollapsed = hasLoadedCollapsePreference && isCollapsed
 
   return (
     <>
-      <aside className="relative z-20 flex h-screen w-64 flex-col border-r border-slate-800 bg-slate-900 text-slate-400 select-none">
+      <aside
+        className={`relative z-20 flex h-screen w-64 flex-col border-r border-slate-800 bg-slate-900 text-slate-400 transition-[width] duration-300 select-none ${
+          isDesktopCollapsed ? 'md:w-20' : 'md:w-64'
+        }`}
+      >
         <div className="pointer-events-none absolute left-0 top-0 h-24 w-24 rounded-full bg-violet-600/5 blur-xl" />
 
-        <div className="flex h-16 items-center gap-3 border-b border-slate-800 px-6">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/10">
-            <Sparkles className="h-4.5 w-4.5 text-white" />
+        <div className={`flex h-16 items-center border-b border-slate-800 ${isDesktopCollapsed ? 'justify-center px-3 md:px-2' : 'justify-between gap-3 px-6'}`}>
+          <div className="flex min-w-0 items-center gap-3 overflow-hidden">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/10">
+              <Sparkles className="h-4.5 w-4.5 text-white" />
+            </div>
+            {!isDesktopCollapsed && (
+              <div className="flex min-w-0 flex-col">
+                <span className="text-sm font-extrabold leading-none tracking-tight text-white">
+                  Lensys <span className="text-indigo-400">Care</span>
+                </span>
+                <span className="mt-1 truncate text-[10px] font-semibold text-slate-500">
+                  {clinic?.name || 'Carregando clinica...'}
+                </span>
+              </div>
+            )}
           </div>
-          <div className="flex min-w-0 flex-col">
-            <span className="text-sm font-extrabold leading-none tracking-tight text-white">
-              Lensys <span className="text-indigo-400">Care</span>
-            </span>
-            <span className="mt-1 truncate text-[10px] font-semibold text-slate-500">
-              {clinic?.name || 'Carregando clínica...'}
-            </span>
-          </div>
+
+          <button
+            type="button"
+            onClick={handleToggleCollapse}
+            className={`hidden rounded-lg border border-slate-800 bg-slate-950/50 p-2 text-slate-400 transition-colors hover:border-slate-700 hover:bg-slate-800 hover:text-white md:flex ${isDesktopCollapsed ? 'absolute right-2 top-4' : ''}`}
+            aria-label={isDesktopCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+            title={isDesktopCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+            data-cy="sidebar-collapse-button"
+          >
+            {isDesktopCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          </button>
         </div>
 
-        <nav className="flex-1 space-y-1.5 overflow-y-auto px-4 py-6">
+        <nav className={`flex-1 space-y-1.5 overflow-y-auto py-6 ${isDesktopCollapsed ? 'px-2' : 'px-4'}`}>
           {menuItems.map((item) => {
             const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path))
             const isPending = pendingPath === item.path
@@ -258,6 +311,7 @@ export default function Sidebar() {
                 href={item.path}
                 aria-busy={isPending}
                 data-cy={item.dataCy}
+                title={isDesktopCollapsed ? item.label : undefined}
                 onClick={() => {
                   if (!isActive) {
                     setPendingPath(item.path)
@@ -265,24 +319,27 @@ export default function Sidebar() {
                 }}
               >
                 <span
-                  className={`flex cursor-pointer items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 ${isActive
+                  className={`flex cursor-pointer items-center rounded-xl text-sm font-semibold transition-all duration-200 ${
+                    isDesktopCollapsed ? 'justify-center px-2 py-3 md:px-0' : 'gap-3 px-4 py-3'
+                  } ${
+                    isActive
                       ? 'border-l-4 border-indigo-500 bg-indigo-600/15 font-bold text-white'
                       : 'hover:bg-slate-800/50 hover:text-slate-200'
-                    }`}
+                  }`}
                 >
                   {isPending ? (
                     <Loader2 className="h-4.5 w-4.5 animate-spin text-indigo-400" />
                   ) : (
-                    <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
+                    <Icon className={`h-4.5 w-4.5 flex-shrink-0 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
                   )}
-                  <span>{item.label}</span>
+                  {!isDesktopCollapsed && <span>{item.label}</span>}
                 </span>
               </Link>
             )
           })}
         </nav>
 
-        {subscription && (
+        {subscription && !isDesktopCollapsed && (
           <div className="m-4 flex flex-col items-center gap-2 rounded-xl border-t border-slate-800 bg-slate-950/40 px-4 py-3">
             <div className="flex w-full items-center justify-between">
               <span className="text-xs font-semibold text-slate-500">Seu Plano:</span>
@@ -293,30 +350,37 @@ export default function Sidebar() {
             {!isConecta && (
               <Link href="/dashboard/planos" className="w-full text-center">
                 <span className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 hover:underline">
-                  Upgrade para WhatsApp/SMS →
+                  Upgrade para WhatsApp/SMS
                 </span>
               </Link>
             )}
           </div>
         )}
 
-        <div className="flex items-center justify-between border-t border-slate-800 p-4">
+        <div className={`border-t border-slate-800 p-4 ${isDesktopCollapsed ? 'flex flex-col items-center gap-3' : 'flex items-center justify-between'}`}>
           <button
             type="button"
             onClick={handleOpenProfileModal}
-            className="group flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-slate-800/50"
+            title={isDesktopCollapsed ? displayName : undefined}
+            className={`group rounded-xl text-left transition-colors hover:bg-slate-800/50 ${
+              isDesktopCollapsed ? 'flex h-11 w-11 items-center justify-center p-0' : 'flex min-w-0 flex-1 items-center gap-3 px-2 py-2'
+            }`}
             data-cy="sidebar-profile-button"
           >
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-slate-800 text-slate-300">
               <User className="h-4.5 w-4.5" />
             </div>
-            <div className="min-w-0 flex-1">
-              <span className="block truncate text-xs font-bold leading-none text-white">
-                {displayName}
-              </span>
-              <span className="mt-1 block truncate text-[10px] text-slate-500">{roleLabel}</span>
-            </div>
-            <PencilLine className="h-4 w-4 flex-shrink-0 text-slate-500 transition-colors group-hover:text-indigo-400" />
+            {!isDesktopCollapsed && (
+              <>
+                <div className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-bold leading-none text-white">
+                    {displayName}
+                  </span>
+                  <span className="mt-1 block truncate text-[10px] text-slate-500">{roleLabel}</span>
+                </div>
+                <PencilLine className="h-4 w-4 flex-shrink-0 text-slate-500 transition-colors group-hover:text-indigo-400" />
+              </>
+            )}
           </button>
 
           <button
@@ -368,7 +432,7 @@ export default function Sidebar() {
                 data-cy="preferred-name-input"
               />
               <p className="text-xs text-slate-500">
-                Se ficar em branco, o sistema usará seu nome completo, e-mail ou Usuário.
+                Se ficar em branco, o sistema usara seu nome completo, e-mail ou Usuario.
               </p>
             </div>
 
