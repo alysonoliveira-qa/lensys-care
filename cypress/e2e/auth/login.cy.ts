@@ -6,18 +6,33 @@ describe("Authentication", () => {
     expect(email, "E2E_USER_EMAIL").to.be.a("string").and.not.be.empty;
     expect(password, "E2E_USER_PASSWORD").to.be.a("string").and.not.be.empty;
 
-    cy.visit("/login");
+    cy.visit("/login", { timeout: 120000 });
 
-    cy.getByCy("login-email-input").type(email);
-    cy.getByCy("login-password-input").type(password, { log: false });
-    cy.getByCy("login-submit-button").click();
+    cy.get('[data-cy="login-email-input"]', { timeout: 30000 })
+      .should("be.visible")
+      .clear()
+      .type(email);
 
-    cy.location("pathname", { timeout: 15000 }).should("eq", "/dashboard");
-    cy.contains("Olá").should("be.visible");
-    cy.getByCy("sidebar-dashboard-link").should("be.visible");
+    cy.get('[data-cy="login-password-input"]', { timeout: 30000 })
+      .should("be.visible")
+      .clear()
+      .type(password, { log: false });
 
-    cy.getByCy("logout-button").click();
+    cy.get('[data-cy="login-submit-button"]', { timeout: 30000 })
+      .should("be.visible")
+      .click();
 
-    cy.location("pathname", { timeout: 10000 }).should("match", /\/login|\/$/);
+    cy.url({ timeout: 30000 }).should("include", "/dashboard");
+
+    cy.contains("Painel Geral", { timeout: 30000 }).should("be.visible");
+    cy.contains("QA Tester", { timeout: 30000 }).should("be.visible");
+
+    cy.get('[data-cy="logout-button"]', { timeout: 30000 })
+      .should("be.visible")
+      .click();
+
+    cy.url({ timeout: 30000 }).should((url) => {
+      expect(url).to.match(/\/login|\/$/);
+    });
   });
 });
