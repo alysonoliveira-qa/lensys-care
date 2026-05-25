@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const supabase = createClient()
 
   const [ownerName, setOwnerName] = useState('')
+  const [preferredName, setPreferredName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [clinicName, setClinicName] = useState('')
@@ -42,6 +43,7 @@ export default function RegisterPage() {
           password,
           clinicName,
           ownerName,
+          preferredName,
           phone,
         }),
       })
@@ -185,6 +187,21 @@ export default function RegisterPage() {
                     />
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                   </div>
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                    Como prefere ser chamado?
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Ex: Dra. Ana ou Ana"
+                    value={preferredName}
+                    onChange={(e) => setPreferredName(e.target.value)}
+                    className="bg-slate-950/50 border-slate-800 text-white placeholder-slate-500 focus:border-violet-500/50 focus:ring-violet-500/20 h-10"
+                    maxLength={60}
+                    disabled={loading}
+                  />
                 </div>
 
                 <div className="space-y-2 md:col-span-2">

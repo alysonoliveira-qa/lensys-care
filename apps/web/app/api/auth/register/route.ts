@@ -62,7 +62,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
-    const { email, password, clinicName, ownerName, phone } = body
+    const { email, password, clinicName, ownerName, preferredName, phone } = body
 
     if (!email || !password || !clinicName || !ownerName) {
       return NextResponse.json(
@@ -75,6 +75,10 @@ export async function POST(request: Request) {
     const supabase = createServerClient()
     const { data: { user: signedInUser } } = await supabase.auth.getUser()
     const normalizedEmail = email.trim().toLowerCase()
+    const normalizedPreferredName =
+      typeof preferredName === 'string' && preferredName.trim().length > 0
+        ? preferredName.trim()
+        : null
 
     if (signedInUser?.email && signedInUser.email.toLowerCase() !== normalizedEmail) {
       return NextResponse.json(
@@ -117,7 +121,10 @@ export async function POST(request: Request) {
         email: normalizedEmail,
         password,
         email_confirm: true,
-        user_metadata: { full_name: ownerName },
+        user_metadata: {
+          full_name: ownerName,
+          preferred_name: normalizedPreferredName,
+        },
       })
 
       if (authError || !authData.user) {
@@ -167,6 +174,12 @@ export async function POST(request: Request) {
           role: 'OWNER',
         },
       })
+
+      await tx.$executeRaw`
+        UPDATE profiles
+        SET preferred_name = ${normalizedPreferredName}
+        WHERE id = ${profile.id}::uuid
+      `
 
       const subscription = await txClient.subscription.create({
         data: {

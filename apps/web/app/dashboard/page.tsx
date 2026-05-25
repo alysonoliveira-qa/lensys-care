@@ -9,6 +9,7 @@ import {
   startPerformanceStep,
   startPerformanceTimer,
 } from '@/lib/performance'
+import { getDisplayName } from '@/lib/profile'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import LoginDestinationPerformance from '@/components/performance/LoginDestinationPerformance'
@@ -39,6 +40,15 @@ type DashboardMetrics = {
   sentAlerts: number
 }
 
+type DashboardProfileRow = {
+  full_name: string
+  preferred_name: string | null
+  clinic_id: string
+  clinic_name: string
+  subscription_plan: string | null
+  subscription_status: string | null
+}
+
 export const revalidate = 0
 
 export default async function DashboardPage() {
@@ -47,6 +57,7 @@ export default async function DashboardPage() {
   const authStartedAt = startPerformanceStep()
   const { data, error } = await supabase.auth.getClaims()
   const userId = data?.claims.sub
+  const userEmail = typeof data?.claims.email === 'string' ? data.claims.email : null
   logPerformanceStep(timer, 'auth.getClaims', authStartedAt)
 
   if (error || !userId) {
@@ -55,24 +66,20 @@ export default async function DashboardPage() {
   }
 
   const profileStartedAt = startPerformanceStep()
-  const profile = await prisma.profile.findUnique({
-    where: { id: userId },
-    select: {
-      full_name: true,
-      clinic: {
-        select: {
-          id: true,
-          name: true,
-          subscription: {
-            select: {
-              plan: true,
-              status: true,
-            },
-          },
-        },
-      },
-    },
-  })
+  const [profile] = await prisma.$queryRaw<DashboardProfileRow[]>`
+    SELECT
+      p.full_name,
+      p.preferred_name,
+      c.id AS clinic_id,
+      c.name AS clinic_name,
+      s.plan::text AS subscription_plan,
+      s.status::text AS subscription_status
+    FROM profiles p
+    INNER JOIN clinics c ON c.id = p.clinic_id
+    LEFT JOIN subscriptions s ON s.clinic_id = c.id
+    WHERE p.id = ${userId}::uuid
+    LIMIT 1
+  `
   logPerformanceStep(timer, 'prisma.profile_and_clinic', profileStartedAt)
 
   if (!profile) {
@@ -80,8 +87,16 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  const clinic = profile.clinic
-  const isConecta = clinic.subscription?.plan === 'CONECTA' && clinic.subscription?.status !== 'CANCELED'
+  const clinic = {
+    id: profile.clinic_id,
+    name: profile.clinic_name,
+  }
+  const displayName = getDisplayName({
+    preferredName: profile.preferred_name,
+    fullName: profile.full_name,
+    email: userEmail,
+  })
+  const isConecta = profile.subscription_plan === 'CONECTA' && profile.subscription_status !== 'CANCELED'
 
   const dashboardQueriesStartedAt = startPerformanceStep()
   const [metrics] = await prisma.$queryRaw<DashboardMetrics[]>`
@@ -172,7 +187,7 @@ export default async function DashboardPage() {
             <div className="space-y-2">
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Olá,</p>
               <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 sm:text-4xl">
-                {profile.full_name}
+                {displayName}
               </h2>
               <p className="max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
                 Aqui está o resumo clínico e operacional da{' '}
