@@ -270,8 +270,10 @@ export default function Sidebar() {
       >
         <div className="pointer-events-none absolute left-0 top-0 h-24 w-24 rounded-full bg-violet-600/5 blur-xl" />
 
-        <div className={`flex h-16 items-center border-b border-slate-800 ${isDesktopCollapsed ? 'justify-center px-3 md:px-2' : 'justify-between gap-3 px-6'}`}>
-          <div className="flex min-w-0 items-center gap-3 overflow-hidden">
+        <div className={`border-b border-slate-800 px-3 py-4 md:px-4 ${isDesktopCollapsed ? 'flex flex-col items-center' : 'flex flex-col gap-3'}`}>
+          <div
+            className={`flex min-w-0 items-center overflow-hidden ${isDesktopCollapsed ? 'justify-center' : 'w-full gap-3'}`}
+          >
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/10">
               <Sparkles className="h-4.5 w-4.5 text-white" />
             </div>
@@ -290,7 +292,9 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={handleToggleCollapse}
-            className={`hidden rounded-lg border border-slate-800 bg-slate-950/50 p-2 text-slate-400 transition-colors hover:border-slate-700 hover:bg-slate-800 hover:text-white md:flex ${isDesktopCollapsed ? 'absolute right-2 top-4' : ''}`}
+            className={`hidden rounded-lg border border-slate-800 bg-slate-950/50 p-2 text-slate-400 transition-colors hover:border-slate-700 hover:bg-slate-800 hover:text-white md:flex ${
+              isDesktopCollapsed ? 'mt-3 self-center' : 'self-end'
+            }`}
             aria-label={isDesktopCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
             title={isDesktopCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
             data-cy="sidebar-collapse-button"
