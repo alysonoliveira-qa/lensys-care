@@ -264,8 +264,8 @@ export default function Sidebar() {
   return (
     <>
       <aside
-        className={`relative z-20 flex h-screen w-64 flex-col border-r border-slate-800 bg-slate-900 text-slate-400 transition-[width] duration-300 select-none ${
-          isDesktopCollapsed ? 'md:w-20' : 'md:w-64'
+        className={`relative z-20 flex h-screen shrink-0 flex-col border-r border-slate-800 bg-slate-900 text-slate-400 transition-[width] duration-300 select-none ${
+          isDesktopCollapsed ? 'w-20' : 'w-64'
         }`}
       >
         <div className="pointer-events-none absolute left-0 top-0 h-24 w-24 rounded-full bg-violet-600/5 blur-xl" />
@@ -324,7 +324,7 @@ export default function Sidebar() {
               >
                 <span
                   className={`flex cursor-pointer items-center rounded-xl text-sm font-semibold transition-all duration-200 ${
-                    isDesktopCollapsed ? 'justify-center px-2 py-3 md:px-0' : 'gap-3 px-4 py-3'
+                    isDesktopCollapsed ? 'justify-center px-2 py-3' : 'gap-3 px-4 py-3'
                   } ${
                     isActive
                       ? 'border-l-4 border-indigo-500 bg-indigo-600/15 font-bold text-white'
