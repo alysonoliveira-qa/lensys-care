@@ -8,17 +8,30 @@ function Pulse({ className }: { className: string }) {
 export function DashboardRouteLoading() {
   return (
     <div className="space-y-8 select-none" aria-busy="true" aria-label="Carregando painel">
-      <div className="flex flex-col md:flex-row justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
-        <div className="space-y-3">
-          <Pulse className="h-8 w-64" />
-          <Pulse className="h-4 w-80 max-w-full" />
+      <div className="relative overflow-hidden rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-4">
+            <Pulse className="h-7 w-28 rounded-full" />
+            <div className="space-y-3">
+              <Pulse className="h-10 w-72 max-w-full" />
+              <Pulse className="h-4 w-[28rem] max-w-full" />
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Pulse className="h-8 w-40 rounded-full" />
+              <Pulse className="h-8 w-36 rounded-full" />
+            </div>
+          </div>
+          <div className="space-y-3">
+            <Pulse className="h-11 w-44" />
+            <Pulse className="h-20 w-56 max-w-full" />
+          </div>
         </div>
-        <Pulse className="h-10 w-36" />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[0, 1, 2, 3].map((item) => (
-          <Card key={item} className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800">
+          <Card key={item} className="overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800">
+            <div className="h-1 w-full bg-slate-100 dark:bg-slate-800" />
             <CardHeader className="space-y-3 pb-2">
               <Pulse className="h-3 w-28" />
               <Pulse className="h-9 w-16" />

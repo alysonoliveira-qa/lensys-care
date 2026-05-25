@@ -10,7 +10,14 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ArrowRight } from 'lucide-react'
+import {
+  ArrowRight,
+  BellRing,
+  CalendarClock,
+  PieChart,
+  UsersRound,
+  UserRoundPlus,
+} from 'lucide-react'
 
 type AgeGroupCounts = {
   infant: number
@@ -50,15 +57,48 @@ interface DashboardPanelFallbackProps {
   description: string
 }
 
+const panelClassName =
+  'rounded-2xl border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none'
+
+function PanelHeading({
+  icon: Icon,
+  title,
+  description,
+  action,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  title: string
+  description: string
+  action?: React.ReactNode
+}) {
+  return (
+    <CardHeader className="flex flex-row items-start justify-between gap-4 pb-4">
+      <div className="flex min-w-0 items-start gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 space-y-1">
+          <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">{title}</CardTitle>
+          <CardDescription className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+            {description}
+          </CardDescription>
+        </div>
+      </div>
+      {action}
+    </CardHeader>
+  )
+}
+
 export function DashboardPanelFallback({ title, description }: DashboardPanelFallbackProps) {
   return (
-    <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800">
-      <CardHeader>
-        <CardTitle className="text-lg font-bold">{title}</CardTitle>
-        <CardDescription className="text-slate-400 text-xs">{description}</CardDescription>
-      </CardHeader>
+    <Card className={panelClassName}>
+      <PanelHeading icon={PieChart} title={title} description={description} />
       <CardContent>
-        <div className="h-20 rounded-xl bg-slate-50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800 animate-pulse" />
+        <div className="space-y-3">
+          <div className="h-12 rounded-2xl bg-slate-100 animate-pulse dark:bg-slate-800" />
+          <div className="h-12 rounded-2xl bg-slate-100 animate-pulse dark:bg-slate-800" />
+          <div className="h-12 rounded-2xl bg-slate-100 animate-pulse dark:bg-slate-800" />
+        </div>
       </CardContent>
     </Card>
   )
@@ -86,31 +126,63 @@ export async function AgeDistributionPanel({ clinicId, totalPatients }: AgeDistr
   logPerformanceStep(timer, 'prisma.age_group_counts', queryStartedAt)
 
   const maxGroupValue = Math.max(...Object.values(ageGroups), 1)
+  const groups = [
+    {
+      label: 'Infantil / Adolescente (< 18 anos)',
+      value: ageGroups.infant,
+      colorClassName: 'bg-sky-500',
+      accentClassName: 'text-sky-600 dark:text-sky-400',
+    },
+    {
+      label: 'Adulto Jovem (18 - 39 anos)',
+      value: ageGroups.young,
+      colorClassName: 'bg-emerald-500',
+      accentClassName: 'text-emerald-600 dark:text-emerald-400',
+    },
+    {
+      label: 'Adulto Presbita (40 - 59 anos)',
+      value: ageGroups.presbyopia,
+      colorClassName: 'bg-indigo-500',
+      accentClassName: 'text-indigo-600 dark:text-indigo-400',
+    },
+    {
+      label: 'Idoso (60+ anos)',
+      value: ageGroups.elderly,
+      colorClassName: 'bg-violet-500',
+      accentClassName: 'text-violet-600 dark:text-violet-400',
+    },
+  ]
   endPerformanceTimer(timer)
 
   return (
-    <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800">
-      <CardHeader>
-        <CardTitle className="text-lg font-bold">Distribuição de Pacientes por Faixa Etária</CardTitle>
-        <CardDescription className="text-slate-400 text-xs">Análise demográfica para adequação de serviços e presbiopia.</CardDescription>
-      </CardHeader>
+    <Card className={panelClassName}>
+      <PanelHeading
+        icon={PieChart}
+        title="Distribuição de Pacientes por Faixa Etária"
+        description="Análise demográfica para adequação de serviços e presbiopia."
+        action={
+          <Badge variant="secondary" className="hidden sm:inline-flex">
+            {totalPatients} paciente(s)
+          </Badge>
+        }
+      />
       <CardContent className="space-y-4" data-cy="alerts-list">
-        {[
-          { label: 'Infantil / Adolescente (< 18 anos)', value: ageGroups.infant, color: 'bg-blue-500' },
-          { label: 'Adulto Jovem (18 - 39 anos)', value: ageGroups.young, color: 'bg-emerald-500' },
-          { label: 'Adulto Presbita (40 - 59 anos)', value: ageGroups.presbyopia, color: 'bg-indigo-500' },
-          { label: 'Idoso (60+ anos)', value: ageGroups.elderly, color: 'bg-violet-500' },
-        ].map((group, index) => {
+        {groups.map((group) => {
           const percentage = totalPatients > 0 ? (group.value / totalPatients) * 100 : 0
           return (
-            <div key={index} className="space-y-1.5">
-              <div className="flex justify-between text-xs font-semibold">
-                <span className="text-slate-600 dark:text-slate-400">{group.label}</span>
-                <span className="text-slate-800 dark:text-slate-200">{group.value} ({percentage.toFixed(0)}%)</span>
+            <div
+              key={group.label}
+              className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-950/30"
+            >
+              <div className="mb-2 flex items-center justify-between gap-3 text-xs font-semibold">
+                <span className="text-slate-600 dark:text-slate-300">{group.label}</span>
+                <span className={group.accentClassName}>
+                  {group.value} ({percentage.toFixed(0)}%)
+                </span>
               </div>
-              <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-slate-800">
                 <div
-                  className={`h-full ${group.color} transition-all duration-500`}
+                  className={`h-full rounded-full ${group.colorClassName} transition-all duration-500`}
                   style={{ width: `${(group.value / maxGroupValue) * 100}%` }}
                 />
               </div>
@@ -141,40 +213,57 @@ export async function RecentPatientsPanel({ clinicId }: ClinicPanelProps) {
   endPerformanceTimer(timer)
 
   return (
-    <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800">
-      <CardHeader className="flex flex-row items-center justify-between pb-4">
-        <div>
-          <CardTitle className="text-lg font-bold">Pacientes Recém-Cadastrados</CardTitle>
-          <CardDescription className="text-slate-400 text-xs">Os últimos 5 pacientes registrados na clínica.</CardDescription>
-        </div>
-        <Link href="/patients" className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1">
-          Ver todos
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
-      </CardHeader>
+    <Card className={panelClassName}>
+      <PanelHeading
+        icon={UserRoundPlus}
+        title="Pacientes Recém-Cadastrados"
+        description="Os últimos 5 pacientes registrados na clínica."
+        action={
+          <Link
+            href="/patients"
+            className="hidden items-center gap-1 text-xs font-bold text-indigo-600 hover:underline dark:text-indigo-400 sm:inline-flex"
+          >
+            Ver todos
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        }
+      />
       <CardContent>
         {recentPatients.length === 0 ? (
-          <div className="py-6 text-center text-sm text-slate-400">Nenhum paciente cadastrado ainda.</div>
+          <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-10 text-center dark:border-slate-800 dark:bg-slate-950/30">
+            <UsersRound className="h-10 w-10 text-slate-300 dark:text-slate-700" />
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Nenhum paciente cadastrado ainda.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">Os novos cadastros aparecerão aqui automaticamente.</p>
+            </div>
+          </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-2xl border border-slate-100 dark:border-slate-800">
             <table className="w-full text-sm text-left">
               <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-800 text-xs text-slate-400 font-semibold uppercase tracking-wider">
-                  <th className="py-2.5">Nome</th>
-                  <th className="py-2.5">Data Nasc.</th>
-                  <th className="py-2.5">Contato</th>
-                  <th className="py-2.5 text-right">Ação</th>
+                <tr className="bg-slate-50/80 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:bg-slate-950/50">
+                  <th className="px-4 py-3">Nome</th>
+                  <th className="px-4 py-3">Data Nasc.</th>
+                  <th className="px-4 py-3">Contato</th>
+                  <th className="px-4 py-3 text-right">Ação</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {recentPatients.map((patient: RecentPatient) => (
-                  <tr key={patient.id} className="text-slate-600 dark:text-slate-300 font-medium">
-                    <td className="py-3 font-bold text-slate-800 dark:text-slate-200">{patient.full_name}</td>
-                    <td className="py-3">{new Date(patient.dob).toLocaleDateString('pt-BR')}</td>
-                    <td className="py-3 text-xs">{patient.phone || patient.email || '-'}</td>
-                    <td className="py-3 text-right">
+                  <tr
+                    key={patient.id}
+                    className="text-slate-600 transition-colors hover:bg-slate-50/80 dark:text-slate-300 dark:hover:bg-slate-950/30"
+                  >
+                    <td className="px-4 py-4 font-bold text-slate-800 dark:text-slate-100">{patient.full_name}</td>
+                    <td className="px-4 py-4 font-medium">{new Date(patient.dob).toLocaleDateString('pt-BR')}</td>
+                    <td className="px-4 py-4 text-xs">{patient.phone || patient.email || '-'}</td>
+                    <td className="px-4 py-4 text-right">
                       <Link href={`/patients/${patient.id}`} prefetch={false}>
-                        <Button size="sm" variant="outline" className="h-7 text-[10px] font-bold">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 rounded-lg border-slate-200 text-[11px] font-bold dark:border-slate-800"
+                        >
                           Ficha
                         </Button>
                       </Link>
@@ -216,42 +305,55 @@ export async function UpcomingRecallsPanel({ clinicId }: ClinicPanelProps) {
   endPerformanceTimer(timer)
 
   return (
-    <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800">
-      <CardHeader className="flex flex-row items-center justify-between pb-4">
-        <div>
-          <CardTitle className="text-lg font-bold">Próximos Recalls</CardTitle>
-          <CardDescription className="text-slate-400 text-xs">Lembretes de exames com validade de 1 ano expirando em breve.</CardDescription>
-        </div>
-        <Link href="/alerts" className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
-          Gerenciar
-        </Link>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <Card className={panelClassName}>
+      <PanelHeading
+        icon={CalendarClock}
+        title="Próximos Recalls"
+        description="Lembretes de exames com validade de 1 ano expirando em breve."
+        action={
+          <Link
+            href="/alerts"
+            className="hidden text-xs font-bold text-indigo-600 hover:underline dark:text-indigo-400 sm:inline-flex"
+          >
+            Gerenciar
+          </Link>
+        }
+      />
+      <CardContent className="space-y-3">
         {recentAlerts.length === 0 ? (
-          <div className="py-6 text-center text-sm text-slate-400">Nenhum alerta pendente no momento.</div>
+          <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-10 text-center dark:border-slate-800 dark:bg-slate-950/30">
+            <BellRing className="h-10 w-10 text-slate-300 dark:text-slate-700" />
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Nenhum alerta pendente no momento.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">Quando houver recalls para acompanhar, eles aparecerão aqui.</p>
+            </div>
+          </div>
         ) : (
           recentAlerts.map((alert: RecentAlert) => (
             <div
               key={alert.id}
-              className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20 flex flex-col gap-2"
+              className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-950/30"
             >
-              <div className="flex justify-between items-start">
-                <span className="font-bold text-sm text-slate-800 dark:text-slate-200 truncate max-w-[150px]">
-                  {alert.patient.full_name}
-                </span>
-                <Badge variant="warning" className="text-[9px] px-1.5 py-0">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 space-y-1">
+                  <p className="truncate text-sm font-bold text-slate-900 dark:text-slate-100">
+                    {alert.patient.full_name}
+                  </p>
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    Vence em: {new Date(alert.due_date).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+                <Badge variant="warning" className="text-[10px]">
                   Pendente
                 </Badge>
               </div>
-              <div className="flex justify-between items-center text-xs text-slate-500 font-semibold">
-                <span>Vence em: {new Date(alert.due_date).toLocaleDateString('pt-BR')}</span>
-                <Badge variant="secondary" className="text-[9px] uppercase">
+
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <Badge variant="secondary" className="text-[10px] uppercase">
                   {alert.channel}
                 </Badge>
-              </div>
-              <div className="flex justify-end gap-1.5 pt-1">
-                <Link href={`/patients/${alert.patient_id}`} className="w-full" prefetch={false}>
-                  <Button size="sm" className="w-full h-7 text-[10px] font-bold bg-indigo-600 hover:bg-indigo-500">
+                <Link href={`/patients/${alert.patient_id}`} className="w-full max-w-[140px]" prefetch={false}>
+                  <Button size="sm" className="h-8 w-full rounded-lg bg-indigo-600 text-[11px] font-bold hover:bg-indigo-500">
                     Disparar Manual
                   </Button>
                 </Link>

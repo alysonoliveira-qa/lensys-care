@@ -25,7 +25,11 @@ import {
   CheckCircle,
   Plus,
   TrendingUp,
-  UserCheck
+  UserCheck,
+  Sparkles,
+  Building2,
+  ShieldCheck,
+  ArrowRight,
 } from 'lucide-react'
 
 type DashboardMetrics = {
@@ -107,89 +111,146 @@ export default async function DashboardPage() {
   logPerformanceStep(timer, 'prisma.dashboard_queries_parallel', dashboardQueriesStartedAt)
 
   const { totalPatients, totalExams, pendingAlerts, sentAlerts } = metrics
+  const planLabel = isConecta ? 'Plano Conecta ativo' : 'Plano Essencial'
+  const summaryCards = [
+    {
+      title: 'Total de Pacientes',
+      value: totalPatients,
+      description: 'Base ativa e atualizada',
+      icon: Users,
+      iconClassName: 'bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300',
+      noteClassName: 'text-emerald-600 dark:text-emerald-400',
+      noteIcon: TrendingUp,
+    },
+    {
+      title: 'Consultas Realizadas',
+      value: totalExams,
+      description: 'Prontuários refrativos cadastrados',
+      icon: ClipboardList,
+      iconClassName: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300',
+      noteClassName: 'text-slate-500 dark:text-slate-400',
+      noteIcon: null,
+    },
+    {
+      title: 'Alertas Pendentes',
+      value: pendingAlerts,
+      description: 'Exames expirando em breve',
+      icon: Clock,
+      iconClassName: 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300',
+      noteClassName: 'text-amber-600 dark:text-amber-400',
+      noteIcon: null,
+    },
+    {
+      title: 'Alertas Enviados',
+      value: sentAlerts,
+      description: 'Lembretes de recall disparados',
+      icon: CheckCircle,
+      iconClassName: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
+      noteClassName: 'text-emerald-600 dark:text-emerald-400',
+      noteIcon: null,
+    },
+  ] as const
 
   endPerformanceTimer(timer, 'initial_content_ready')
+
   return (
     <div className="space-y-8 select-none">
       <LoginDestinationPerformance />
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
-        <div>
-          <h2 className="text-3xl font-extrabold tracking-tight">
-            Olá, <span className="text-indigo-600 dark:text-indigo-400">{profile.full_name}</span>
-          </h2>
-          <p className="text-sm text-slate-500 mt-1">
-            Aqui está o resumo clínico e operacional da <span className="font-semibold text-slate-700 dark:text-slate-300">{clinic.name}</span> hoje.
-          </p>
+
+      <section className="relative overflow-hidden rounded-[28px] border border-violet-100 bg-gradient-to-br from-white via-violet-50/70 to-indigo-50/90 p-6 shadow-sm shadow-violet-100/50 dark:border-slate-800 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
+        <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-gradient-to-l from-indigo-100/60 to-transparent dark:from-indigo-950/20 lg:block" />
+        <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-violet-200/40 blur-3xl dark:bg-violet-900/20" />
+        <div className="absolute -bottom-20 left-10 h-44 w-44 rounded-full bg-indigo-200/30 blur-3xl dark:bg-indigo-900/20" />
+
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-white/80 px-3 py-1 text-xs font-semibold text-violet-700 shadow-sm dark:border-violet-900/60 dark:bg-slate-900/80 dark:text-violet-300">
+              <Sparkles className="h-3.5 w-3.5" />
+              Painel clínico
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Olá,</p>
+              <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 sm:text-4xl">
+                {profile.full_name}
+              </h2>
+              <p className="max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+                Aqui está o resumo clínico e operacional da{' '}
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{clinic.name}</span> hoje.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/85 px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300">
+                <Building2 className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+                <span>{clinic.name}</span>
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/85 px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300">
+                <ShieldCheck className="h-3.5 w-3.5 text-indigo-700 dark:text-indigo-400" />
+                <span>{planLabel}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-[240px]">
+            <Link href="/patients/new">
+              <Button
+                className="h-11 w-full gap-2 rounded-xl bg-indigo-600 font-semibold shadow-lg shadow-indigo-500/15 hover:bg-indigo-500"
+                data-cy="new-patient-button"
+              >
+                <Plus className="h-4.5 w-4.5" />
+                Novo Paciente
+              </Button>
+            </Link>
+            <div className="rounded-2xl border border-white/80 bg-white/70 p-3 text-xs text-slate-600 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300">
+              <p className="font-semibold text-slate-900 dark:text-slate-100">Resumo do dia</p>
+              <p className="mt-1 leading-5">
+                {pendingAlerts > 0
+                  ? `${pendingAlerts} alerta(s) pendente(s) para acompanhar hoje.`
+                  : 'Nenhum alerta pendente para acompanhar no momento.'}
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Link href="/patients/new">
-            <Button className="bg-indigo-600 hover:bg-indigo-500 font-semibold gap-2 shadow-lg shadow-indigo-500/10">
-              <Plus className="h-4.5 w-4.5" />
-              Novo Paciente
-            </Button>
-          </Link>
-        </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4" data-cy="dashboard-summary-cards">
+        {summaryCards.map((item) => {
+          const Icon = item.icon
+          const NoteIcon = item.noteIcon
+
+          return (
+            <Card
+              key={item.title}
+              className="overflow-hidden rounded-2xl border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
+            >
+              <div className="h-1 w-full bg-gradient-to-r from-violet-500 via-indigo-500 to-sky-500" />
+              <CardHeader className="flex flex-row items-start justify-between pb-3 space-y-0">
+                <div className="space-y-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    {item.title}
+                  </span>
+                  <div className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+                    {item.value}
+                  </div>
+                </div>
+                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${item.iconClassName}`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <p className={`flex items-center gap-1.5 text-xs font-semibold ${item.noteClassName}`}>
+                  {NoteIcon ? <NoteIcon className="h-3.5 w-3.5" /> : null}
+                  <span>{item.description}</span>
+                </p>
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" data-cy="dashboard-summary-cards">
-        <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total de Pacientes</span>
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-              <Users className="h-4 w-4" />
-            </div>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">{totalPatients}</div>
-            <p className="text-xs text-emerald-500 flex items-center gap-1 mt-1 font-semibold">
-              <TrendingUp className="h-3 w-3" />
-              <span>Base ativa e atualizada</span>
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Consultas Realizadas</span>
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-              <ClipboardList className="h-4 w-4" />
-            </div>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">{totalExams}</div>
-            <p className="text-xs text-slate-500 mt-1 font-semibold">Prontuários refrativos cadastrados</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Alertas Pendentes</span>
-            <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-amber-600 dark:text-amber-400">
-              <Clock className="h-4 w-4" />
-            </div>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">{pendingAlerts}</div>
-            <p className="text-xs text-amber-500 font-semibold mt-1">Exames expirando em breve</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Alertas Enviados</span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <CheckCircle className="h-4 w-4" />
-            </div>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <div className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">{sentAlerts}</div>
-            <p className="text-xs text-emerald-500 font-semibold mt-1">Lembretes de recall disparados</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
           <Suspense
             fallback={
               <DashboardPanelFallback
@@ -225,25 +286,32 @@ export default async function DashboardPage() {
             <UpcomingRecallsPanel clinicId={clinic.id} />
           </Suspense>
 
-          <Card className="bg-indigo-600 text-white overflow-hidden relative shadow-lg shadow-indigo-500/10">
-            <div className="absolute right-[-20%] bottom-[-20%] w-44 h-44 rounded-full bg-white/10 blur-xl pointer-events-none" />
-            <CardHeader className="pb-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider opacity-85">Status da Conta B2B</span>
-              <CardTitle className="text-xl font-bold flex items-center gap-1.5">
+          <Card className="relative overflow-hidden rounded-2xl border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-500 via-indigo-500 to-sky-500" />
+            <div className="absolute -right-10 top-6 h-28 w-28 rounded-full bg-violet-100/70 blur-2xl dark:bg-violet-950/30" />
+            <CardHeader className="pb-3">
+              <div className="mb-3 inline-flex w-fit items-center rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700 dark:bg-violet-950/50 dark:text-violet-300">
+                Status da Conta
+              </div>
+              <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-slate-100">
                 <UserCheck className="h-5 w-5" />
                 <span>Modalidade Clínica</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 relative z-10">
-              <p className="text-xs opacity-90 leading-relaxed">
+            <CardContent className="relative z-10 space-y-4">
+              <div className="inline-flex items-center rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 dark:border-indigo-900/60 dark:bg-indigo-950/40 dark:text-indigo-300">
+                {planLabel}
+              </div>
+              <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
                 {isConecta
                   ? 'Sua clínica está com todas as automações de alertas via WhatsApp, SMS e Recall em Massa ativas.'
                   : 'Sua clínica está no plano Essencial. Assine o plano Conecta para desbloquear automações via WhatsApp e SMS.'}
               </p>
               {!isConecta && (
                 <Link href="/planos" passHref>
-                  <Button className="w-full h-9 bg-white text-indigo-700 hover:bg-slate-50 text-xs font-bold transition-all duration-200">
+                  <Button className="h-10 w-full gap-2 rounded-xl bg-indigo-600 text-xs font-bold text-white shadow-lg shadow-indigo-500/15 transition-all duration-200 hover:bg-indigo-500">
                     Ativar Plano Conecta
+                    <ArrowRight className="h-3.5 w-3.5" />
                   </Button>
                 </Link>
               )}
