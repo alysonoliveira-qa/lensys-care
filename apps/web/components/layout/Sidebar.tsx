@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -42,6 +42,7 @@ export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const profileSuccessCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [clinic, setClinic] = useState<ClinicSummary | null>(null)
   const [profile, setProfile] = useState<ProfileSummary | null>(null)
@@ -54,9 +55,22 @@ export default function Sidebar() {
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null)
   const [profileSaveSuccess, setProfileSaveSuccess] = useState<string | null>(null)
 
+  const clearProfileSuccessCloseTimer = () => {
+    if (profileSuccessCloseTimerRef.current) {
+      clearTimeout(profileSuccessCloseTimerRef.current)
+      profileSuccessCloseTimerRef.current = null
+    }
+  }
+
   useEffect(() => {
     setPendingPath(null)
   }, [pathname])
+
+  useEffect(() => {
+    return () => {
+      clearProfileSuccessCloseTimer()
+    }
+  }, [])
 
   useEffect(() => {
     async function loadData() {
@@ -127,6 +141,7 @@ export default function Sidebar() {
   }
 
   const handleOpenProfileModal = () => {
+    clearProfileSuccessCloseTimer()
     setPreferredNameInput(profile?.preferred_name ?? '')
     setProfileSaveError(null)
     setProfileSaveSuccess(null)
@@ -141,6 +156,7 @@ export default function Sidebar() {
     setIsProfileModalOpen(false)
     setProfileSaveError(null)
     setProfileSaveSuccess(null)
+    clearProfileSuccessCloseTimer()
   }
 
   const handleSaveProfile = async () => {
@@ -178,6 +194,12 @@ export default function Sidebar() {
       setProfileSaveSuccess('Perfil atualizado com sucesso.')
       window.dispatchEvent(new Event('profile-updated'))
       router.refresh()
+      clearProfileSuccessCloseTimer()
+      profileSuccessCloseTimerRef.current = setTimeout(() => {
+        setIsProfileModalOpen(false)
+        setProfileSaveSuccess(null)
+        profileSuccessCloseTimerRef.current = null
+      }, 850)
     } catch (error) {
       console.error('Error updating profile:', error)
       setProfileSaveError(error instanceof Error ? error.message : 'Não foi possível atualizar o perfil.')
@@ -346,7 +368,7 @@ export default function Sidebar() {
                 data-cy="preferred-name-input"
               />
               <p className="text-xs text-slate-500">
-                Se ficar em branco, o sistema usa nome completo, e-mail ou &Usuário&.
+                Se ficar em branco, o sistema usará seu nome completo, e-mail ou Usuário.
               </p>
             </div>
 
