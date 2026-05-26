@@ -13,12 +13,12 @@ export default function DashboardLayout({
       <Sidebar />
 
       {/* Main container */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex min-w-0 flex-col overflow-hidden">
         {/* TopBar controls */}
         <TopBar />
 
         {/* Dynamic page content */}
-        <main className="flex-grow p-6 overflow-y-auto">
+        <main className="flex-1 min-w-0 overflow-y-auto p-4 md:p-6">
           {children}
         </main>
       </div>

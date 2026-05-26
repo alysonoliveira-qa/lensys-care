@@ -24,6 +24,9 @@ import {
 } from 'lucide-react'
 
 const SIDEBAR_STORAGE_KEY = 'lensys-care-sidebar-collapsed'
+const MOBILE_SIDEBAR_EVENT = 'lensys:toggle-mobile-sidebar'
+
+type ViewportMode = 'mobile' | 'tablet' | 'desktop'
 
 interface ClinicSummary {
   name: string
@@ -58,7 +61,10 @@ export default function Sidebar() {
   const [isSavingProfile, setIsSavingProfile] = useState(false)
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null)
   const [profileSaveSuccess, setProfileSaveSuccess] = useState<string | null>(null)
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false)
+  const [tabletCollapsed, setTabletCollapsed] = useState(true)
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
+  const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop')
   const [hasLoadedCollapsePreference, setHasLoadedCollapsePreference] = useState(false)
 
   const clearProfileSuccessCloseTimer = () => {
@@ -70,18 +76,73 @@ export default function Sidebar() {
 
   useEffect(() => {
     setPendingPath(null)
+    setMobileDrawerOpen(false)
   }, [pathname])
 
   useEffect(() => {
     try {
       const storedValue = window.localStorage.getItem(SIDEBAR_STORAGE_KEY)
       if (storedValue === 'true') {
-        setIsCollapsed(true)
+        setDesktopCollapsed(true)
       }
     } catch (error) {
       console.error('Error reading sidebar preference:', error)
     } finally {
       setHasLoadedCollapsePreference(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    const updateViewportMode = () => {
+      const width = window.innerWidth
+
+      if (width < 768) {
+        setViewportMode('mobile')
+        return
+      }
+
+      if (width < 1024) {
+        setViewportMode('tablet')
+        setTabletCollapsed(true)
+        return
+      }
+
+      setViewportMode('desktop')
+    }
+
+    updateViewportMode()
+    window.addEventListener('resize', updateViewportMode)
+
+    return () => {
+      window.removeEventListener('resize', updateViewportMode)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (viewportMode !== 'mobile') {
+      setMobileDrawerOpen(false)
+    }
+  }, [viewportMode])
+
+  useEffect(() => {
+    const handleToggleMobileSidebar = () => {
+      if (window.innerWidth < 768) {
+        setMobileDrawerOpen((currentValue) => !currentValue)
+      }
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMobileDrawerOpen(false)
+      }
+    }
+
+    window.addEventListener(MOBILE_SIDEBAR_EVENT, handleToggleMobileSidebar)
+    window.addEventListener('keydown', handleEscape)
+
+    return () => {
+      window.removeEventListener(MOBILE_SIDEBAR_EVENT, handleToggleMobileSidebar)
+      window.removeEventListener('keydown', handleEscape)
     }
   }, [])
 
@@ -154,13 +215,19 @@ export default function Sidebar() {
   }, [supabase])
 
   const handleLogout = async () => {
+    setMobileDrawerOpen(false)
     await supabase.auth.signOut()
     router.push('/login')
     router.refresh()
   }
 
   const handleToggleCollapse = () => {
-    setIsCollapsed((currentValue) => {
+    if (viewportMode === 'tablet') {
+      setTabletCollapsed((currentValue) => !currentValue)
+      return
+    }
+
+    setDesktopCollapsed((currentValue) => {
       const nextValue = !currentValue
 
       try {
@@ -241,6 +308,16 @@ export default function Sidebar() {
     }
   }
 
+  const handleMenuItemClick = (path: string, isActive: boolean) => {
+    if (!isActive) {
+      setPendingPath(path)
+    }
+
+    if (viewportMode === 'mobile') {
+      setMobileDrawerOpen(false)
+    }
+  }
+
   const menuItems = [
     { label: 'Painel Geral', icon: LayoutDashboard, path: '/dashboard', dataCy: 'sidebar-dashboard-link' },
     { label: 'Pacientes', icon: Users, path: '/patients', dataCy: 'sidebar-patients-link' },
@@ -259,25 +336,41 @@ export default function Sidebar() {
     [authEmail, profile?.full_name, profile?.preferred_name]
   )
   const roleLabel = getRoleLabel(profile?.role)
-  const isDesktopCollapsed = hasLoadedCollapsePreference && isCollapsed
+  const isMobile = viewportMode === 'mobile'
+  const isCollapsed = viewportMode === 'tablet'
+    ? tabletCollapsed
+    : viewportMode === 'desktop'
+      ? hasLoadedCollapsePreference && desktopCollapsed
+      : false
+
+  const asideWidthClass = viewportMode === 'tablet'
+    ? (isCollapsed ? 'md:w-20 lg:w-20' : 'md:w-56 lg:w-56')
+    : (isCollapsed ? 'md:w-20 lg:w-20' : 'md:w-20 lg:w-64')
 
   return (
     <>
+      {isMobile && mobileDrawerOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-30 bg-slate-950/55 backdrop-blur-[2px]"
+          onClick={() => setMobileDrawerOpen(false)}
+          aria-label="Fechar menu lateral"
+          data-cy="mobile-sidebar-overlay"
+        />
+      )}
+
       <aside
-        className={`relative z-20 flex h-screen shrink-0 flex-col border-r border-slate-800 bg-slate-900 text-slate-400 transition-[width] duration-300 select-none ${
-          isDesktopCollapsed ? 'w-20' : 'w-64'
-        }`}
+        className={`fixed inset-y-0 left-0 z-40 ${mobileDrawerOpen ? 'translate-x-0' : '-translate-x-full'} w-[min(20rem,86vw)] flex h-screen flex-col border-r border-slate-800 bg-slate-900 text-slate-400 shadow-2xl shadow-slate-950/20 transition-[width,transform] duration-300 select-none md:relative md:left-auto md:z-20 md:translate-x-0 md:shadow-none ${asideWidthClass}`}
+        data-cy={isMobile ? 'mobile-sidebar-drawer' : undefined}
       >
         <div className="pointer-events-none absolute left-0 top-0 h-24 w-24 rounded-full bg-violet-600/5 blur-xl" />
 
-        <div className={`border-b border-slate-800 px-3 py-4 md:px-4 ${isDesktopCollapsed ? 'flex flex-col items-center' : 'flex flex-col gap-3'}`}>
-          <div
-            className={`flex min-w-0 items-center overflow-hidden ${isDesktopCollapsed ? 'justify-center' : 'w-full gap-3'}`}
-          >
+        <div className={`flex h-16 items-center border-b border-slate-800 ${isCollapsed ? 'justify-center px-2' : 'justify-between gap-3 px-4 lg:px-6'}`}>
+          <div className="flex min-w-0 items-center gap-3 overflow-hidden">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/10">
               <Sparkles className="h-4.5 w-4.5 text-white" />
             </div>
-            {!isDesktopCollapsed && (
+            {!isCollapsed && (
               <div className="flex min-w-0 flex-col">
                 <span className="text-sm font-extrabold leading-none tracking-tight text-white">
                   Lensys <span className="text-indigo-400">Care</span>
@@ -289,21 +382,32 @@ export default function Sidebar() {
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={handleToggleCollapse}
-            className={`hidden rounded-lg border border-slate-800 bg-slate-950/50 p-2 text-slate-400 transition-colors hover:border-slate-700 hover:bg-slate-800 hover:text-white md:flex ${
-              isDesktopCollapsed ? 'mt-3 self-center' : 'self-end'
-            }`}
-            aria-label={isDesktopCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
-            title={isDesktopCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
-            data-cy="sidebar-collapse-button"
-          >
-            {isDesktopCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-          </button>
+          {!isMobile && (
+            <button
+              type="button"
+              onClick={handleToggleCollapse}
+              className="rounded-lg border border-slate-800 bg-slate-950/50 p-2 text-slate-400 transition-colors hover:border-slate-700 hover:bg-slate-800 hover:text-white"
+              aria-label={isCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+              title={isCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+              data-cy="sidebar-collapse-button"
+            >
+              {isCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+            </button>
+          )}
+
+          {isMobile && (
+            <button
+              type="button"
+              onClick={() => setMobileDrawerOpen(false)}
+              className="rounded-lg border border-slate-800 bg-slate-950/50 p-2 text-slate-400 transition-colors hover:border-slate-700 hover:bg-slate-800 hover:text-white"
+              aria-label="Fechar menu lateral"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
-        <nav className={`flex-1 space-y-1.5 overflow-y-auto py-6 ${isDesktopCollapsed ? 'px-2' : 'px-4'}`}>
+        <nav className={`flex-1 space-y-1.5 overflow-y-auto py-6 ${isCollapsed ? 'px-2' : 'px-3 lg:px-4'}`}>
           {menuItems.map((item) => {
             const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path))
             const isPending = pendingPath === item.path
@@ -315,16 +419,12 @@ export default function Sidebar() {
                 href={item.path}
                 aria-busy={isPending}
                 data-cy={item.dataCy}
-                title={isDesktopCollapsed ? item.label : undefined}
-                onClick={() => {
-                  if (!isActive) {
-                    setPendingPath(item.path)
-                  }
-                }}
+                title={isCollapsed ? item.label : undefined}
+                onClick={() => handleMenuItemClick(item.path, isActive)}
               >
                 <span
                   className={`flex cursor-pointer items-center rounded-xl text-sm font-semibold transition-all duration-200 ${
-                    isDesktopCollapsed ? 'justify-center px-2 py-3' : 'gap-3 px-4 py-3'
+                    isCollapsed ? 'justify-center px-2 py-3' : 'gap-3 px-4 py-3'
                   } ${
                     isActive
                       ? 'border-l-4 border-indigo-500 bg-indigo-600/15 font-bold text-white'
@@ -336,14 +436,14 @@ export default function Sidebar() {
                   ) : (
                     <Icon className={`h-4.5 w-4.5 flex-shrink-0 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
                   )}
-                  {!isDesktopCollapsed && <span>{item.label}</span>}
+                  {!isCollapsed && <span>{item.label}</span>}
                 </span>
               </Link>
             )
           })}
         </nav>
 
-        {subscription && !isDesktopCollapsed && (
+        {subscription && !isCollapsed && (
           <div className="m-4 flex flex-col items-center gap-2 rounded-xl border-t border-slate-800 bg-slate-950/40 px-4 py-3">
             <div className="flex w-full items-center justify-between">
               <span className="text-xs font-semibold text-slate-500">Seu Plano:</span>
@@ -352,7 +452,15 @@ export default function Sidebar() {
               </Badge>
             </div>
             {!isConecta && (
-              <Link href="/dashboard/planos" className="w-full text-center">
+              <Link
+                href="/dashboard/planos"
+                className="w-full text-center"
+                onClick={() => {
+                  if (isMobile) {
+                    setMobileDrawerOpen(false)
+                  }
+                }}
+              >
                 <span className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 hover:underline">
                   Upgrade para WhatsApp/SMS
                 </span>
@@ -361,20 +469,20 @@ export default function Sidebar() {
           </div>
         )}
 
-        <div className={`border-t border-slate-800 p-4 ${isDesktopCollapsed ? 'flex flex-col items-center gap-3' : 'flex items-center justify-between'}`}>
+        <div className={`border-t border-slate-800 p-4 ${isCollapsed ? 'flex flex-col items-center gap-3' : 'flex items-center justify-between gap-3'}`}>
           <button
             type="button"
             onClick={handleOpenProfileModal}
-            title={isDesktopCollapsed ? displayName : undefined}
+            title={isCollapsed ? displayName : undefined}
             className={`group rounded-xl text-left transition-colors hover:bg-slate-800/50 ${
-              isDesktopCollapsed ? 'flex h-11 w-11 items-center justify-center p-0' : 'flex min-w-0 flex-1 items-center gap-3 px-2 py-2'
+              isCollapsed ? 'flex h-11 w-11 items-center justify-center p-0' : 'flex min-w-0 flex-1 items-center gap-3 px-2 py-2'
             }`}
             data-cy="sidebar-profile-button"
           >
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-slate-800 text-slate-300">
               <User className="h-4.5 w-4.5" />
             </div>
-            {!isDesktopCollapsed && (
+            {!isCollapsed && (
               <>
                 <div className="min-w-0 flex-1">
                   <span className="block truncate text-xs font-bold leading-none text-white">
