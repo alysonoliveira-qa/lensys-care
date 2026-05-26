@@ -7,11 +7,9 @@ import { createClient } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { SIDEBAR_NAV_ITEMS } from '@/lib/navigation/nav-items'
 import { getDisplayName, getRoleLabel } from '@/lib/profile'
 import {
-  Bell,
-  CreditCard,
-  LayoutDashboard,
   Loader2,
   LogOut,
   PanelLeftClose,
@@ -19,7 +17,6 @@ import {
   PencilLine,
   Sparkles,
   User,
-  Users,
   X,
 } from 'lucide-react'
 
@@ -318,13 +315,6 @@ export default function Sidebar() {
     }
   }
 
-  const menuItems = [
-    { label: 'Painel Geral', icon: LayoutDashboard, path: '/dashboard', dataCy: 'sidebar-dashboard-link' },
-    { label: 'Pacientes', icon: Users, path: '/patients', dataCy: 'sidebar-patients-link' },
-    { label: 'Alertas de Renovacao', icon: Bell, path: '/alerts', dataCy: 'sidebar-alerts-link' },
-    { label: 'Planos e Precos', icon: CreditCard, path: '/dashboard/planos', dataCy: 'sidebar-plans-link' },
-  ]
-
   const isConecta = subscription?.plan === 'CONECTA' && subscription?.status !== 'CANCELED'
   const displayName = useMemo(
     () =>
@@ -408,19 +398,19 @@ export default function Sidebar() {
         </div>
 
         <nav className={`flex-1 space-y-1.5 overflow-y-auto py-6 ${isCollapsed ? 'px-2' : 'px-3 lg:px-4'}`}>
-          {menuItems.map((item) => {
-            const isActive = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path))
-            const isPending = pendingPath === item.path
+          {SIDEBAR_NAV_ITEMS.map((item) => {
+            const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+            const isPending = pendingPath === item.href
             const Icon = item.icon
 
             return (
               <Link
-                key={item.path}
-                href={item.path}
+                key={item.id}
+                href={item.href}
                 aria-busy={isPending}
                 data-cy={item.dataCy}
                 title={isCollapsed ? item.label : undefined}
-                onClick={() => handleMenuItemClick(item.path, isActive)}
+                onClick={() => handleMenuItemClick(item.href, isActive)}
               >
                 <span
                   className={`flex cursor-pointer items-center rounded-xl text-sm font-semibold transition-all duration-200 ${
