@@ -1,3 +1,11 @@
+import {
+  normalizePatientDob,
+  normalizePatientEmail,
+  normalizePatientName,
+  normalizePatientNotes,
+  normalizePatientPhone,
+} from './patient-form-normalizers'
+
 export type PatientFormValues = {
   fullName: string
   dob: string
@@ -20,10 +28,10 @@ export function buildPatientPayload({
 }: BuildPatientPayloadInput) {
   return {
     patientId,
-    fullName,
-    dob,
-    phone: phone || null,
-    email: email || null,
-    notes: notes || null,
+    fullName: normalizePatientName(fullName),
+    dob: normalizePatientDob(dob),
+    phone: normalizePatientPhone(phone),
+    email: normalizePatientEmail(email),
+    notes: normalizePatientNotes(notes),
   }
 }
