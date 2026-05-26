@@ -9,17 +9,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useAgeGroup } from '@/hooks/useAgeGroup'
+import { buildPatientPayload, type PatientFormValues } from '@/lib/patients/patient-form-mapper'
 
 const TODAY = new Date().toISOString().split('T')[0]
 const FUTURE_DOB_MESSAGE = 'A data de nascimento nao pode ser futura.'
-
-type PatientFormValues = {
-  fullName: string
-  dob: string
-  phone: string
-  email: string
-  notes: string
-}
 
 interface PatientFormProps {
   mode: 'create' | 'edit'
@@ -70,14 +63,14 @@ export default function PatientForm({
       const response = await fetch('/api/patients', {
         method: isEditMode ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: JSON.stringify(buildPatientPayload({
           patientId,
           fullName,
           dob,
-          phone: phone || null,
-          email: email || null,
-          notes: notes || null,
-        }),
+          phone,
+          email,
+          notes,
+        })),
       })
 
       const data = await response.json()
