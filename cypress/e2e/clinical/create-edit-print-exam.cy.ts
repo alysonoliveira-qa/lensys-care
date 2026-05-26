@@ -118,19 +118,15 @@ describe("Clinical flow", () => {
       .clear()
       .type("180");
 
+    cy.get('[data-cy="exam-od-visual-acuity-input"]', { timeout: 30000 })
+      .should("be.visible")
+      .select("20/40");
+
+    cy.get('[data-cy="exam-oe-visual-acuity-input"]', { timeout: 30000 })
+      .should("be.visible")
+      .select("20/20");
+
     cy.get("body").then(($body) => {
-      if ($body.find('[data-cy="exam-od-visual-acuity-input"]').length) {
-        cy.get('[data-cy="exam-od-visual-acuity-input"]')
-          .should("be.visible")
-          .select("20/40");
-      }
-
-      if ($body.find('[data-cy="exam-os-visual-acuity-input"]').length) {
-        cy.get('[data-cy="exam-os-visual-acuity-input"]')
-          .should("be.visible")
-          .select("20/20");
-      }
-
       if ($body.find('[data-cy="quick-note-antireflexo-checkbox"]').length) {
         cy.get('[data-cy="quick-note-antireflexo-checkbox"]').check({ force: true });
       }
@@ -154,6 +150,8 @@ describe("Clinical flow", () => {
     cy.contains(patientName, { timeout: 30000 }).should("be.visible");
     cy.contains("Historico de Exames", { timeout: 30000 }).should("be.visible");
     cy.contains("-1.25", { timeout: 30000 }).should("be.visible");
+    cy.contains("20/40", { timeout: 30000 }).should("be.visible");
+    cy.contains("20/20", { timeout: 30000 }).should("be.visible");
 
     cy.get('[data-cy="edit-exam-button"]', { timeout: 30000 })
       .first()
@@ -174,6 +172,8 @@ describe("Clinical flow", () => {
     cy.url({ timeout: 30000 }).should("match", /\/patients\/.+/);
 
     cy.contains("-1.50", { timeout: 30000 }).should("be.visible");
+    cy.contains("20/40", { timeout: 30000 }).should("be.visible");
+    cy.contains("20/20", { timeout: 30000 }).should("be.visible");
 
     cy.get('[data-cy="print-exam-button"]', { timeout: 30000 })
       .first()
@@ -187,6 +187,7 @@ describe("Clinical flow", () => {
     cy.contains(/gradua[cç][aã]o refrativa/i, { timeout: 30000 }).should("be.visible");
     cy.contains("-1.50", { timeout: 30000 }).should("be.visible");
     cy.contains("20/40", { timeout: 30000 }).should("be.visible");
+    cy.contains("20/20", { timeout: 30000 }).should("be.visible");
     cy.contains("Observação criada pelo Cypress.", { timeout: 30000 }).should("be.visible");
   });
 });
