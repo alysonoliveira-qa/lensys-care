@@ -16,6 +16,7 @@ import {
   QUICK_PRESCRIPTION_OPTIONS,
   type QuickPrescriptionOptionId,
 } from '@/lib/exams/exam-options'
+import { buildExamPayload } from '@/lib/exams/exam-form-mapper'
 import { Sparkles, Loader2, ClipboardCheck, AlertCircle } from 'lucide-react'
 
 export interface PatientData {
@@ -176,21 +177,21 @@ export default function ExamForm({ patient, exam, previousExam }: ExamFormProps)
       const response = await fetch(exam ? `/api/exams/${exam.id}` : '/api/exams', {
         method: exam ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: JSON.stringify(buildExamPayload({
           patientId: patient.id,
           examDate,
-          odSph: odSph ? parseFloat(odSph) : '',
-          odCyl: odCyl ? parseFloat(odCyl) : '',
-          odAxis: odAxis ? parseInt(odAxis) : '',
-          odVa: odVa || null,
-          oeSph: oeSph ? parseFloat(oeSph) : '',
-          oeCyl: oeCyl ? parseFloat(oeCyl) : '',
-          oeAxis: oeAxis ? parseInt(oeAxis) : '',
-          oeVa: oeVa || null,
-          addition: addition ? parseFloat(addition) : '',
-          pd: pd ? parseFloat(pd) : '',
-          prescriptionNotes: prescriptionNotes || null,
-        }),
+          odSph,
+          odCyl,
+          odAxis,
+          odVa,
+          oeSph,
+          oeCyl,
+          oeAxis,
+          oeVa,
+          addition,
+          pd,
+          prescriptionNotes,
+        })),
       })
 
       const data = await response.json()
