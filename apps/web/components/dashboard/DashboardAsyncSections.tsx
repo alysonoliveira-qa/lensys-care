@@ -1,5 +1,9 @@
 import { prisma } from '@/lib/db'
 import {
+  buildDashboardAgeDistribution,
+  type DashboardAgeGroupCounts,
+} from '@/lib/dashboard/dashboard-mappers'
+import {
   endPerformanceTimer,
   logPerformanceStep,
   startPerformanceStep,
@@ -10,13 +14,6 @@ import AgeDistributionSection from '@/components/dashboard/AgeDistributionSectio
 import DashboardPanelFallbackView from '@/components/dashboard/DashboardPanelFallback'
 import RecentPatientsSection from '@/components/dashboard/RecentPatientsSection'
 import UpcomingRecallsSection from '@/components/dashboard/UpcomingRecallsSection'
-
-type AgeGroupCounts = {
-  infant: number
-  young: number
-  presbyopia: number
-  elderly: number
-}
 
 type RecentPatient = {
   id: string
@@ -63,7 +60,7 @@ export async function AgeDistributionPanel({
   const timer = startPerformanceTimer('page /dashboard.section.age_distribution')
   const currentYear = new Date().getFullYear()
   const queryStartedAt = startPerformanceStep()
-  const [ageGroups] = await prisma.$queryRaw<AgeGroupCounts[]>`
+  const [ageGroups] = await prisma.$queryRaw<DashboardAgeGroupCounts[]>`
     SELECT
       COUNT(*) FILTER (WHERE ${currentYear} - EXTRACT(YEAR FROM dob) < 18)::integer AS infant,
       COUNT(*) FILTER (
@@ -80,33 +77,7 @@ export async function AgeDistributionPanel({
   `
   logPerformanceStep(timer, 'prisma.age_group_counts', queryStartedAt)
 
-  const maxGroupValue = Math.max(...Object.values(ageGroups), 1)
-  const groups = [
-    {
-      label: 'Infantil / Adolescente (< 18 anos)',
-      value: ageGroups.infant,
-      colorClassName: 'bg-sky-500',
-      accentClassName: 'text-sky-600 dark:text-sky-400',
-    },
-    {
-      label: 'Adulto Jovem (18 - 39 anos)',
-      value: ageGroups.young,
-      colorClassName: 'bg-emerald-500',
-      accentClassName: 'text-emerald-600 dark:text-emerald-400',
-    },
-    {
-      label: 'Adulto Presbita (40 - 59 anos)',
-      value: ageGroups.presbyopia,
-      colorClassName: 'bg-indigo-500',
-      accentClassName: 'text-indigo-600 dark:text-indigo-400',
-    },
-    {
-      label: 'Idoso (60+ anos)',
-      value: ageGroups.elderly,
-      colorClassName: 'bg-violet-500',
-      accentClassName: 'text-violet-600 dark:text-violet-400',
-    },
-  ]
+  const { groups, maxGroupValue } = buildDashboardAgeDistribution(ageGroups)
   endPerformanceTimer(timer)
 
   return (

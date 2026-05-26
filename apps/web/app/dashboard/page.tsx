@@ -12,7 +12,11 @@ import DashboardPlanStatusCard from '@/components/dashboard/DashboardPlanStatusC
 import DashboardSummaryCards from '@/components/dashboard/DashboardSummaryCards'
 import LoginDestinationPerformance from '@/components/performance/LoginDestinationPerformance'
 import { prisma } from '@/lib/db'
-import { DASHBOARD_CARD_CONFIG } from '@/lib/dashboard/dashboard-card-config'
+import {
+  buildDashboardSummaryCards,
+  resolveDashboardPlanStatus,
+  type DashboardMetrics,
+} from '@/lib/dashboard/dashboard-mappers'
 import {
   endPerformanceTimer,
   logPerformanceStep,
@@ -21,13 +25,6 @@ import {
 } from '@/lib/performance'
 import { getDisplayName } from '@/lib/profile'
 import { createClient } from '@/lib/supabase/server'
-
-type DashboardMetrics = {
-  totalPatients: number
-  totalExams: number
-  pendingAlerts: number
-  sentAlerts: number
-}
 
 type DashboardProfileRow = {
   full_name: string
@@ -85,7 +82,7 @@ export default async function DashboardPage() {
     fullName: profile.full_name,
     email: userEmail,
   })
-  const isConecta = profile.subscription_plan === 'CONECTA' && profile.subscription_status !== 'CANCELED'
+  const { isConecta, planLabel } = resolveDashboardPlanStatus(profile)
 
   const dashboardQueriesStartedAt = startPerformanceStep()
   const [metrics] = await prisma.$queryRaw<DashboardMetrics[]>`
@@ -115,17 +112,12 @@ export default async function DashboardPage() {
   logPerformanceStep(timer, 'prisma.dashboard_queries_parallel', dashboardQueriesStartedAt)
 
   const { totalPatients, totalExams, pendingAlerts, sentAlerts } = metrics
-  const planLabel = isConecta ? 'Plano Conecta ativo' : 'Plano Essencial'
-  const summaryMetricValues = {
+  const summaryCards = buildDashboardSummaryCards({
     totalPatients,
     totalExams,
     pendingAlerts,
     sentAlerts,
-  } as const
-  const summaryCards = DASHBOARD_CARD_CONFIG.map((item) => ({
-    ...item,
-    value: summaryMetricValues[item.id],
-  }))
+  })
 
   endPerformanceTimer(timer, 'initial_content_ready')
 
