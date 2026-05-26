@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Badge } from '@/components/ui/badge'
 import SidebarProfileSection from '@/components/layout/SidebarProfileSection'
+import SidebarPlanStatus from '@/components/layout/sidebar/SidebarPlanStatus'
 import { SIDEBAR_NAV_ITEMS } from '@/lib/navigation/nav-items'
 import {
   Loader2,
@@ -332,30 +332,17 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {subscription && !isCollapsed && (
-          <div className="m-4 flex flex-col items-center gap-2 rounded-xl border-t border-slate-800 bg-slate-950/40 px-4 py-3">
-            <div className="flex w-full items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">Seu Plano:</span>
-              <Badge variant={isConecta ? 'premium' : 'secondary'} className="px-2 py-0.5 text-[10px] font-bold">
-                {isConecta ? 'Conecta' : 'Essencial'}
-              </Badge>
-            </div>
-            {!isConecta && (
-              <Link
-                href="/dashboard/planos"
-                className="w-full text-center"
-                onClick={() => {
-                  if (isMobile) {
-                    setMobileDrawerOpen(false)
-                  }
-                }}
-              >
-                <span className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 hover:underline">
-                  Upgrade para WhatsApp/SMS
-                </span>
-              </Link>
-            )}
-          </div>
+        {subscription && (
+          <SidebarPlanStatus
+            isCollapsed={isCollapsed}
+            isConecta={isConecta}
+            plansHref="/dashboard/planos"
+            onPlansClick={() => {
+              if (isMobile) {
+                setMobileDrawerOpen(false)
+              }
+            }}
+          />
         )}
 
         <div className={`border-t border-slate-800 p-4 ${isCollapsed ? 'flex flex-col items-center gap-3' : 'flex items-center justify-between gap-3'}`}>
