@@ -1,22 +1,18 @@
 'use client'
 
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import SidebarProfileSection from '@/components/layout/SidebarProfileSection'
 import { SIDEBAR_NAV_ITEMS } from '@/lib/navigation/nav-items'
-import { getDisplayName, getRoleLabel } from '@/lib/profile'
 import {
   Loader2,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
-  PencilLine,
   Sparkles,
-  User,
   X,
 } from 'lucide-react'
 
@@ -46,30 +42,17 @@ export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
-  const profileSuccessCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [clinic, setClinic] = useState<ClinicSummary | null>(null)
   const [profile, setProfile] = useState<ProfileSummary | null>(null)
   const [subscription, setSubscription] = useState<SubscriptionSummary | null>(null)
   const [pendingPath, setPendingPath] = useState<string | null>(null)
   const [authEmail, setAuthEmail] = useState<string | null>(null)
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
-  const [preferredNameInput, setPreferredNameInput] = useState('')
-  const [isSavingProfile, setIsSavingProfile] = useState(false)
-  const [profileSaveError, setProfileSaveError] = useState<string | null>(null)
-  const [profileSaveSuccess, setProfileSaveSuccess] = useState<string | null>(null)
   const [desktopCollapsed, setDesktopCollapsed] = useState(false)
   const [tabletCollapsed, setTabletCollapsed] = useState(true)
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
   const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop')
   const [hasLoadedCollapsePreference, setHasLoadedCollapsePreference] = useState(false)
-
-  const clearProfileSuccessCloseTimer = () => {
-    if (profileSuccessCloseTimerRef.current) {
-      clearTimeout(profileSuccessCloseTimerRef.current)
-      profileSuccessCloseTimerRef.current = null
-    }
-  }
 
   useEffect(() => {
     setPendingPath(null)
@@ -140,12 +123,6 @@ export default function Sidebar() {
     return () => {
       window.removeEventListener(MOBILE_SIDEBAR_EVENT, handleToggleMobileSidebar)
       window.removeEventListener('keydown', handleEscape)
-    }
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      clearProfileSuccessCloseTimer()
     }
   }, [])
 
@@ -237,74 +214,6 @@ export default function Sidebar() {
     })
   }
 
-  const handleOpenProfileModal = () => {
-    clearProfileSuccessCloseTimer()
-    setPreferredNameInput(profile?.preferred_name ?? '')
-    setProfileSaveError(null)
-    setProfileSaveSuccess(null)
-    setIsProfileModalOpen(true)
-  }
-
-  const handleCloseProfileModal = () => {
-    if (isSavingProfile) {
-      return
-    }
-
-    setIsProfileModalOpen(false)
-    setProfileSaveError(null)
-    setProfileSaveSuccess(null)
-    clearProfileSuccessCloseTimer()
-  }
-
-  const handleSaveProfile = async () => {
-    setIsSavingProfile(true)
-    setProfileSaveError(null)
-    setProfileSaveSuccess(null)
-
-    try {
-      const response = await fetch('/api/profile', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          preferredName: preferredNameInput,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Nao foi possivel atualizar o perfil.')
-      }
-
-      setProfile((currentProfile) =>
-        currentProfile
-          ? {
-              ...currentProfile,
-              preferred_name: data.profile.preferred_name,
-              full_name: data.profile.full_name,
-              role: data.profile.role,
-            }
-          : currentProfile
-      )
-      setProfileSaveSuccess('Perfil atualizado com sucesso.')
-      window.dispatchEvent(new Event('profile-updated'))
-      router.refresh()
-      clearProfileSuccessCloseTimer()
-      profileSuccessCloseTimerRef.current = setTimeout(() => {
-        setIsProfileModalOpen(false)
-        setProfileSaveSuccess(null)
-        profileSuccessCloseTimerRef.current = null
-      }, 850)
-    } catch (error) {
-      console.error('Error updating profile:', error)
-      setProfileSaveError(error instanceof Error ? error.message : 'Nao foi possivel atualizar o perfil.')
-    } finally {
-      setIsSavingProfile(false)
-    }
-  }
-
   const handleMenuItemClick = (path: string, isActive: boolean) => {
     if (!isActive) {
       setPendingPath(path)
@@ -316,16 +225,6 @@ export default function Sidebar() {
   }
 
   const isConecta = subscription?.plan === 'CONECTA' && subscription?.status !== 'CANCELED'
-  const displayName = useMemo(
-    () =>
-      getDisplayName({
-        preferredName: profile?.preferred_name,
-        fullName: profile?.full_name,
-        email: authEmail,
-      }),
-    [authEmail, profile?.full_name, profile?.preferred_name]
-  )
-  const roleLabel = getRoleLabel(profile?.role)
   const isMobile = viewportMode === 'mobile'
   const isCollapsed = viewportMode === 'tablet'
     ? tabletCollapsed
@@ -460,30 +359,23 @@ export default function Sidebar() {
         )}
 
         <div className={`border-t border-slate-800 p-4 ${isCollapsed ? 'flex flex-col items-center gap-3' : 'flex items-center justify-between gap-3'}`}>
-          <button
-            type="button"
-            onClick={handleOpenProfileModal}
-            title={isCollapsed ? displayName : undefined}
-            className={`group rounded-xl text-left transition-colors hover:bg-slate-800/50 ${
-              isCollapsed ? 'flex h-11 w-11 items-center justify-center p-0' : 'flex min-w-0 flex-1 items-center gap-3 px-2 py-2'
-            }`}
-            data-cy="sidebar-profile-button"
-          >
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-slate-800 text-slate-300">
-              <User className="h-4.5 w-4.5" />
-            </div>
-            {!isCollapsed && (
-              <>
-                <div className="min-w-0 flex-1">
-                  <span className="block truncate text-xs font-bold leading-none text-white">
-                    {displayName}
-                  </span>
-                  <span className="mt-1 block truncate text-[10px] text-slate-500">{roleLabel}</span>
-                </div>
-                <PencilLine className="h-4 w-4 flex-shrink-0 text-slate-500 transition-colors group-hover:text-indigo-400" />
-              </>
-            )}
-          </button>
+          <SidebarProfileSection
+            authEmail={authEmail}
+            fullName={profile?.full_name}
+            preferredName={profile?.preferred_name}
+            role={profile?.role}
+            isCollapsed={isCollapsed}
+            onProfileUpdated={(updatedProfile) => {
+              setProfile((currentProfile) =>
+                currentProfile
+                  ? {
+                      ...currentProfile,
+                      ...updatedProfile,
+                    }
+                  : currentProfile
+              )
+            }}
+          />
 
           <button
             onClick={handleLogout}
@@ -495,91 +387,6 @@ export default function Sidebar() {
           </button>
         </div>
       </aside>
-
-      {isProfileModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
-          <div
-            className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl"
-            data-cy="edit-profile-modal"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-bold text-white">Editar perfil</h3>
-                <p className="mt-1 text-sm text-slate-400">
-                  Atualize como o Lensys Care deve te chamar no dashboard e na sidebar.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleCloseProfileModal}
-                className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200"
-                aria-label="Fechar modal"
-              >
-                <X className="h-4.5 w-4.5" />
-              </button>
-            </div>
-
-            <div className="mt-5 space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                Como prefere ser chamado?
-              </label>
-              <Input
-                type="text"
-                value={preferredNameInput}
-                onChange={(event) => setPreferredNameInput(event.target.value)}
-                placeholder="Ex: Dra. Ana ou Ana"
-                className="border-slate-800 bg-slate-950/50 text-white placeholder:text-slate-500 focus:border-violet-500/50 focus:ring-violet-500/20"
-                maxLength={60}
-                disabled={isSavingProfile}
-                data-cy="preferred-name-input"
-              />
-              <p className="text-xs text-slate-500">
-                Se ficar em branco, o sistema usara seu nome completo, e-mail ou Usuario.
-              </p>
-            </div>
-
-            {profileSaveError && (
-              <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300">
-                {profileSaveError}
-              </div>
-            )}
-
-            {profileSaveSuccess && (
-              <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300">
-                {profileSaveSuccess}
-              </div>
-            )}
-
-            <div className="mt-6 flex items-center justify-end gap-3">
-              <Button
-                type="button"
-                variant="ghost"
-                className="text-slate-300 hover:bg-slate-800 hover:text-white"
-                onClick={handleCloseProfileModal}
-                disabled={isSavingProfile}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="button"
-                className="bg-indigo-600 font-semibold hover:bg-indigo-500"
-                onClick={handleSaveProfile}
-                disabled={isSavingProfile}
-                data-cy="save-profile-button"
-              >
-                {isSavingProfile ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Salvando...
-                  </>
-                ) : (
-                  'Salvar'
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   )
 }
