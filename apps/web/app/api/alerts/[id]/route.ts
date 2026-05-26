@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { createClient as createServerClient } from '@/lib/supabase/server'
+import { prisma } from '@/lib/db'
 import {
   sendAlertEmail,
   sendAlertWhatsApp,
@@ -49,17 +51,49 @@ export async function POST(
       return NextResponse.json({ error: 'INVALID_REQUEST', message: 'ID do alerta e ação são obrigatórios.' }, { status: 400 })
     }
 
-    const supabase = createClient(
+    if (action !== 'dismiss' && action !== 'resend') {
+      return NextResponse.json({ error: 'INVALID_ACTION', message: 'Ação não suportada.' }, { status: 400 })
+    }
+
+    const authClient = createServerClient()
+    const { data: authData, error: authError } = await authClient.auth.getClaims()
+    const userId = authData?.claims.sub
+
+    if (authError || !userId) {
+      return NextResponse.json({ error: 'UNAUTHORIZED', message: 'Faça login para continuar.' }, { status: 401 })
+    }
+
+    const profile = await prisma.profile.findUnique({
+      where: { id: userId },
+      select: { clinic_id: true },
+    })
+
+    if (!profile) {
+      return NextResponse.json({ error: 'PROFILE_NOT_FOUND', message: 'Perfil não encontrado.' }, { status: 404 })
+    }
+
+    const ownedAlert = await prisma.alert.findFirst({
+      where: {
+        id: alertId,
+        patient: { clinic_id: profile.clinic_id },
+      },
+      select: { id: true },
+    })
+
+    if (!ownedAlert) {
+      return NextResponse.json({ error: 'ALERT_NOT_FOUND', message: 'Alerta não encontrado.' }, { status: 404 })
+    }
+
+    const supabase = createServiceClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
     if (action === 'dismiss') {
-      // 1. Dismiss alert
       const { data, error } = await supabase
         .from('alerts')
         .update({ status: 'DISMISSED' })
-        .eq('id', alertId)
+        .eq('id', ownedAlert.id)
         .select()
         .single()
 
@@ -68,8 +102,7 @@ export async function POST(
       }
 
       return NextResponse.json({ success: true, alert: data })
-    } else if (action === 'resend') {
-      // 2. Query alert with patient relations using service role (matches type shape)
+    } else {
       const { data: alert, error: queryError } = await supabase
         .from('alerts')
         .select(`
@@ -85,14 +118,13 @@ export async function POST(
             clinic_id
           )
         `)
-        .eq('id', alertId)
+        .eq('id', ownedAlert.id)
         .single()
 
       if (queryError || !alert) {
         return NextResponse.json({ error: 'ALERT_NOT_FOUND', message: 'Alerta não encontrado.' }, { status: 404 })
       }
 
-      // 3. Dispatch based on channel
       const alertQuery = alert as unknown as AlertQueryRecord
       const patient = alertQuery.patients[0]
 
@@ -119,12 +151,10 @@ export async function POST(
       await supabase
         .from('alerts')
         .update({ status: 'SENT', sent_at: new Date().toISOString() })
-        .eq('id', alertId)
+        .eq('id', ownedAlert.id)
 
       return NextResponse.json({ success: true, message: 'Alerta redisparado com sucesso.' })
     }
-
-    return NextResponse.json({ error: 'INVALID_ACTION', message: 'Ação não suportada.' }, { status: 400 })
   } catch (error: unknown) {
     console.error('Alert action error:', error)
     return NextResponse.json(
