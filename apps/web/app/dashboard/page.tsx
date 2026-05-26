@@ -1,33 +1,26 @@
-import React, { Suspense } from 'react'
+import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
-import { prisma } from '@/lib/db'
-import {
-  endPerformanceTimer,
-  logPerformanceStep,
-  startPerformanceStep,
-  startPerformanceTimer,
-} from '@/lib/performance'
-import { DASHBOARD_CARD_CONFIG } from '@/lib/dashboard/dashboard-card-config'
-import { getDisplayName } from '@/lib/profile'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import LoginDestinationPerformance from '@/components/performance/LoginDestinationPerformance'
+
 import {
   AgeDistributionPanel,
   DashboardPanelFallback,
   RecentPatientsPanel,
   UpcomingRecallsPanel,
 } from '@/components/dashboard/DashboardAsyncSections'
+import DashboardHeader from '@/components/dashboard/DashboardHeader'
+import DashboardPlanStatusCard from '@/components/dashboard/DashboardPlanStatusCard'
+import DashboardSummaryCards from '@/components/dashboard/DashboardSummaryCards'
+import LoginDestinationPerformance from '@/components/performance/LoginDestinationPerformance'
+import { prisma } from '@/lib/db'
+import { DASHBOARD_CARD_CONFIG } from '@/lib/dashboard/dashboard-card-config'
 import {
-  Plus,
-  UserCheck,
-  Sparkles,
-  Building2,
-  ShieldCheck,
-  ArrowRight,
-} from 'lucide-react'
+  endPerformanceTimer,
+  logPerformanceStep,
+  startPerformanceStep,
+  startPerformanceTimer,
+} from '@/lib/performance'
+import { getDisplayName } from '@/lib/profile'
+import { createClient } from '@/lib/supabase/server'
 
 type DashboardMetrics = {
   totalPatients: number
@@ -140,105 +133,22 @@ export default async function DashboardPage() {
     <div className="space-y-8 select-none">
       <LoginDestinationPerformance />
 
-      <section className="relative overflow-hidden rounded-[28px] border border-violet-100 bg-gradient-to-br from-white via-violet-50/70 to-indigo-50/90 p-6 shadow-sm shadow-violet-100/50 dark:border-slate-800 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
-        <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-gradient-to-l from-indigo-100/60 to-transparent dark:from-indigo-950/20 lg:block" />
-        <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-violet-200/40 blur-3xl dark:bg-violet-900/20" />
-        <div className="absolute -bottom-20 left-10 h-44 w-44 rounded-full bg-indigo-200/30 blur-3xl dark:bg-indigo-900/20" />
+      <DashboardHeader
+        clinicName={clinic.name}
+        displayName={displayName}
+        pendingAlerts={pendingAlerts}
+        planLabel={planLabel}
+      />
 
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-white/80 px-3 py-1 text-xs font-semibold text-violet-700 shadow-sm dark:border-violet-900/60 dark:bg-slate-900/80 dark:text-violet-300">
-              <Sparkles className="h-3.5 w-3.5" />
-              Painel clínico
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Olá,</p>
-              <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 sm:text-4xl">
-                {displayName}
-              </h2>
-              <p className="max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                Aqui está o resumo clínico e operacional da{' '}
-                <span className="font-semibold text-slate-900 dark:text-slate-100">{clinic.name}</span> hoje.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/85 px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300">
-                <Building2 className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
-                <span>{clinic.name}</span>
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/85 px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300">
-                <ShieldCheck className="h-3.5 w-3.5 text-indigo-700 dark:text-indigo-400" />
-                <span>{planLabel}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-[240px]">
-            <Link href="/patients/new">
-              <Button
-                className="h-11 w-full gap-2 rounded-xl bg-indigo-600 font-semibold shadow-lg shadow-indigo-500/15 hover:bg-indigo-500"
-                data-cy="new-patient-button"
-              >
-                <Plus className="h-4.5 w-4.5" />
-                Novo Paciente
-              </Button>
-            </Link>
-            <div className="rounded-2xl border border-white/80 bg-white/70 p-3 text-xs text-slate-600 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300">
-              <p className="font-semibold text-slate-900 dark:text-slate-100">Resumo do dia</p>
-              <p className="mt-1 leading-5">
-                {pendingAlerts > 0
-                  ? `${pendingAlerts} alerta(s) pendente(s) para acompanhar hoje.`
-                  : 'Nenhum alerta pendente para acompanhar no momento.'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4" data-cy="dashboard-summary-cards">
-        {summaryCards.map((item) => {
-          const Icon = item.icon
-          const NoteIcon = item.noteIcon
-
-          return (
-            <Card
-              key={item.id}
-              className="overflow-hidden rounded-2xl border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
-            >
-              <div className="h-1 w-full bg-gradient-to-r from-violet-500 via-indigo-500 to-sky-500" />
-              <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
-                <div className="space-y-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                    {item.label}
-                  </span>
-                  <div className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-                    {item.value}
-                  </div>
-                </div>
-                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${item.iconClassName}`}>
-                  <Icon className="h-5 w-5" />
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className={`flex items-center gap-1.5 text-xs font-semibold ${item.noteClassName}`}>
-                  {NoteIcon ? <NoteIcon className="h-3.5 w-3.5" /> : null}
-                  <span>{item.description}</span>
-                </p>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
+      <DashboardSummaryCards items={summaryCards} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <Suspense
             fallback={
               <DashboardPanelFallback
-                title="Distribuição de Pacientes por Faixa Etária"
-                description="Carregando análise demográfica..."
+                title="Distribuicao de Pacientes por Faixa Etaria"
+                description="Carregando analise demografica..."
               />
             }
           >
@@ -248,8 +158,8 @@ export default async function DashboardPage() {
           <Suspense
             fallback={
               <DashboardPanelFallback
-                title="Pacientes Recém-Cadastrados"
-                description="Carregando últimos registros..."
+                title="Pacientes Recem-Cadastrados"
+                description="Carregando ultimos registros..."
               />
             }
           >
@@ -261,7 +171,7 @@ export default async function DashboardPage() {
           <Suspense
             fallback={
               <DashboardPanelFallback
-                title="Próximos Recalls"
+                title="Proximos Recalls"
                 description="Carregando lembretes pendentes..."
               />
             }
@@ -269,37 +179,7 @@ export default async function DashboardPage() {
             <UpcomingRecallsPanel clinicId={clinic.id} />
           </Suspense>
 
-          <Card className="relative overflow-hidden rounded-2xl border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-500 via-indigo-500 to-sky-500" />
-            <div className="absolute -right-10 top-6 h-28 w-28 rounded-full bg-violet-100/70 blur-2xl dark:bg-violet-950/30" />
-            <CardHeader className="pb-3">
-              <div className="mb-3 inline-flex w-fit items-center rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700 dark:bg-violet-950/50 dark:text-violet-300">
-                Status da Conta
-              </div>
-              <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-slate-100">
-                <UserCheck className="h-5 w-5" />
-                <span>Modalidade Clínica</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="relative z-10 space-y-4">
-              <div className="inline-flex items-center rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 dark:border-indigo-900/60 dark:bg-indigo-950/40 dark:text-indigo-300">
-                {planLabel}
-              </div>
-              <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-                {isConecta
-                  ? 'Sua clínica está com todas as automações de alertas via WhatsApp, SMS e Recall em Massa ativas.'
-                  : 'Sua clínica está no plano Essencial. Assine o plano Conecta para desbloquear automações via WhatsApp e SMS.'}
-              </p>
-              {!isConecta && (
-                <Link href="/dashboard/planos" passHref>
-                  <Button className="h-10 w-full gap-2 rounded-xl bg-indigo-600 text-xs font-bold text-white shadow-lg shadow-indigo-500/15 transition-all duration-200 hover:bg-indigo-500">
-                    Ativar Plano Conecta
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
-                </Link>
-              )}
-            </CardContent>
-          </Card>
+          <DashboardPlanStatusCard isConecta={isConecta} planLabel={planLabel} />
         </div>
       </div>
     </div>
