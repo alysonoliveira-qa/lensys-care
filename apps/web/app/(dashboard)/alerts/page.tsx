@@ -3,13 +3,12 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
+import { ALERT_STATUS_FILTER_OPTIONS, type AlertStatus } from '@/lib/alerts/alert-status-config'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import AlertActionsList from '@/components/alerts/AlertActionsList'
 import type { AlertData } from '@/components/alerts/AlertActionsList'
 import { Bell, Filter } from 'lucide-react'
-
-type AlertStatus = 'PENDING' | 'SENT' | 'DISMISSED'
 
 interface AlertsPageProps {
   searchParams?: {
@@ -74,11 +73,7 @@ export default async function AlertsPage({ searchParams }: AlertsPageProps) {
           <Filter className="h-3.5 w-3.5" />
           Filtrar Status:
         </span>
-        {[
-          { label: 'Pendentes', value: 'PENDING', badge: 'warning' },
-          { label: 'Enviados', value: 'SENT', badge: 'success' },
-          { label: 'Cancelados / Dispensados', value: 'DISMISSED', badge: 'secondary' },
-        ].map((statusOpt) => {
+        {ALERT_STATUS_FILTER_OPTIONS.map((statusOpt) => {
           const isActive = activeStatus === statusOpt.value
           return (
             <Link key={statusOpt.value} href={`/alerts?status=${statusOpt.value}`} passHref>

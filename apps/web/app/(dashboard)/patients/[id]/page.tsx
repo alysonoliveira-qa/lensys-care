@@ -3,6 +3,7 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
+import { ALERT_STATUS_CONFIG } from '@/lib/alerts/alert-status-config'
 import {
   endPerformanceTimer,
   logPerformanceStep,
@@ -210,7 +211,7 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
               ) : (
                 <div className="space-y-3">
                   {patient.alerts.map((alert: PatientAlert) => {
-                    const isPending = alert.status === 'PENDING'
+                    const statusConfig = ALERT_STATUS_CONFIG[alert.status]
                     const isSent = alert.status === 'SENT'
 
                     return (
@@ -224,10 +225,10 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
                               Lembrete de Consulta Anual ({alert.channel})
                             </span>
                             <Badge
-                              variant={isPending ? 'warning' : isSent ? 'success' : 'secondary'}
+                              variant={statusConfig.badgeVariant}
                               className="text-[9px] py-0 px-1.5"
                             >
-                              {isPending ? 'Pendente' : isSent ? 'Enviado' : 'Cancelado'}
+                              {statusConfig.compactLabel ?? statusConfig.label}
                             </Badge>
                           </div>
                           <p className="text-[10px] text-slate-400">

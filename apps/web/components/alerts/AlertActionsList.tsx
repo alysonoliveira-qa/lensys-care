@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { ALERT_STATUS_CONFIG } from '@/lib/alerts/alert-status-config'
 import { Bell, Calendar, Eye, Mail, Phone, RefreshCw, Trash2, Loader2, CheckCircle2 } from 'lucide-react'
 
 export interface AlertData {
@@ -83,6 +84,7 @@ export default function AlertActionsList({ alerts, activeStatus }: AlertActionsL
               {alerts.map((alert) => {
                 const isLoading = actionLoading === alert.id
                 const isSuccess = successAlert === alert.id
+                const statusConfig = ALERT_STATUS_CONFIG[alert.status]
 
                 return (
                   <tr key={alert.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-950/10 transition-colors">
@@ -116,20 +118,10 @@ export default function AlertActionsList({ alerts, activeStatus }: AlertActionsL
                     </td>
                     <td className="py-4 px-6">
                       <Badge
-                        variant={
-                          alert.status === 'PENDING'
-                            ? 'warning'
-                            : alert.status === 'SENT'
-                              ? 'success'
-                              : 'secondary'
-                        }
+                        variant={statusConfig.badgeVariant}
                         className="text-[9px] font-bold py-0.5 px-2"
                       >
-                        {alert.status === 'PENDING'
-                          ? 'Pendente'
-                          : alert.status === 'SENT'
-                            ? 'Enviado'
-                            : 'Dispensado'}
+                        {statusConfig.label}
                       </Badge>
                       {alert.sent_at && (
                         <span className="text-[9px] text-slate-400 block mt-1">

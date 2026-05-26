@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
+import { ALERT_STATUS_CONFIG } from '@/lib/alerts/alert-status-config'
 import { prisma } from '@/lib/db'
 import {
   endPerformanceTimer,
@@ -344,7 +345,7 @@ export async function UpcomingRecallsPanel({ clinicId }: ClinicPanelProps) {
                   </p>
                 </div>
                 <Badge variant="warning" className="text-[10px]">
-                  Pendente
+                  {ALERT_STATUS_CONFIG.PENDING.label}
                 </Badge>
               </div>
 
