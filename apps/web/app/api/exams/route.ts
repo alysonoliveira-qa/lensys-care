@@ -56,10 +56,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'EXAMINER_NOT_FOUND', message: 'Perfil do examinador não encontrado.' }, { status: 404 })
     }
 
+    const patientStartedAt = startPerformanceStep()
+    const patient = await prisma.patient.findFirst({
+      where: {
+        id: patientId,
+        clinic_id: examiner.clinic_id,
+      },
+      select: { id: true },
+    })
+    logPerformanceStep(timer, 'prisma.patient_ownership', patientStartedAt)
+
+    if (!patient) {
+      return NextResponse.json(
+        { error: 'PATIENT_NOT_FOUND', message: 'Paciente não encontrado.' },
+        { status: 404 }
+      )
+    }
+
     const examStartedAt = startPerformanceStep()
     const exam = await prisma.exam.create({
       data: {
-        patient_id: patientId,
+        patient_id: patient.id,
         performed_by: examiner.id,
         exam_date: new Date(examDate),
         od_sph: odSph !== undefined && odSph !== '' ? Number(odSph) : null,
@@ -83,7 +100,7 @@ export async function POST(request: Request) {
     await createAlertForExam({
       examId: exam.id,
       examDate: new Date(examDate),
-      patientId,
+      patientId: patient.id,
       channel: 'EMAIL',
       supabase,
     })
