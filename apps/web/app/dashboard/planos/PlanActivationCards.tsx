@@ -7,33 +7,13 @@ import { Check, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { PLAN_DISPLAY_CONFIG } from '@/lib/plans/plan-display-config'
 import { activatePlan, type AvailablePlan, type PlanActionState } from './actions'
 
 interface PlanActivationCardsProps {
   currentPlan: AvailablePlan
   canManagePlan: boolean
 }
-
-const plans = [
-  {
-    id: 'ESSENTIAL' as const,
-    name: 'Essencial',
-    price: 'R$ 79,90',
-    description: 'Organização da rotina clínica com pacientes, exames e retornos em um único lugar.',
-    features: ['Pacientes e histórico clínico', 'Registro de exames e refração', 'Alertas de retorno e renovação'],
-    dataCy: 'essential-plan-card',
-    buttonDataCy: 'activate-essential-plan-button',
-  },
-  {
-    id: 'CONECTA' as const,
-    name: 'Conecta',
-    price: 'R$ 149,90',
-    description: 'Mais automações para relacionamento e acompanhamento recorrente da clínica.',
-    features: ['Tudo do Essencial', 'Alertas previstos via WhatsApp e SMS', 'Recall em massa previsto'],
-    dataCy: 'connect-plan-card',
-    buttonDataCy: 'activate-connect-plan-button',
-  },
-]
 
 const initialPlanActionState: PlanActionState = {
   status: 'idle',
@@ -95,7 +75,7 @@ export default function PlanActivationCards({ currentPlan, canManagePlan }: Plan
       ) : null}
 
       <section className="grid gap-6 lg:grid-cols-2">
-        {plans.map((plan) => {
+        {PLAN_DISPLAY_CONFIG.map((plan) => {
           const isCurrent = activePlan === plan.id
 
           return (
@@ -104,7 +84,7 @@ export default function PlanActivationCards({ currentPlan, canManagePlan }: Plan
               className={`flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ${
                 isCurrent ? 'border-indigo-300 ring-2 ring-indigo-100' : 'border-slate-200'
               }`}
-              data-cy={plan.dataCy}
+              data-cy={plan.dashboardCardDataCy}
             >
               <CardHeader className="space-y-4 p-6">
                 <div className="flex items-center justify-between gap-4">
@@ -116,16 +96,16 @@ export default function PlanActivationCards({ currentPlan, canManagePlan }: Plan
                   ) : null}
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold tracking-tight text-slate-900">{plan.price}</span>
-                  <span className="text-sm font-medium text-slate-500">/mês</span>
+                  <span className="text-4xl font-extrabold tracking-tight text-slate-900">{plan.monthlyPrice}</span>
+                  <span className="text-sm font-medium text-slate-500">{plan.monthlyPriceSuffix}</span>
                 </div>
                 <CardDescription className="text-sm leading-6 text-slate-600">
-                  {plan.description}
+                  {plan.dashboardDescription}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-grow px-6 pb-2">
                 <ul className="space-y-3 border-t border-slate-100 pt-5">
-                  {plan.features.map((feature) => (
+                  {plan.dashboardFeatures.map((feature) => (
                     <li key={feature} className="flex gap-2.5 text-sm text-slate-600">
                       <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-indigo-500" />
                       <span>{feature}</span>
@@ -136,7 +116,7 @@ export default function PlanActivationCards({ currentPlan, canManagePlan }: Plan
               <CardFooter className="p-6 pt-8">
                 <form action={formAction} className="w-full">
                   <input type="hidden" name="plan" value={plan.id} />
-                  <SubmitButton dataCy={plan.buttonDataCy} disabled={!canManagePlan || isCurrent}>
+                  <SubmitButton dataCy={plan.dashboardButtonDataCy} disabled={!canManagePlan || isCurrent}>
                     {isCurrent ? 'Plano ativo' : `Ativar Plano ${plan.name}`}
                   </SubmitButton>
                 </form>

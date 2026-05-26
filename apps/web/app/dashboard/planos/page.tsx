@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { ShieldCheck, Sparkles } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { DASHBOARD_PLANS_VALIDATION_MESSAGE } from '@/lib/plans/plan-display-config'
 import PlanActivationCards from './PlanActivationCards'
 
 export const revalidate = 0
@@ -50,10 +51,7 @@ export default async function DashboardPlansPage() {
           </p>
           <div className="inline-flex max-w-3xl items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium leading-6 text-emerald-800">
             <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0" />
-            <span>
-              Durante a fase de validação, a ativação dos planos é gratuita. A cobrança será ativada
-              posteriormente.
-            </span>
+            <span>{DASHBOARD_PLANS_VALIDATION_MESSAGE}</span>
           </div>
           {!profile || profile.role !== 'OWNER' ? (
             <p className="text-sm font-medium text-amber-700">

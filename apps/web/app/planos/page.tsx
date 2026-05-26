@@ -3,33 +3,12 @@ import { ArrowLeft, Check, ShieldCheck, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-
-const plans = [
-  {
-    name: 'Essencial',
-    price: 'R$ 79,90',
-    description: 'Para consultórios e profissionais que querem organizar a rotina clínica com clareza e agilidade.',
-    features: [
-      'Pacientes e histórico clínico',
-      'Registro de exames e refração',
-      'Evolução clínica centralizada',
-      'Alertas de retorno e renovação',
-    ],
-    featured: false,
-  },
-  {
-    name: 'Conecta',
-    price: 'R$ 149,90',
-    description: 'Para operações que desejam ampliar acompanhamento, recorrência e visão da rotina clínica.',
-    features: [
-      'Tudo do plano Essencial',
-      'Mais apoio à rotina de relacionamento',
-      'Fluxos de retorno e acompanhamento',
-      'Maior visão operacional da clínica',
-    ],
-    featured: true,
-  },
-]
+import {
+  PLAN_DISPLAY_CONFIG,
+  PUBLIC_PLANS_BADGE_LABEL,
+  PUBLIC_PLANS_FOOTER_MESSAGES,
+  PUBLIC_PLANS_TRIAL_BANNER,
+} from '@/lib/plans/plan-display-config'
 
 export default function PlanosPage() {
   return (
@@ -51,7 +30,7 @@ export default function PlanosPage() {
           </Link>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-400/20 bg-indigo-500/10 px-3 py-1.5 text-xs font-semibold text-indigo-200">
             <Sparkles className="h-3.5 w-3.5" />
-            Lensys Care
+            {PUBLIC_PLANS_BADGE_LABEL}
           </span>
         </header>
 
@@ -67,15 +46,15 @@ export default function PlanosPage() {
           </p>
           <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-300">
             <ShieldCheck className="h-4 w-4" />
-            Teste grátis por 7 dias em qualquer plano
+            {PUBLIC_PLANS_TRIAL_BANNER}
           </div>
         </section>
 
         <section className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
-          {plans.map((plan) => (
+          {PLAN_DISPLAY_CONFIG.map((plan) => (
             <Card
-              key={plan.name}
-              data-cy={plan.featured ? 'connect-plan-card' : 'essential-plan-card'}
+              key={plan.id}
+              data-cy={plan.publicCardDataCy}
               className={`relative flex flex-col overflow-hidden bg-slate-900/60 shadow-2xl ${
                 plan.featured
                   ? 'border-indigo-500/40 shadow-indigo-950/40'
@@ -84,7 +63,7 @@ export default function PlanosPage() {
             >
               {plan.featured && (
                 <div className="absolute right-0 top-0 rounded-bl-xl bg-gradient-to-l from-violet-600 to-indigo-600 px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
-                  Recomendado
+                  {plan.recommendedLabel}
                 </div>
               )}
 
@@ -93,26 +72,26 @@ export default function PlanosPage() {
                   <CardTitle className={`text-2xl ${plan.featured ? 'text-indigo-300' : 'text-white'}`}>
                     {plan.name}
                   </CardTitle>
-                  {!plan.featured && (
+                  {!plan.featured && plan.tierLabel && (
                     <Badge variant="secondary" className="border-slate-700 bg-slate-800 text-slate-300">
-                      Base
+                      {plan.tierLabel}
                     </Badge>
                   )}
                 </div>
                 <div className="flex items-baseline gap-1 pt-2">
-                  <span className="text-4xl font-extrabold text-white">{plan.price}</span>
-                  <span className="text-sm font-medium text-slate-400">/mês</span>
+                  <span className="text-4xl font-extrabold text-white">{plan.monthlyPrice}</span>
+                  <span className="text-sm font-medium text-slate-400">{plan.monthlyPriceSuffix}</span>
                 </div>
-                <p className="text-xs font-medium text-emerald-300">Teste grátis por 7 dias</p>
+                <p className="text-xs font-medium text-emerald-300">{plan.trialLabel}</p>
                 <CardDescription className="pt-2 text-sm leading-6 text-slate-400">
-                  {plan.description}
+                  {plan.publicDescription}
                 </CardDescription>
               </CardHeader>
 
               <CardContent className="flex-grow px-7 pb-2">
                 <div className="mb-5 border-t border-slate-800/80" />
                 <ul className="space-y-3">
-                  {plan.features.map((feature) => (
+                  {plan.publicFeatures.map((feature) => (
                     <li key={feature} className="flex items-start gap-2.5 text-sm text-slate-300">
                       <Check
                         className={`mt-0.5 h-4 w-4 flex-shrink-0 ${
@@ -142,9 +121,10 @@ export default function PlanosPage() {
           ))}
         </section>
 
-        <div className="mt-10 text-center text-sm text-slate-500 space-y-2">
-          <p>Durante a fase de validação, o acesso ao sistema está gratuito.</p>
-          <p>A cobrança dos planos será ativada após a fase de validação.</p>
+        <div className="mt-10 space-y-2 text-center text-sm text-slate-500">
+          {PUBLIC_PLANS_FOOTER_MESSAGES.map((message) => (
+            <p key={message}>{message}</p>
+          ))}
         </div>
       </div>
     </main>
