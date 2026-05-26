@@ -1,16 +1,9 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// lib/features.ts
-// Feature flag system for plan-based access control.
-// Determines which features are available to a clinic based on its subscription.
-// ─────────────────────────────────────────────────────────────────────────────
-
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-export type Feature = 'whatsapp' | 'sms' | 'bulk_send'
+import { hasPlanFeatureAccess, type PlanFeature } from '@/lib/plans/plan-feature-config'
 
-// Features gated to the CONECTA plan
-const CONECTA_FEATURES: Feature[] = ['whatsapp', 'sms', 'bulk_send']
+export type Feature = PlanFeature
 
 export interface FeatureCheckResult {
   available: boolean
@@ -44,9 +37,7 @@ export function clearFeatureCache(): void {
  */
 export async function hasFeature(clinicId: string, feature: Feature): Promise<boolean> {
   const result = await getFeatureResult(clinicId)
-  return result.available && CONECTA_FEATURES.includes(feature)
-    ? result.plan === 'CONECTA' && (result.status === 'ACTIVE' || result.status === 'TRIALING')
-    : !CONECTA_FEATURES.includes(feature)
+  return result.available && hasPlanFeatureAccess(result.plan, result.status, feature)
 }
 
 /**
@@ -63,11 +54,11 @@ export async function getFeatureResult(clinicId: string): Promise<FeatureCheckRe
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
       cookies: {
-        getAll() { return cookieStore.getAll() },
+        getAll() {
+          return cookieStore.getAll()
+        },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          )
+          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
         },
       },
     }
@@ -106,7 +97,7 @@ export async function requireFeature(clinicId: string, feature: Feature): Promis
         error: 'FEATURE_NOT_AVAILABLE',
         feature,
         upgrade_url: '/dashboard/planos',
-        message: `Este recurso está disponível apenas no plano Conecta.`,
+        message: 'Este recurso está disponível apenas no plano Conecta.',
       }),
       {
         status: 403,
@@ -134,10 +125,6 @@ export async function hasFeatureAsService(clinicId: string, feature: Feature): P
     .single()
 
   if (!subscription) return false
-  if (!CONECTA_FEATURES.includes(feature)) return true
 
-  return (
-    subscription.plan === 'CONECTA' &&
-    (subscription.status === 'ACTIVE' || subscription.status === 'TRIALING')
-  )
+  return hasPlanFeatureAccess(subscription.plan, subscription.status, feature)
 }
