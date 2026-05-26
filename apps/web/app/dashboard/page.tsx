@@ -11,11 +11,13 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader'
 import DashboardPlanStatusCard from '@/components/dashboard/DashboardPlanStatusCard'
 import DashboardSummaryCards from '@/components/dashboard/DashboardSummaryCards'
 import LoginDestinationPerformance from '@/components/performance/LoginDestinationPerformance'
-import { prisma } from '@/lib/db'
+import {
+  getDashboardMetrics,
+  getDashboardProfile,
+} from '@/lib/dashboard/dashboard-data'
 import {
   buildDashboardSummaryCards,
   resolveDashboardPlanStatus,
-  type DashboardMetrics,
 } from '@/lib/dashboard/dashboard-mappers'
 import {
   endPerformanceTimer,
@@ -25,15 +27,6 @@ import {
 } from '@/lib/performance'
 import { getDisplayName } from '@/lib/profile'
 import { createClient } from '@/lib/supabase/server'
-
-type DashboardProfileRow = {
-  full_name: string
-  preferred_name: string | null
-  clinic_id: string
-  clinic_name: string
-  subscription_plan: string | null
-  subscription_status: string | null
-}
 
 export const revalidate = 0
 
@@ -52,20 +45,7 @@ export default async function DashboardPage() {
   }
 
   const profileStartedAt = startPerformanceStep()
-  const [profile] = await prisma.$queryRaw<DashboardProfileRow[]>`
-    SELECT
-      p.full_name,
-      p.preferred_name,
-      c.id AS clinic_id,
-      c.name AS clinic_name,
-      s.plan::text AS subscription_plan,
-      s.status::text AS subscription_status
-    FROM profiles p
-    INNER JOIN clinics c ON c.id = p.clinic_id
-    LEFT JOIN subscriptions s ON s.clinic_id = c.id
-    WHERE p.id = ${userId}::uuid
-    LIMIT 1
-  `
+  const profile = await getDashboardProfile(userId)
   logPerformanceStep(timer, 'prisma.profile_and_clinic', profileStartedAt)
 
   if (!profile) {
@@ -85,30 +65,7 @@ export default async function DashboardPage() {
   const { isConecta, planLabel } = resolveDashboardPlanStatus(profile)
 
   const dashboardQueriesStartedAt = startPerformanceStep()
-  const [metrics] = await prisma.$queryRaw<DashboardMetrics[]>`
-    SELECT
-      (SELECT COUNT(*)::integer FROM patients WHERE clinic_id = ${clinic.id}::uuid) AS "totalPatients",
-      (
-        SELECT COUNT(*)::integer
-        FROM exams
-        INNER JOIN patients ON patients.id = exams.patient_id
-        WHERE patients.clinic_id = ${clinic.id}::uuid
-      ) AS "totalExams",
-      (
-        SELECT COUNT(*)::integer
-        FROM alerts
-        INNER JOIN patients ON patients.id = alerts.patient_id
-        WHERE patients.clinic_id = ${clinic.id}::uuid
-          AND alerts.status = 'PENDING'
-      ) AS "pendingAlerts",
-      (
-        SELECT COUNT(*)::integer
-        FROM alerts
-        INNER JOIN patients ON patients.id = alerts.patient_id
-        WHERE patients.clinic_id = ${clinic.id}::uuid
-          AND alerts.status = 'SENT'
-      ) AS "sentAlerts"
-  `
+  const metrics = await getDashboardMetrics(clinic.id)
   logPerformanceStep(timer, 'prisma.dashboard_queries_parallel', dashboardQueriesStartedAt)
 
   const { totalPatients, totalExams, pendingAlerts, sentAlerts } = metrics

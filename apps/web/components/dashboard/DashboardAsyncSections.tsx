@@ -1,7 +1,10 @@
-import { prisma } from '@/lib/db'
+import {
+  getDashboardAgeDistribution,
+  getRecentPatientsForDashboard,
+  getUpcomingRecallsForDashboard,
+} from '@/lib/dashboard/dashboard-data'
 import {
   buildDashboardAgeDistribution,
-  type DashboardAgeGroupCounts,
 } from '@/lib/dashboard/dashboard-mappers'
 import {
   endPerformanceTimer,
@@ -60,21 +63,7 @@ export async function AgeDistributionPanel({
   const timer = startPerformanceTimer('page /dashboard.section.age_distribution')
   const currentYear = new Date().getFullYear()
   const queryStartedAt = startPerformanceStep()
-  const [ageGroups] = await prisma.$queryRaw<DashboardAgeGroupCounts[]>`
-    SELECT
-      COUNT(*) FILTER (WHERE ${currentYear} - EXTRACT(YEAR FROM dob) < 18)::integer AS infant,
-      COUNT(*) FILTER (
-        WHERE ${currentYear} - EXTRACT(YEAR FROM dob) >= 18
-          AND ${currentYear} - EXTRACT(YEAR FROM dob) < 40
-      )::integer AS young,
-      COUNT(*) FILTER (
-        WHERE ${currentYear} - EXTRACT(YEAR FROM dob) >= 40
-          AND ${currentYear} - EXTRACT(YEAR FROM dob) < 60
-      )::integer AS presbyopia,
-      COUNT(*) FILTER (WHERE ${currentYear} - EXTRACT(YEAR FROM dob) >= 60)::integer AS elderly
-    FROM patients
-    WHERE clinic_id = ${clinicId}::uuid
-  `
+  const ageGroups = await getDashboardAgeDistribution(clinicId, currentYear)
   logPerformanceStep(timer, 'prisma.age_group_counts', queryStartedAt)
 
   const { groups, maxGroupValue } = buildDashboardAgeDistribution(ageGroups)
@@ -92,18 +81,7 @@ export async function AgeDistributionPanel({
 export async function RecentPatientsPanel({ clinicId }: ClinicPanelProps) {
   const timer = startPerformanceTimer('page /dashboard.section.recent_patients')
   const queryStartedAt = startPerformanceStep()
-  const recentPatients = await prisma.patient.findMany({
-    where: { clinic_id: clinicId },
-    orderBy: { created_at: 'desc' },
-    take: 5,
-    select: {
-      id: true,
-      full_name: true,
-      dob: true,
-      phone: true,
-      email: true,
-    },
-  })
+  const recentPatients = await getRecentPatientsForDashboard(clinicId)
   logPerformanceStep(timer, 'prisma.recent_patients', queryStartedAt)
   endPerformanceTimer(timer)
 
@@ -113,25 +91,7 @@ export async function RecentPatientsPanel({ clinicId }: ClinicPanelProps) {
 export async function UpcomingRecallsPanel({ clinicId }: ClinicPanelProps) {
   const timer = startPerformanceTimer('page /dashboard.section.upcoming_recalls')
   const queryStartedAt = startPerformanceStep()
-  const recentAlerts = await prisma.alert.findMany({
-    where: {
-      status: 'PENDING',
-      patient: { clinic_id: clinicId },
-    },
-    orderBy: { due_date: 'asc' },
-    take: 5,
-    select: {
-      id: true,
-      patient_id: true,
-      due_date: true,
-      channel: true,
-      patient: {
-        select: {
-          full_name: true,
-        },
-      },
-    },
-  })
+  const recentAlerts = await getUpcomingRecallsForDashboard(clinicId)
   logPerformanceStep(timer, 'prisma.recent_alerts', queryStartedAt)
   endPerformanceTimer(timer)
 
