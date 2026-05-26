@@ -9,6 +9,7 @@ import {
   startPerformanceStep,
   startPerformanceTimer,
 } from '@/lib/performance'
+import { DASHBOARD_CARD_CONFIG } from '@/lib/dashboard/dashboard-card-config'
 import { getDisplayName } from '@/lib/profile'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -20,12 +21,7 @@ import {
   UpcomingRecallsPanel,
 } from '@/components/dashboard/DashboardAsyncSections'
 import {
-  Users,
-  ClipboardList,
-  Clock,
-  CheckCircle,
   Plus,
-  TrendingUp,
   UserCheck,
   Sparkles,
   Building2,
@@ -127,44 +123,16 @@ export default async function DashboardPage() {
 
   const { totalPatients, totalExams, pendingAlerts, sentAlerts } = metrics
   const planLabel = isConecta ? 'Plano Conecta ativo' : 'Plano Essencial'
-  const summaryCards = [
-    {
-      title: 'Total de Pacientes',
-      value: totalPatients,
-      description: 'Base ativa e atualizada',
-      icon: Users,
-      iconClassName: 'bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300',
-      noteClassName: 'text-emerald-600 dark:text-emerald-400',
-      noteIcon: TrendingUp,
-    },
-    {
-      title: 'Consultas Realizadas',
-      value: totalExams,
-      description: 'Prontuários refrativos cadastrados',
-      icon: ClipboardList,
-      iconClassName: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300',
-      noteClassName: 'text-slate-500 dark:text-slate-400',
-      noteIcon: null,
-    },
-    {
-      title: 'Alertas Pendentes',
-      value: pendingAlerts,
-      description: 'Exames expirando em breve',
-      icon: Clock,
-      iconClassName: 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300',
-      noteClassName: 'text-amber-600 dark:text-amber-400',
-      noteIcon: null,
-    },
-    {
-      title: 'Alertas Enviados',
-      value: sentAlerts,
-      description: 'Lembretes de recall disparados',
-      icon: CheckCircle,
-      iconClassName: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
-      noteClassName: 'text-emerald-600 dark:text-emerald-400',
-      noteIcon: null,
-    },
-  ] as const
+  const summaryMetricValues = {
+    totalPatients,
+    totalExams,
+    pendingAlerts,
+    sentAlerts,
+  } as const
+  const summaryCards = DASHBOARD_CARD_CONFIG.map((item) => ({
+    ...item,
+    value: summaryMetricValues[item.id],
+  }))
 
   endPerformanceTimer(timer, 'initial_content_ready')
 
@@ -236,14 +204,14 @@ export default async function DashboardPage() {
 
           return (
             <Card
-              key={item.title}
+              key={item.id}
               className="overflow-hidden rounded-2xl border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
             >
               <div className="h-1 w-full bg-gradient-to-r from-violet-500 via-indigo-500 to-sky-500" />
-              <CardHeader className="flex flex-row items-start justify-between pb-3 space-y-0">
+              <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
                 <div className="space-y-2">
                   <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                    {item.title}
+                    {item.label}
                   </span>
                   <div className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
                     {item.value}
