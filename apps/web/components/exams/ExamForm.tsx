@@ -9,10 +9,10 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useAgeGroup } from '@/hooks/useAgeGroup'
 import ExamRefractionFields from '@/components/exams/ExamRefractionFields'
+import PrescriptionNotesSection from '@/components/exams/PrescriptionNotesSection'
 import {
   DEFAULT_VISUAL_ACUITY,
   isCommonVisualAcuity,
-  PRESCRIPTION_NOTE_OPTIONS,
   QUICK_PRESCRIPTION_OPTIONS,
   type QuickPrescriptionOptionId,
 } from '@/lib/exams/exam-options'
@@ -124,6 +124,13 @@ export default function ExamForm({ patient, exam, previousExam }: ExamFormProps)
       return `${currentNotes.trimEnd()}\n${template}`
     })
     setSelectedNoteTemplate('')
+  }
+
+  const selectPrescriptionNoteTemplate = (template: string) => {
+    setSelectedNoteTemplate(template)
+    if (template) {
+      applyPrescriptionNoteTemplate(template)
+    }
   }
 
   const toggleQuickPrescriptionNote = (
@@ -291,58 +298,14 @@ export default function ExamForm({ patient, exam, previousExam }: ExamFormProps)
               <Input type="number" step="0.5" min="45" max="80" data-cy="exam-pd-input" placeholder={hasPreviousExam && previousExam?.pd ? previousExam.pd : 'ex: 63.5'} value={pd} onChange={(e) => setPd(e.target.value)} className={`border-slate-200 bg-slate-50 font-semibold dark:border-slate-800 dark:bg-slate-950/20 ${hasPreviousExam && previousExam?.pd ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80' : ''}`} />
             </div>
 
-            <div className="space-y-2 sm:col-span-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Observações de Receituário
-              </label>
-              <div className="flex flex-wrap items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-800 dark:bg-slate-950/20">
-                <span className="font-semibold text-slate-500">Opções rápidas:</span>
-                {QUICK_PRESCRIPTION_OPTIONS.map((option) => (
-                  <label key={option.id} className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                    <input
-                      type="checkbox"
-                      data-cy={option.dataCy}
-                      checked={quickNoteSelections[option.id]}
-                      onChange={(e) => toggleQuickPrescriptionNote(option.id, e.target.checked)}
-                      className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    {option.label}
-                  </label>
-                ))}
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-[10px] font-semibold text-slate-400">
-                  Inserir observação padrão
-                </div>
-                <select
-                  value={selectedNoteTemplate}
-                  data-cy="standard-note-select"
-                  onChange={(e) => {
-                    const template = e.target.value
-                    setSelectedNoteTemplate(template)
-                    if (template) {
-                      applyPrescriptionNoteTemplate(template)
-                    }
-                  }}
-                  className="h-9 rounded-md border border-slate-200 bg-slate-50 px-3 text-xs text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-950/20 dark:text-slate-300"
-                >
-                  <option value="">Selecionar</option>
-                  {PRESCRIPTION_NOTE_OPTIONS.map((template) => (
-                    <option key={template.id} value={template.value}>
-                      {template.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <textarea
-                data-cy="exam-notes-input"
-                placeholder="Insira detalhes sobre lentes indicadas (multifocais, antirreflexo, etc.) ou notas de montagem..."
-                value={prescriptionNotes}
-                onChange={(e) => setPrescriptionNotes(e.target.value)}
-                rows={3}
-                className="flex w-full rounded-md border border-input bg-slate-50 px-3 py-2 text-sm transition-all duration-200 placeholder:text-muted-foreground focus:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-950/20"
-              />
-            </div>
+            <PrescriptionNotesSection
+              notes={prescriptionNotes}
+              onNotesChange={setPrescriptionNotes}
+              selectedNoteTemplate={selectedNoteTemplate}
+              onSelectStandardNote={selectPrescriptionNoteTemplate}
+              quickNoteSelections={quickNoteSelections}
+              onToggleQuickNote={toggleQuickPrescriptionNote}
+            />
           </CardContent>
         </Card>
 
