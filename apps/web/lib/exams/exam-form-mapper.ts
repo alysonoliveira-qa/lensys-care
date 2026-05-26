@@ -1,3 +1,9 @@
+import {
+  emptyStringToNull,
+  parseOptionalDecimal,
+  parseOptionalInteger,
+} from './exam-form-normalizers'
+
 export interface ExamFormPayloadInput {
   patientId: string
   examDate: string
@@ -34,16 +40,16 @@ export function buildExamPayload(formState: ExamFormPayloadInput): ExamPayload {
   return {
     patientId: formState.patientId,
     examDate: formState.examDate,
-    odSph: formState.odSph ? parseFloat(formState.odSph) : '',
-    odCyl: formState.odCyl ? parseFloat(formState.odCyl) : '',
-    odAxis: formState.odAxis ? parseInt(formState.odAxis) : '',
-    odVa: formState.odVa || null,
-    oeSph: formState.oeSph ? parseFloat(formState.oeSph) : '',
-    oeCyl: formState.oeCyl ? parseFloat(formState.oeCyl) : '',
-    oeAxis: formState.oeAxis ? parseInt(formState.oeAxis) : '',
-    oeVa: formState.oeVa || null,
-    addition: formState.addition ? parseFloat(formState.addition) : '',
-    pd: formState.pd ? parseFloat(formState.pd) : '',
-    prescriptionNotes: formState.prescriptionNotes || null,
+    odSph: parseOptionalDecimal(formState.odSph),
+    odCyl: parseOptionalDecimal(formState.odCyl),
+    odAxis: parseOptionalInteger(formState.odAxis),
+    odVa: emptyStringToNull(formState.odVa),
+    oeSph: parseOptionalDecimal(formState.oeSph),
+    oeCyl: parseOptionalDecimal(formState.oeCyl),
+    oeAxis: parseOptionalInteger(formState.oeAxis),
+    oeVa: emptyStringToNull(formState.oeVa),
+    addition: parseOptionalDecimal(formState.addition),
+    pd: parseOptionalDecimal(formState.pd),
+    prescriptionNotes: emptyStringToNull(formState.prescriptionNotes),
   }
 }
