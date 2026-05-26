@@ -5,19 +5,18 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useAgeGroup } from '@/hooks/useAgeGroup'
+import ExamRefractionFields from '@/components/exams/ExamRefractionFields'
 import {
-  CUSTOM_VISUAL_ACUITY_OPTION,
   DEFAULT_VISUAL_ACUITY,
   isCommonVisualAcuity,
   PRESCRIPTION_NOTE_OPTIONS,
   QUICK_PRESCRIPTION_OPTIONS,
   type QuickPrescriptionOptionId,
-  VISUAL_ACUITY_OPTIONS,
 } from '@/lib/exams/exam-options'
-import { Sparkles, Loader2, ClipboardCheck, AlertCircle, History } from 'lucide-react'
+import { Sparkles, Loader2, ClipboardCheck, AlertCircle } from 'lucide-react'
 
 export interface PatientData {
   id: string
@@ -47,81 +46,6 @@ interface ExamFormProps {
   patient: PatientData
   exam?: EditableExamData
   previousExam?: Omit<EditableExamData, 'id' | 'examDate'> | null
-}
-
-interface VisualAcuityFieldProps {
-  value: string
-  onChange: (value: string) => void
-  customMode: boolean
-  onCustomModeChange: (value: boolean) => void
-  referenceValue?: string | null
-  dataCy: string
-}
-
-function VisualAcuityField({
-  value,
-  onChange,
-  customMode,
-  onCustomModeChange,
-  referenceValue,
-  dataCy,
-}: VisualAcuityFieldProps) {
-  const showingReference = Boolean(referenceValue && !value)
-  const selectedValue = showingReference
-    ? ''
-    : customMode || !isCommonVisualAcuity(value)
-      ? CUSTOM_VISUAL_ACUITY_OPTION
-      : value
-
-  return (
-    <div className="flex min-w-[13rem] items-center justify-center gap-2">
-      <select
-        value={selectedValue}
-        data-cy={dataCy}
-        onChange={(e) => {
-          if (e.target.value === CUSTOM_VISUAL_ACUITY_OPTION) {
-            onCustomModeChange(true)
-            return
-          }
-
-          onCustomModeChange(false)
-          onChange(e.target.value)
-        }}
-        className={`h-10 w-36 min-w-[9rem] rounded-md border border-slate-200 bg-slate-50 px-2 text-center text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-950/20 ${
-          showingReference
-            ? 'text-amber-600 dark:text-amber-400'
-            : 'text-indigo-600 dark:text-indigo-400'
-        }`}
-      >
-        {showingReference && (
-          <option value="" disabled>
-            Ref. {referenceValue}
-          </option>
-        )}
-        {VISUAL_ACUITY_OPTIONS.map((option) => (
-          <option key={option.id} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-        <option value={CUSTOM_VISUAL_ACUITY_OPTION}>Manual</option>
-      </select>
-
-      {customMode ? (
-        <div className="flex items-center gap-2">
-          <Input
-            type="text"
-            placeholder={DEFAULT_VISUAL_ACUITY}
-            data-cy={dataCy}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className="h-10 w-24 text-center font-bold text-indigo-600 placeholder:text-slate-400 dark:text-indigo-400 dark:placeholder:text-slate-500"
-          />
-        </div>
-      ) : (
-        <div className="whitespace-nowrap text-[10px] font-semibold text-slate-400">Padrão: 20/20</div>
-      )}
-    </div>
-  )
 }
 
 export default function ExamForm({ patient, exam, previousExam }: ExamFormProps) {
@@ -314,94 +238,38 @@ export default function ExamForm({ patient, exam, previousExam }: ExamFormProps)
         </CardContent>
       </Card>
 
-      <Card className="border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <CardHeader className="border-b border-slate-100 pb-3 dark:border-slate-800/80">
-          <CardTitle className="text-base font-bold">Graduação Refrativa (OD / OE)</CardTitle>
-          <CardDescription className="text-xs text-slate-400">Preencha os valores esféricos, cilíndricos e eixos de cada olho.</CardDescription>
-          {hasPreviousExam && (
-            <div className="mt-3 flex flex-col gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
-                <History className="h-4 w-4 shrink-0" />
-                <span className="font-semibold">Último exame encontrado. Os valores anteriores aparecem como referência.</span>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="h-8 shrink-0 border-amber-500/30 px-3 text-xs font-bold text-amber-700 hover:bg-amber-500/10 dark:text-amber-300"
-                onClick={applyPreviousExam}
-                data-cy="use-previous-exam-button"
-              >
-                Usar exame anterior como base
-              </Button>
-            </div>
-          )}
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-center text-xs font-semibold">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50 text-[10px] uppercase tracking-wider text-slate-400 dark:border-slate-800 dark:bg-slate-950/20">
-                  <th className="px-4 py-3 text-left">Olho</th>
-                  <th className="py-3">Esférico (SPH)</th>
-                  <th className="py-3">Cilíndrico (CYL)</th>
-                  <th className="py-3">Eixo (AXIS)</th>
-                  <th className="py-3">Acuidade (VA)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                <tr>
-                  <td className="w-32 bg-slate-50/20 px-4 py-4 text-left font-bold text-slate-500 dark:bg-slate-950/10">
-                    OD (Direito)
-                  </td>
-                  <td className="px-2 py-4">
-                    <Input type="number" step="0.25" min="-20" max="20" data-cy="exam-od-sphere-input" placeholder={hasPreviousExam && previousExam?.odSph ? previousExam.odSph : '0.00'} value={odSph} onChange={(e) => setOdSph(e.target.value)} className={`mx-auto w-24 text-center font-bold ${hasPreviousExam && previousExam?.odSph ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80' : ''}`} />
-                  </td>
-                  <td className="px-2 py-4">
-                    <Input type="number" step="0.25" min="-10" max="0" data-cy="exam-od-cylinder-input" placeholder={hasPreviousExam && previousExam?.odCyl ? previousExam.odCyl : '0.00'} value={odCyl} onChange={(e) => setOdCyl(e.target.value)} className={`mx-auto w-24 text-center ${hasPreviousExam && previousExam?.odCyl ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80' : ''}`} />
-                  </td>
-                  <td className="px-2 py-4">
-                    <Input type="number" min="0" max="180" data-cy="exam-od-axis-input" placeholder={hasPreviousExam && previousExam?.odAxis !== null && previousExam?.odAxis !== undefined ? previousExam.odAxis.toString() : 'Eixo'} value={odAxis} onChange={(e) => setOdAxis(e.target.value)} className={`mx-auto w-20 text-center ${hasPreviousExam && previousExam?.odAxis !== null && previousExam?.odAxis !== undefined ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80' : ''}`} />
-                  </td>
-                  <td className="px-2 py-4 align-middle">
-                    <VisualAcuityField
-                      value={odVa}
-                      onChange={setOdVa}
-                      customMode={odVaCustomMode}
-                      onCustomModeChange={setOdVaCustomMode}
-                      referenceValue={hasPreviousExam ? previousExam?.odVa : null}
-                      dataCy="exam-od-visual-acuity-input"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="w-32 bg-slate-50/20 px-4 py-4 text-left font-bold text-slate-500 dark:bg-slate-950/10">
-                    OE (Esquerdo)
-                  </td>
-                  <td className="px-2 py-4">
-                    <Input type="number" step="0.25" min="-20" max="20" data-cy="exam-oe-sphere-input" placeholder={hasPreviousExam && previousExam?.oeSph ? previousExam.oeSph : '0.00'} value={oeSph} onChange={(e) => setOeSph(e.target.value)} className={`mx-auto w-24 text-center font-bold ${hasPreviousExam && previousExam?.oeSph ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80' : ''}`} />
-                  </td>
-                  <td className="px-2 py-4">
-                    <Input type="number" step="0.25" min="-10" max="0" data-cy="exam-oe-cylinder-input" placeholder={hasPreviousExam && previousExam?.oeCyl ? previousExam.oeCyl : '0.00'} value={oeCyl} onChange={(e) => setOeCyl(e.target.value)} className={`mx-auto w-24 text-center ${hasPreviousExam && previousExam?.oeCyl ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80' : ''}`} />
-                  </td>
-                  <td className="px-2 py-4">
-                    <Input type="number" min="0" max="180" data-cy="exam-oe-axis-input" placeholder={hasPreviousExam && previousExam?.oeAxis !== null && previousExam?.oeAxis !== undefined ? previousExam.oeAxis.toString() : 'Eixo'} value={oeAxis} onChange={(e) => setOeAxis(e.target.value)} className={`mx-auto w-20 text-center ${hasPreviousExam && previousExam?.oeAxis !== null && previousExam?.oeAxis !== undefined ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80' : ''}`} />
-                  </td>
-                  <td className="px-2 py-4 align-middle">
-                    <VisualAcuityField
-                      value={oeVa}
-                      onChange={setOeVa}
-                      customMode={oeVaCustomMode}
-                      onCustomModeChange={setOeVaCustomMode}
-                      referenceValue={hasPreviousExam ? previousExam?.oeVa : null}
-                      dataCy="exam-oe-visual-acuity-input"
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      <ExamRefractionFields
+        hasPreviousExam={hasPreviousExam}
+        onApplyPreviousExam={applyPreviousExam}
+        odSph={odSph}
+        onOdSphChange={setOdSph}
+        odCyl={odCyl}
+        onOdCylChange={setOdCyl}
+        odAxis={odAxis}
+        onOdAxisChange={setOdAxis}
+        odVa={odVa}
+        onOdVaChange={setOdVa}
+        odVaCustomMode={odVaCustomMode}
+        onOdVaCustomModeChange={setOdVaCustomMode}
+        oeSph={oeSph}
+        onOeSphChange={setOeSph}
+        oeCyl={oeCyl}
+        onOeCylChange={setOeCyl}
+        oeAxis={oeAxis}
+        onOeAxisChange={setOeAxis}
+        oeVa={oeVa}
+        onOeVaChange={setOeVa}
+        oeVaCustomMode={oeVaCustomMode}
+        onOeVaCustomModeChange={setOeVaCustomMode}
+        previousOdSph={previousExam?.odSph}
+        previousOdCyl={previousExam?.odCyl}
+        previousOdAxis={previousExam?.odAxis}
+        previousOdVa={previousExam?.odVa}
+        previousOeSph={previousExam?.oeSph}
+        previousOeCyl={previousExam?.oeCyl}
+        previousOeAxis={previousExam?.oeAxis}
+        previousOeVa={previousExam?.oeVa}
+      />
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <Card className="border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 md:col-span-2">
