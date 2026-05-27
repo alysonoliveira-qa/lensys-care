@@ -55,6 +55,36 @@ describe('POST /api/exams ownership', () => {
       clinic_id: 'clinic-a',
     })
     mocks.patientFindFirst.mockResolvedValue(null)
+    mocks.examCreate.mockResolvedValue({ id: 'exam-clinic-a' })
+    mocks.createAlertForExam.mockResolvedValue(undefined)
+  })
+
+  it('creates an exam when the patient belongs to the authenticated clinic', async () => {
+    mocks.patientFindFirst.mockResolvedValue({ id: 'patient-clinic-a' })
+
+    const response = await POST(new Request('http://localhost/api/exams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        patientId: 'patient-clinic-a',
+        examDate: '2026-05-27',
+      }),
+    }))
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({
+      success: true,
+      exam: { id: 'exam-clinic-a' },
+    })
+    expect(mocks.patientFindFirst).toHaveBeenCalledWith({
+      where: {
+        id: 'patient-clinic-a',
+        clinic_id: 'clinic-a',
+      },
+      select: { id: true },
+    })
+    expect(mocks.examCreate).toHaveBeenCalledOnce()
+    expect(mocks.createAlertForExam).toHaveBeenCalledOnce()
   })
 
   it('blocks exam creation when the patient does not belong to the authenticated clinic', async () => {
@@ -75,6 +105,32 @@ describe('POST /api/exams ownership', () => {
     expect(mocks.patientFindFirst).toHaveBeenCalledWith({
       where: {
         id: 'patient-clinic-b',
+        clinic_id: 'clinic-a',
+      },
+      select: { id: true },
+    })
+    expect(mocks.examCreate).not.toHaveBeenCalled()
+    expect(mocks.createAlertForExam).not.toHaveBeenCalled()
+  })
+
+  it('blocks exam creation when the patient does not exist', async () => {
+    const response = await POST(new Request('http://localhost/api/exams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        patientId: 'missing-patient',
+        examDate: '2026-05-27',
+      }),
+    }))
+
+    expect(response.status).toBe(404)
+    await expect(response.json()).resolves.toEqual({
+      error: 'PATIENT_NOT_FOUND',
+      message: 'Paciente não encontrado.',
+    })
+    expect(mocks.patientFindFirst).toHaveBeenCalledWith({
+      where: {
+        id: 'missing-patient',
         clinic_id: 'clinic-a',
       },
       select: { id: true },
