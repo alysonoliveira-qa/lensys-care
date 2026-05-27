@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import DeleteExamButton from '@/components/exams/DeleteExamButton'
+import { formatClinicalExamDate } from '@/lib/patients/patient-detail-mappers'
 import { Calendar, FileText, Pencil, Printer } from 'lucide-react'
 
 type DecimalLike = number | string | { toString(): string; valueOf(): string | number }
@@ -63,7 +64,7 @@ export default function PatientExamHistory({ exams: initialExams, patientId }: P
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-indigo-400" />
               <span className="font-bold text-slate-700 dark:text-slate-300">
-                Exame Realizado em: {new Date(exam.exam_date).toLocaleDateString('pt-BR')}
+                Exame Realizado em: {formatClinicalExamDate(exam.exam_date)}
               </span>
             </div>
             <div className="flex items-center gap-3">
