@@ -80,6 +80,7 @@ export default function ExamForm({ patient, exam, previousExam }: ExamFormProps)
     filtroAzul: Boolean(exam?.prescriptionNotes?.includes(quickPrescriptionNotes.filtroAzul)),
     fotossensivel: Boolean(exam?.prescriptionNotes?.includes(quickPrescriptionNotes.fotossensivel)),
   })
+  const [isPreviousExamApplied, setIsPreviousExamApplied] = useState(false)
   const { age, ageGroup, suggestedAddition } = useAgeGroup(patient.dob.toString())
   const { error, handleSubmit, loading } = useExamFormSubmission({
     patientId: patient.id,
@@ -127,6 +128,7 @@ export default function ExamForm({ patient, exam, previousExam }: ExamFormProps)
     setOeVaCustomMode(Boolean(previousExam.oeVa && !isCommonVisualAcuity(previousExam.oeVa)))
     setAddition(previousExam.addition ?? '')
     setPd(previousExam.pd ?? '')
+    setIsPreviousExamApplied(true)
   }
 
   const applyPrescriptionNoteTemplate = (template: string) => {
@@ -214,6 +216,7 @@ export default function ExamForm({ patient, exam, previousExam }: ExamFormProps)
 
       <ExamRefractionFields
         hasPreviousExam={hasPreviousExam}
+        isPreviousExamApplied={isPreviousExamApplied}
         onApplyPreviousExam={applyPreviousExam}
         odSph={odSph}
         onOdSphChange={setOdSph}

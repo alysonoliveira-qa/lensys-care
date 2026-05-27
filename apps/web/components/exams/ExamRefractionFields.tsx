@@ -19,6 +19,7 @@ interface VisualAcuityFieldProps {
 
 interface ExamRefractionFieldsProps {
   hasPreviousExam: boolean
+  isPreviousExamApplied: boolean
   onApplyPreviousExam: () => void
   odSph: string
   onOdSphChange: (value: string) => void
@@ -118,6 +119,7 @@ function VisualAcuityField({
 
 export default function ExamRefractionFields({
   hasPreviousExam,
+  isPreviousExamApplied,
   onApplyPreviousExam,
   odSph,
   onOdSphChange,
@@ -154,7 +156,10 @@ export default function ExamRefractionFields({
         <CardTitle className="text-base font-bold">Graduação Refrativa (OD / OE)</CardTitle>
         <CardDescription className="text-xs text-slate-400">Preencha os valores esféricos, cilíndricos e eixos de cada olho.</CardDescription>
         {hasPreviousExam && (
-          <PreviousExamReferencePanel onUsePreviousExam={onApplyPreviousExam} />
+          <PreviousExamReferencePanel
+            onUsePreviousExam={onApplyPreviousExam}
+            isApplied={isPreviousExamApplied}
+          />
         )}
       </CardHeader>
       <CardContent className="p-0">
