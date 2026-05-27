@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import {
   AgeDistributionPanel,
   DashboardPanelFallback,
+  preloadDashboardSecondaryData,
   RecentPatientsPanel,
   UpcomingRecallsPanel,
 } from '@/components/dashboard/DashboardAsyncSections'
@@ -65,7 +66,9 @@ export default async function DashboardPage() {
   const { isConecta, planLabel } = resolveDashboardPlanStatus(profile)
 
   const dashboardQueriesStartedAt = startPerformanceStep()
-  const metrics = await getDashboardMetrics(clinic.id)
+  const metricsPromise = getDashboardMetrics(clinic.id)
+  const secondaryData = preloadDashboardSecondaryData(clinic.id)
+  const metrics = await metricsPromise
   logPerformanceStep(timer, 'prisma.dashboard_queries_parallel', dashboardQueriesStartedAt)
 
   const { totalPatients, totalExams, pendingAlerts, sentAlerts } = metrics
@@ -101,7 +104,11 @@ export default async function DashboardPage() {
               />
             }
           >
-            <AgeDistributionPanel clinicId={clinic.id} totalPatients={totalPatients} />
+            <AgeDistributionPanel
+              clinicId={clinic.id}
+              totalPatients={totalPatients}
+              preloadedData={secondaryData.ageDistribution}
+            />
           </Suspense>
 
           <Suspense
@@ -112,7 +119,10 @@ export default async function DashboardPage() {
               />
             }
           >
-            <RecentPatientsPanel clinicId={clinic.id} />
+            <RecentPatientsPanel
+              clinicId={clinic.id}
+              preloadedData={secondaryData.recentPatients}
+            />
           </Suspense>
         </div>
 
@@ -125,7 +135,10 @@ export default async function DashboardPage() {
               />
             }
           >
-            <UpcomingRecallsPanel clinicId={clinic.id} />
+            <UpcomingRecallsPanel
+              clinicId={clinic.id}
+              preloadedData={secondaryData.upcomingRecalls}
+            />
           </Suspense>
 
           <DashboardPlanStatusCard isConecta={isConecta} planLabel={planLabel} />

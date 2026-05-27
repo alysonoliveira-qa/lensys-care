@@ -42,12 +42,25 @@ interface ClinicPanelProps {
 
 interface AgeDistributionPanelProps extends ClinicPanelProps {
   totalPatients: number
+  preloadedData?: ReturnType<typeof preloadDashboardSecondaryData>['ageDistribution']
+}
+
+interface RecentPatientsPanelProps extends ClinicPanelProps {
+  preloadedData?: ReturnType<typeof preloadDashboardSecondaryData>['recentPatients']
+}
+
+interface UpcomingRecallsPanelProps extends ClinicPanelProps {
+  preloadedData?: ReturnType<typeof preloadDashboardSecondaryData>['upcomingRecalls']
 }
 
 interface DashboardPanelFallbackProps {
   title: string
   description: string
 }
+
+type PreloadedPanelResult<T> =
+  | { status: 'fulfilled'; value: T }
+  | { status: 'rejected'; reason: unknown }
 
 export function DashboardPanelFallback({
   title,
@@ -56,18 +69,72 @@ export function DashboardPanelFallback({
   return <DashboardPanelFallbackView title={title} description={description} />
 }
 
+function preloadPanelData<T>(
+  label: string,
+  step: string,
+  load: () => Promise<T>
+) {
+  const timer = startPerformanceTimer(label)
+  const queryStartedAt = startPerformanceStep()
+  const data: Promise<PreloadedPanelResult<T>> = load().then(
+    (value): PreloadedPanelResult<T> => {
+      logPerformanceStep(timer, step, queryStartedAt)
+      return { status: 'fulfilled', value }
+    },
+    (reason: unknown): PreloadedPanelResult<T> => ({ status: 'rejected', reason })
+  )
+
+  return { timer, data }
+}
+
+async function readPreloadedPanelData<T>(
+  pendingData: ReturnType<typeof preloadPanelData<T>>
+) {
+  const result = await pendingData.data
+
+  if (result.status === 'rejected') {
+    throw result.reason
+  }
+
+  return result.value
+}
+
+export function preloadDashboardSecondaryData(clinicId: string) {
+  const currentYear = new Date().getFullYear()
+
+  return {
+    ageDistribution: preloadPanelData(
+      'page /dashboard.section.age_distribution',
+      'prisma.age_group_counts',
+      () => getDashboardAgeDistribution(clinicId, currentYear)
+    ),
+    recentPatients: preloadPanelData(
+      'page /dashboard.section.recent_patients',
+      'prisma.recent_patients',
+      () => getRecentPatientsForDashboard(clinicId)
+    ),
+    upcomingRecalls: preloadPanelData(
+      'page /dashboard.section.upcoming_recalls',
+      'prisma.recent_alerts',
+      () => getUpcomingRecallsForDashboard(clinicId)
+    ),
+  }
+}
+
 export async function AgeDistributionPanel({
   clinicId,
   totalPatients,
+  preloadedData,
 }: AgeDistributionPanelProps) {
-  const timer = startPerformanceTimer('page /dashboard.section.age_distribution')
-  const currentYear = new Date().getFullYear()
-  const queryStartedAt = startPerformanceStep()
-  const ageGroups = await getDashboardAgeDistribution(clinicId, currentYear)
-  logPerformanceStep(timer, 'prisma.age_group_counts', queryStartedAt)
+  const pendingData = preloadedData ?? preloadPanelData(
+    'page /dashboard.section.age_distribution',
+    'prisma.age_group_counts',
+    () => getDashboardAgeDistribution(clinicId, new Date().getFullYear())
+  )
+  const ageGroups = await readPreloadedPanelData(pendingData)
 
   const { groups, maxGroupValue } = buildDashboardAgeDistribution(ageGroups)
-  endPerformanceTimer(timer)
+  endPerformanceTimer(pendingData.timer)
 
   return (
     <AgeDistributionSection
@@ -78,22 +145,32 @@ export async function AgeDistributionPanel({
   )
 }
 
-export async function RecentPatientsPanel({ clinicId }: ClinicPanelProps) {
-  const timer = startPerformanceTimer('page /dashboard.section.recent_patients')
-  const queryStartedAt = startPerformanceStep()
-  const recentPatients = await getRecentPatientsForDashboard(clinicId)
-  logPerformanceStep(timer, 'prisma.recent_patients', queryStartedAt)
-  endPerformanceTimer(timer)
+export async function RecentPatientsPanel({
+  clinicId,
+  preloadedData,
+}: RecentPatientsPanelProps) {
+  const pendingData = preloadedData ?? preloadPanelData(
+    'page /dashboard.section.recent_patients',
+    'prisma.recent_patients',
+    () => getRecentPatientsForDashboard(clinicId)
+  )
+  const recentPatients = await readPreloadedPanelData(pendingData)
+  endPerformanceTimer(pendingData.timer)
 
   return <RecentPatientsSection recentPatients={recentPatients as RecentPatient[]} />
 }
 
-export async function UpcomingRecallsPanel({ clinicId }: ClinicPanelProps) {
-  const timer = startPerformanceTimer('page /dashboard.section.upcoming_recalls')
-  const queryStartedAt = startPerformanceStep()
-  const recentAlerts = await getUpcomingRecallsForDashboard(clinicId)
-  logPerformanceStep(timer, 'prisma.recent_alerts', queryStartedAt)
-  endPerformanceTimer(timer)
+export async function UpcomingRecallsPanel({
+  clinicId,
+  preloadedData,
+}: UpcomingRecallsPanelProps) {
+  const pendingData = preloadedData ?? preloadPanelData(
+    'page /dashboard.section.upcoming_recalls',
+    'prisma.recent_alerts',
+    () => getUpcomingRecallsForDashboard(clinicId)
+  )
+  const recentAlerts = await readPreloadedPanelData(pendingData)
+  endPerformanceTimer(pendingData.timer)
 
   return <UpcomingRecallsSection recentAlerts={recentAlerts as RecentAlert[]} />
 }
