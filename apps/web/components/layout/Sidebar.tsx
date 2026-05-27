@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import SidebarProfileSection from '@/components/layout/SidebarProfileSection'
 import SidebarNavigation from '@/components/layout/sidebar/SidebarNavigation'
 import SidebarPlanStatus from '@/components/layout/sidebar/SidebarPlanStatus'
+import useSidebarState from '@/components/layout/sidebar/useSidebarState'
 import {
   LogOut,
   PanelLeftClose,
@@ -13,11 +14,6 @@ import {
   Sparkles,
   X,
 } from 'lucide-react'
-
-const SIDEBAR_STORAGE_KEY = 'lensys-care-sidebar-collapsed'
-const MOBILE_SIDEBAR_EVENT = 'lensys:toggle-mobile-sidebar'
-
-type ViewportMode = 'mobile' | 'tablet' | 'desktop'
 
 interface ClinicSummary {
   name: string
@@ -46,83 +42,18 @@ export default function Sidebar() {
   const [subscription, setSubscription] = useState<SubscriptionSummary | null>(null)
   const [pendingPath, setPendingPath] = useState<string | null>(null)
   const [authEmail, setAuthEmail] = useState<string | null>(null)
-  const [desktopCollapsed, setDesktopCollapsed] = useState(false)
-  const [tabletCollapsed, setTabletCollapsed] = useState(true)
-  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
-  const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop')
-  const [hasLoadedCollapsePreference, setHasLoadedCollapsePreference] = useState(false)
+  const {
+    asideWidthClass,
+    handleToggleCollapse,
+    isCollapsed,
+    isMobile,
+    mobileDrawerOpen,
+    setMobileDrawerOpen,
+  } = useSidebarState(pathname)
 
   useEffect(() => {
     setPendingPath(null)
-    setMobileDrawerOpen(false)
   }, [pathname])
-
-  useEffect(() => {
-    try {
-      const storedValue = window.localStorage.getItem(SIDEBAR_STORAGE_KEY)
-      if (storedValue === 'true') {
-        setDesktopCollapsed(true)
-      }
-    } catch (error) {
-      console.error('Error reading sidebar preference:', error)
-    } finally {
-      setHasLoadedCollapsePreference(true)
-    }
-  }, [])
-
-  useEffect(() => {
-    const updateViewportMode = () => {
-      const width = window.innerWidth
-
-      if (width < 768) {
-        setViewportMode('mobile')
-        return
-      }
-
-      if (width < 1024) {
-        setViewportMode('tablet')
-        setTabletCollapsed(true)
-        return
-      }
-
-      setViewportMode('desktop')
-    }
-
-    updateViewportMode()
-    window.addEventListener('resize', updateViewportMode)
-
-    return () => {
-      window.removeEventListener('resize', updateViewportMode)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (viewportMode !== 'mobile') {
-      setMobileDrawerOpen(false)
-    }
-  }, [viewportMode])
-
-  useEffect(() => {
-    const handleToggleMobileSidebar = () => {
-      if (window.innerWidth < 768) {
-        setMobileDrawerOpen((currentValue) => !currentValue)
-      }
-    }
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setMobileDrawerOpen(false)
-      }
-    }
-
-    window.addEventListener(MOBILE_SIDEBAR_EVENT, handleToggleMobileSidebar)
-    window.addEventListener('keydown', handleEscape)
-
-    return () => {
-      window.removeEventListener(MOBILE_SIDEBAR_EVENT, handleToggleMobileSidebar)
-      window.removeEventListener('keydown', handleEscape)
-    }
-  }, [])
 
   useEffect(() => {
     async function loadData() {
@@ -193,46 +124,17 @@ export default function Sidebar() {
     router.refresh()
   }
 
-  const handleToggleCollapse = () => {
-    if (viewportMode === 'tablet') {
-      setTabletCollapsed((currentValue) => !currentValue)
-      return
-    }
-
-    setDesktopCollapsed((currentValue) => {
-      const nextValue = !currentValue
-
-      try {
-        window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(nextValue))
-      } catch (error) {
-        console.error('Error saving sidebar preference:', error)
-      }
-
-      return nextValue
-    })
-  }
-
   const handleMenuItemClick = (path: string, isActive: boolean) => {
     if (!isActive) {
       setPendingPath(path)
     }
 
-    if (viewportMode === 'mobile') {
+    if (isMobile) {
       setMobileDrawerOpen(false)
     }
   }
 
   const isConecta = subscription?.plan === 'CONECTA' && subscription?.status !== 'CANCELED'
-  const isMobile = viewportMode === 'mobile'
-  const isCollapsed = viewportMode === 'tablet'
-    ? tabletCollapsed
-    : viewportMode === 'desktop'
-      ? hasLoadedCollapsePreference && desktopCollapsed
-      : false
-
-  const asideWidthClass = viewportMode === 'tablet'
-    ? (isCollapsed ? 'md:w-20 lg:w-20' : 'md:w-56 lg:w-56')
-    : (isCollapsed ? 'md:w-20 lg:w-20' : 'md:w-20 lg:w-64')
 
   return (
     <>
