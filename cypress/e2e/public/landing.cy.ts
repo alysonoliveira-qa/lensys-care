@@ -7,8 +7,9 @@ describe("Public navigation", () => {
 
     cy.getByCy("landing-login-link").should("be.visible");
     cy.getByCy("landing-register-link").should("be.visible");
+    cy.contains("Ver planos").should("not.exist");
 
-    cy.contains("Ver planos").click();
+    cy.getByCy("landing-register-link").click();
     cy.location("pathname").should("eq", "/planos");
     cy.contains("Planos para sua rotina clínica").should("be.visible");
 
@@ -23,6 +24,8 @@ describe("Public navigation", () => {
     cy.location("pathname").should("eq", "/");
 
     cy.getByCy("landing-register-link").click();
+    cy.location("pathname").should("eq", "/planos");
+    cy.contains("Começar teste grátis").click();
     cy.location("pathname").should("eq", "/register");
     cy.contains("Criar conta").should("be.visible");
   });

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Activity, Bell, LayoutDashboard, Sparkles, Users } from 'lucide-react'
+
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
@@ -64,15 +65,7 @@ export default function Home() {
                 size="lg"
                 className="w-full border-slate-700 bg-slate-900/50 text-white hover:border-indigo-400/40 hover:bg-slate-800 hover:text-white sm:w-auto"
               >
-                <Link href="/register" data-cy="landing-register-link">Criar conta</Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                size="lg"
-                className="w-full text-slate-300 hover:bg-slate-900 hover:text-white sm:w-auto"
-              >
-                <Link href="/planos" data-cy="landing-plans-link">Ver planos</Link>
+                <Link href="/planos" data-cy="landing-register-link">Criar conta</Link>
               </Button>
             </div>
           </div>
