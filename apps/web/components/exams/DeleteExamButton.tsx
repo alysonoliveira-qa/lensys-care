@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
+
 import { Button } from '@/components/ui/button'
 
 interface DeleteExamButtonProps {
@@ -23,16 +24,16 @@ export default function DeleteExamButton({ examId, onDeleted }: DeleteExamButton
 
     try {
       const response = await fetch(`/api/exams/${examId}`, { method: 'DELETE' })
-      const data = await response.json() as { message?: string }
+      const data = (await response.json()) as { message?: string }
 
       if (!response.ok) {
-        throw new Error(data.message || 'Nao foi possivel excluir o exame.')
+        throw new Error(data.message || 'Não foi possível excluir o exame.')
       }
 
       onDeleted?.(examId)
       router.refresh()
     } catch (error: unknown) {
-      window.alert(error instanceof Error ? error.message : 'Nao foi possivel excluir o exame.')
+      window.alert(error instanceof Error ? error.message : 'Não foi possível excluir o exame.')
       setDeleting(false)
     }
   }

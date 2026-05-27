@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Loader2, X } from 'lucide-react'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -74,7 +75,7 @@ export default function PreferredDisplayNameDialog({
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.message || 'Nao foi possivel atualizar o perfil.')
+        throw new Error(data.message || 'Não foi possível atualizar o perfil.')
       }
 
       onProfileUpdated({
@@ -93,7 +94,7 @@ export default function PreferredDisplayNameDialog({
       }, 850)
     } catch (error) {
       console.error('Error updating profile:', error)
-      setSaveError(error instanceof Error ? error.message : 'Nao foi possivel atualizar o perfil.')
+      setSaveError(error instanceof Error ? error.message : 'Não foi possível atualizar o perfil.')
     } finally {
       setIsSaving(false)
     }
@@ -137,7 +138,7 @@ export default function PreferredDisplayNameDialog({
             data-cy="preferred-name-input"
           />
           <p className="text-xs text-slate-500">
-            Se ficar em branco, o sistema usara seu nome completo, e-mail ou Usuario.
+            Se ficar em branco, o sistema usará seu nome completo, e-mail ou usuário.
           </p>
         </div>
 

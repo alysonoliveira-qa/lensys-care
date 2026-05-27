@@ -27,8 +27,8 @@ export default function AgeDistributionSection({
     <Card className="rounded-2xl border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
       <DashboardPanelHeading
         icon={PieChart}
-        title="DistribuiÃ§Ã£o de Pacientes por Faixa EtÃ¡ria"
-        description="AnÃ¡lise demogrÃ¡fica para adequaÃ§Ã£o de serviÃ§os e presbiopia."
+        title="Distribuição de Pacientes por Faixa Etária"
+        description="Análise demográfica para adequação de serviços e presbiopia."
         action={
           <Badge variant="secondary" className="hidden sm:inline-flex">
             {totalPatients} paciente(s)

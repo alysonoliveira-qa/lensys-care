@@ -66,7 +66,7 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
           <PatientRecallsCard alerts={patient.alerts} />
 
           <div className="space-y-4">
-            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Historico de Exames</h3>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Histórico de Exames</h3>
             <PatientExamHistory exams={patient.exams} patientId={patient.id} />
           </div>
         </div>

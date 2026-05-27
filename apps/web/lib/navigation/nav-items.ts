@@ -34,7 +34,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
   },
   {
     id: 'alerts',
-    label: 'Alertas de Renovacao',
+    label: 'Alertas de Renovação',
     href: '/alerts',
     icon: Bell,
     dataCy: 'sidebar-alerts-link',
@@ -42,7 +42,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
   },
   {
     id: 'plans',
-    label: 'Planos e Precos',
+    label: 'Planos e Preços',
     href: '/dashboard/planos',
     icon: CreditCard,
     dataCy: 'sidebar-plans-link',

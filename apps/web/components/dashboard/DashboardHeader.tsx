@@ -26,16 +26,16 @@ export default function DashboardHeader({
         <div className="space-y-4">
           <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-white/80 px-3 py-1 text-xs font-semibold text-violet-700 shadow-sm dark:border-violet-900/60 dark:bg-slate-900/80 dark:text-violet-300">
             <Sparkles className="h-3.5 w-3.5" />
-            Painel clÃ­nico
+            Painel clínico
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">OlÃ¡,</p>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Olá,</p>
             <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 sm:text-4xl">
               {displayName}
             </h2>
             <p className="max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-              Aqui estÃ¡ o resumo clÃ­nico e operacional da{' '}
+              Aqui está o resumo clínico e operacional da{' '}
               <span className="font-semibold text-slate-900 dark:text-slate-100">{clinicName}</span> hoje.
             </p>
           </div>

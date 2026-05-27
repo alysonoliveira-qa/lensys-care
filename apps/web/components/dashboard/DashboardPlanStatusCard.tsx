@@ -23,7 +23,7 @@ export default function DashboardPlanStatusCard({
         </div>
         <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-slate-100">
           <UserCheck className="h-5 w-5" />
-          <span>Modalidade ClÃ­nica</span>
+          <span>Modalidade Clínica</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="relative z-10 space-y-4">
@@ -32,8 +32,8 @@ export default function DashboardPlanStatusCard({
         </div>
         <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
           {isConecta
-            ? 'Sua clÃ­nica estÃ¡ com todas as automaÃ§Ãµes de alertas via WhatsApp, SMS e Recall em Massa ativas.'
-            : 'Sua clÃ­nica estÃ¡ no plano Essencial. Assine o plano Conecta para desbloquear automaÃ§Ãµes via WhatsApp e SMS.'}
+            ? 'Sua clínica está com todas as automações de alertas via WhatsApp, SMS e Recall em Massa ativas.'
+            : 'Sua clínica está no plano Essencial. Assine o plano Conecta para desbloquear automações via WhatsApp e SMS.'}
         </p>
         {!isConecta && (
           <Link href="/dashboard/planos" passHref>

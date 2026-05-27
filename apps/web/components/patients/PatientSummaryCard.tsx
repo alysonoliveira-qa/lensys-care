@@ -69,7 +69,7 @@ export default function PatientSummaryCard({
 
         {notes && (
           <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-2">Observacoes Clinicas</div>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-2">Observações Clínicas</div>
             <div className="p-3 bg-slate-50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800 rounded-xl text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-semibold">
               {notes}
             </div>

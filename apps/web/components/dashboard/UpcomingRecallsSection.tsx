@@ -29,7 +29,7 @@ export default function UpcomingRecallsSection({
     <Card className="rounded-2xl border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
       <DashboardPanelHeading
         icon={CalendarClock}
-        title="PrÃ³ximos Recalls"
+        title="Próximos Recalls"
         description="Lembretes de exames com validade de 1 ano expirando em breve."
         action={
           <Link
@@ -46,7 +46,7 @@ export default function UpcomingRecallsSection({
             <BellRing className="h-10 w-10 text-slate-300 dark:text-slate-700" />
             <div className="space-y-1">
               <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Nenhum alerta pendente no momento.</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">Quando houver recalls para acompanhar, eles aparecerÃ£o aqui.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">Quando houver recalls para acompanhar, eles aparecerão aqui.</p>
             </div>
           </div>
         ) : (

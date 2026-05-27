@@ -12,7 +12,7 @@ import { useAgeGroup } from '@/hooks/useAgeGroup'
 import { buildPatientPayload, type PatientFormValues } from '@/lib/patients/patient-form-mapper'
 
 const TODAY = new Date().toISOString().split('T')[0]
-const FUTURE_DOB_MESSAGE = 'A data de nascimento nao pode ser futura.'
+const FUTURE_DOB_MESSAGE = 'A data de nascimento não pode ser futura.'
 
 interface PatientFormProps {
   mode: 'create' | 'edit'
@@ -42,7 +42,7 @@ export default function PatientForm({
     event.preventDefault()
 
     if (!fullName || !dob) {
-      setError('Por favor, preencha todos os campos obrigatorios.')
+      setError('Por favor, preencha todos os campos obrigatórios.')
       return
     }
 
@@ -52,7 +52,7 @@ export default function PatientForm({
     }
 
     if (isEditMode && !patientId) {
-      setError('Paciente nao identificado para atualizacao.')
+      setError('Paciente não identificado para atualização.')
       return
     }
 
@@ -85,7 +85,7 @@ export default function PatientForm({
       router.refresh()
     } catch (err: unknown) {
       console.error(err)
-      setError(err instanceof Error ? err.message : 'Erro de conexao. Tente novamente.')
+      setError(err instanceof Error ? err.message : 'Erro de conexão. Tente novamente.')
     } finally {
       setLoading(false)
     }
@@ -107,8 +107,8 @@ export default function PatientForm({
         </h2>
         <p className="text-sm text-slate-500">
           {isEditMode
-            ? 'Atualize apenas os dados cadastrais basicos do paciente.'
-            : 'Preencha os dados cadastrais basicos do paciente para iniciar o prontuario.'}
+            ? 'Atualize apenas os dados cadastrais básicos do paciente.'
+            : 'Preencha os dados cadastrais básicos do paciente para iniciar o prontuário.'}
         </p>
       </div>
 
@@ -133,7 +133,7 @@ export default function PatientForm({
                 <Input
                   type="text"
                   data-cy="patient-name-input"
-                  placeholder="ex: Joao da Silva Santos"
+                  placeholder="ex: João da Silva Santos"
                   value={fullName}
                   onChange={(event) => setFullName(event.target.value)}
                   className="h-10 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/20"
@@ -179,7 +179,7 @@ export default function PatientForm({
                 <div className="flex items-center gap-2.5 rounded-xl border border-emerald-500/15 bg-emerald-500/5 p-3.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 md:col-span-2">
                   <Sparkles className="h-4.5 w-4.5 flex-shrink-0 text-emerald-500" />
                   <span>
-                    Paciente com presbiopia. Adicao presbiopica sugerida:{' '}
+                    Paciente com presbiopia. Adição presbiópica sugerida:{' '}
                     <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
                       +{suggestedAddition.toFixed(2)} D
                     </span>
@@ -219,11 +219,11 @@ export default function PatientForm({
 
               <div className="space-y-2 md:col-span-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Observacoes Clinicas Gerais
+                  Observações Clínicas Gerais
                 </label>
                 <textarea
                   data-cy="patient-notes-input"
-                  placeholder="Insira patologias previas, historico familiar ou outras notas clinicas relevantes..."
+                  placeholder="Insira patologias prévias, histórico familiar ou outras notas clínicas relevantes..."
                   value={notes}
                   onChange={(event) => setNotes(event.target.value)}
                   rows={3}
@@ -256,7 +256,7 @@ export default function PatientForm({
                     Salvando...
                   </>
                 ) : isEditMode ? (
-                  'Salvar Alteracoes'
+                  'Salvar Alterações'
                 ) : (
                   'Salvar Paciente'
                 )}

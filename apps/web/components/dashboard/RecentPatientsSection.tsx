@@ -25,8 +25,8 @@ export default function RecentPatientsSection({
     <Card className="rounded-2xl border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
       <DashboardPanelHeading
         icon={UserRoundPlus}
-        title="Pacientes RecÃ©m-Cadastrados"
-        description="Os Ãºltimos 5 pacientes registrados na clÃ­nica."
+        title="Pacientes Recém-Cadastrados"
+        description="Os últimos 5 pacientes registrados na clínica."
         action={
           <Link
             href="/patients"
@@ -43,7 +43,7 @@ export default function RecentPatientsSection({
             <UsersRound className="h-10 w-10 text-slate-300 dark:text-slate-700" />
             <div className="space-y-1">
               <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Nenhum paciente cadastrado ainda.</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">Os novos cadastros aparecerÃ£o aqui automaticamente.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">Os novos cadastros aparecerão aqui automaticamente.</p>
             </div>
           </div>
         ) : (
@@ -54,7 +54,7 @@ export default function RecentPatientsSection({
                   <th className="px-4 py-3">Nome</th>
                   <th className="px-4 py-3">Data Nasc.</th>
                   <th className="px-4 py-3">Contato</th>
-                  <th className="px-4 py-3 text-right">AÃ§Ã£o</th>
+                  <th className="px-4 py-3 text-right">Ação</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">

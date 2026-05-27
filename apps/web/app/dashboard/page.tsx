@@ -99,8 +99,8 @@ export default async function DashboardPage() {
           <Suspense
             fallback={
               <DashboardPanelFallback
-                title="Distribuicao de Pacientes por Faixa Etaria"
-                description="Carregando analise demografica..."
+                title="Distribuição de Pacientes por Faixa Etária"
+                description="Carregando análise demográfica..."
               />
             }
           >
@@ -114,8 +114,8 @@ export default async function DashboardPage() {
           <Suspense
             fallback={
               <DashboardPanelFallback
-                title="Pacientes Recem-Cadastrados"
-                description="Carregando ultimos registros..."
+                title="Pacientes Recém-Cadastrados"
+                description="Carregando últimos registros..."
               />
             }
           >
@@ -130,7 +130,7 @@ export default async function DashboardPage() {
           <Suspense
             fallback={
               <DashboardPanelFallback
-                title="Proximos Recalls"
+                title="Próximos Recalls"
                 description="Carregando lembretes pendentes..."
               />
             }

@@ -165,7 +165,7 @@ export default function Sidebar() {
                   Lensys <span className="text-indigo-400">Care</span>
                 </span>
                 <span className="mt-1 truncate text-[10px] font-semibold text-slate-500">
-                  {clinic?.name || 'Carregando clinica...'}
+                  {clinic?.name || 'Carregando clínica...'}
                 </span>
               </div>
             )}
