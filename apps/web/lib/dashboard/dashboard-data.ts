@@ -43,20 +43,17 @@ export async function getDashboardMetrics(clinicId: string) {
         INNER JOIN patients ON patients.id = exams.patient_id
         WHERE patients.clinic_id = ${clinicId}::uuid
       ) AS "totalExams",
-      (
-        SELECT COUNT(*)::integer
-        FROM alerts
-        INNER JOIN patients ON patients.id = alerts.patient_id
-        WHERE patients.clinic_id = ${clinicId}::uuid
-          AND alerts.status = 'PENDING'
-      ) AS "pendingAlerts",
-      (
-        SELECT COUNT(*)::integer
-        FROM alerts
-        INNER JOIN patients ON patients.id = alerts.patient_id
-        WHERE patients.clinic_id = ${clinicId}::uuid
-          AND alerts.status = 'SENT'
-      ) AS "sentAlerts"
+      alert_counts."pendingAlerts",
+      alert_counts."sentAlerts"
+    FROM (
+      SELECT
+        COUNT(*) FILTER (WHERE alerts.status = 'PENDING')::integer AS "pendingAlerts",
+        COUNT(*) FILTER (WHERE alerts.status = 'SENT')::integer AS "sentAlerts"
+      FROM alerts
+      INNER JOIN patients ON patients.id = alerts.patient_id
+      WHERE patients.clinic_id = ${clinicId}::uuid
+        AND alerts.status IN ('PENDING', 'SENT')
+    ) AS alert_counts
   `
 
   return metrics
