@@ -2,11 +2,9 @@
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { ALERT_STATUS_CONFIG } from '@/lib/alerts/alert-status-config'
-import { Bell, Calendar, Eye, Mail, Phone, RefreshCw, Trash2, Loader2, CheckCircle2 } from 'lucide-react'
+import { Bell } from 'lucide-react'
+
+import AlertActionRow from '@/components/alerts/AlertActionRow'
 
 export interface AlertData {
   id: string
@@ -84,102 +82,17 @@ export default function AlertActionsList({ alerts, activeStatus }: AlertActionsL
               {alerts.map((alert) => {
                 const isLoading = actionLoading === alert.id
                 const isSuccess = successAlert === alert.id
-                const statusConfig = ALERT_STATUS_CONFIG[alert.status]
 
                 return (
-                  <tr key={alert.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-950/10 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="font-bold text-slate-800 dark:text-slate-100">{alert.patient.full_name}</div>
-                      <div className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5 font-semibold">
-                        {alert.patient.phone && (
-                          <span className="flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
-                            {alert.patient.phone}
-                          </span>
-                        )}
-                        {alert.patient.email && (
-                          <span className="flex items-center gap-1">
-                            <Mail className="h-3 w-3" />
-                            {alert.patient.email}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-4 px-6 text-slate-600 dark:text-slate-300 font-semibold">
-                      <span className="flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                        {new Date(alert.due_date).toLocaleDateString('pt-BR')}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <Badge variant="secondary" className="text-[9px] uppercase py-0.5 px-2">
-                        {alert.channel}
-                      </Badge>
-                    </td>
-                    <td className="py-4 px-6">
-                      <Badge
-                        variant={statusConfig.badgeVariant}
-                        className="text-[9px] font-bold py-0.5 px-2"
-                      >
-                        {statusConfig.label}
-                      </Badge>
-                      {alert.sent_at && (
-                        <span className="text-[9px] text-slate-400 block mt-1">
-                          Enviado em: {new Date(alert.sent_at).toLocaleDateString('pt-BR')}
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-4 px-6 text-right space-x-1.5">
-                      <Link href={`/patients/${alert.patient_id}`} passHref>
-                        <Button size="sm" variant="outline" className="h-8 text-xs font-bold border-slate-200 dark:border-slate-800" title="Ver ficha">
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
-                      </Link>
-
-                      {activeStatus === 'PENDING' && (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8 text-xs font-bold border-slate-200 dark:border-slate-800 hover:text-red-500 hover:border-red-500/20"
-                            onClick={() => handleAction(alert.id, 'dismiss')}
-                            disabled={isLoading}
-                            title="Dispensar alerta"
-                          >
-                            {isLoading ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-3.5 w-3.5" />
-                            )}
-                          </Button>
-
-                          <Button
-                            size="sm"
-                            className="h-8 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 flex items-center gap-1 inline-flex"
-                            onClick={() => handleAction(alert.id, 'resend')}
-                            disabled={isLoading}
-                          >
-                            {isLoading ? (
-                              <>
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                <span>Disparando...</span>
-                              </>
-                            ) : isSuccess ? (
-                              <>
-                                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                                <span>Disparado!</span>
-                              </>
-                            ) : (
-                              <>
-                                <RefreshCw className="h-3.5 w-3.5" />
-                                <span>Recall Manual</span>
-                              </>
-                            )}
-                          </Button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
+                  <AlertActionRow
+                    key={alert.id}
+                    alert={alert}
+                    activeStatus={activeStatus}
+                    isLoading={isLoading}
+                    isSuccess={isSuccess}
+                    onDismiss={() => handleAction(alert.id, 'dismiss')}
+                    onResend={() => handleAction(alert.id, 'resend')}
+                  />
                 )
               })}
             </tbody>
