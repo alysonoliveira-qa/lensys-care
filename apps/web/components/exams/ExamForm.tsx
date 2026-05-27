@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,13 +9,13 @@ import { Badge } from '@/components/ui/badge'
 import { useAgeGroup } from '@/hooks/useAgeGroup'
 import ExamRefractionFields from '@/components/exams/ExamRefractionFields'
 import PrescriptionNotesSection from '@/components/exams/PrescriptionNotesSection'
+import { useExamFormSubmission } from '@/components/exams/useExamFormSubmission'
 import {
   DEFAULT_VISUAL_ACUITY,
   isCommonVisualAcuity,
   QUICK_PRESCRIPTION_OPTIONS,
   type QuickPrescriptionOptionId,
 } from '@/lib/exams/exam-options'
-import { buildExamPayload } from '@/lib/exams/exam-form-mapper'
 import { Sparkles, Loader2, ClipboardCheck, AlertCircle } from 'lucide-react'
 
 export interface PatientData {
@@ -50,7 +49,6 @@ interface ExamFormProps {
 }
 
 export default function ExamForm({ patient, exam, previousExam }: ExamFormProps) {
-  const router = useRouter()
   const isEditing = Boolean(exam)
   const hasPreviousExam = !isEditing && Boolean(previousExam)
 
@@ -82,10 +80,25 @@ export default function ExamForm({ patient, exam, previousExam }: ExamFormProps)
     filtroAzul: Boolean(exam?.prescriptionNotes?.includes(quickPrescriptionNotes.filtroAzul)),
     fotossensivel: Boolean(exam?.prescriptionNotes?.includes(quickPrescriptionNotes.fotossensivel)),
   })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
   const { age, ageGroup, suggestedAddition } = useAgeGroup(patient.dob.toString())
+  const { error, handleSubmit, loading } = useExamFormSubmission({
+    patientId: patient.id,
+    examId: exam?.id,
+    formState: {
+      examDate,
+      odSph,
+      odCyl,
+      odAxis,
+      odVa,
+      oeSph,
+      oeCyl,
+      oeAxis,
+      oeVa,
+      addition,
+      pd,
+      prescriptionNotes,
+    },
+  })
 
   useEffect(() => {
     if (!isEditing && suggestedAddition > 0) {
@@ -161,53 +174,6 @@ export default function ExamForm({ patient, exam, previousExam }: ExamFormProps)
 
       return lines.filter((line) => line !== note).join('\n')
     })
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!examDate) {
-      setError('Por favor, defina a data do exame.')
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-
-    try {
-      const response = await fetch(exam ? `/api/exams/${exam.id}` : '/api/exams', {
-        method: exam ? 'PATCH' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildExamPayload({
-          patientId: patient.id,
-          examDate,
-          odSph,
-          odCyl,
-          odAxis,
-          odVa,
-          oeSph,
-          oeCyl,
-          oeAxis,
-          oeVa,
-          addition,
-          pd,
-          prescriptionNotes,
-        })),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || (exam ? 'Falha ao salvar alterações.' : 'Falha ao lançar exame.'))
-      }
-
-      router.push(`/patients/${patient.id}`)
-      router.refresh()
-    } catch (err: unknown) {
-      console.error(err)
-      setError(err instanceof Error ? err.message : exam ? 'Erro ao editar exame refrativo.' : 'Erro ao registrar exame refrativo.')
-    } finally {
-      setLoading(false)
-    }
   }
 
   return (
