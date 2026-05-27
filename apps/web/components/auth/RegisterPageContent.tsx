@@ -25,6 +25,7 @@ export default function RegisterPageContent({
   const [preferredName, setPreferredName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [clinicName, setClinicName] = useState('')
   const [phone, setPhone] = useState('')
   const [loading, setLoading] = useState(false)
@@ -32,8 +33,14 @@ export default function RegisterPageContent({
 
   const handleRegister = async (event: React.FormEvent) => {
     event.preventDefault()
-    if (!ownerName || !email || !password || !clinicName) {
+
+    if (!ownerName || !email || !password || !confirmPassword || !clinicName) {
       setError('Por favor, preencha todos os campos obrigatórios.')
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem.')
       return
     }
 
@@ -156,6 +163,10 @@ export default function RegisterPageContent({
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">Definir Senha de Acesso *</label>
                   <Input type="password" placeholder="Mínimo 6 caracteres" data-cy={includeTestSelectors ? 'register-password-input' : undefined} value={password} onChange={(event) => setPassword(event.target.value)} className="h-10 border-slate-800 bg-slate-950/50 text-white placeholder-slate-500 focus:border-violet-500/50 focus:ring-violet-500/20" required disabled={loading} />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">Confirmar Senha *</label>
+                  <Input type="password" placeholder="Repita sua senha" data-cy={includeTestSelectors ? 'register-confirm-password-input' : undefined} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="h-10 border-slate-800 bg-slate-950/50 text-white placeholder-slate-500 focus:border-violet-500/50 focus:ring-violet-500/20" required disabled={loading} />
                 </div>
               </div>
 
