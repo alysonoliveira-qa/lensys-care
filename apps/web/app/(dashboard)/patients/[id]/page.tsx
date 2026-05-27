@@ -1,7 +1,6 @@
 import React from 'react'
 import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { prisma } from '@/lib/db'
 import {
   endPerformanceTimer,
   logPerformanceStep,
@@ -12,6 +11,7 @@ import PatientExamHistory from '@/components/exams/PatientExamHistory'
 import PatientDetailHeader from '@/components/patients/PatientDetailHeader'
 import PatientRecallsCard from '@/components/patients/PatientRecallsCard'
 import PatientSummaryCard from '@/components/patients/PatientSummaryCard'
+import { getPatientDetailPageData } from '@/lib/patients/patient-detail-data'
 import { mapPatientDetailSummary } from '@/lib/patients/patient-detail-mappers'
 
 interface PatientDetailPageProps {
@@ -36,58 +36,7 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
   }
 
   const patientStartedAt = startPerformanceStep()
-  const patient = await prisma.patient.findFirst({
-    where: {
-      id: params.id,
-      clinic: {
-        profiles: {
-          some: { id: userId },
-        },
-      },
-    },
-    select: {
-      id: true,
-      full_name: true,
-      dob: true,
-      phone: true,
-      email: true,
-      notes: true,
-      exams: {
-        select: {
-          id: true,
-          exam_date: true,
-          od_sph: true,
-          od_cyl: true,
-          od_axis: true,
-          od_va: true,
-          oe_sph: true,
-          oe_cyl: true,
-          oe_axis: true,
-          oe_va: true,
-          addition: true,
-          pd: true,
-          prescription_notes: true,
-          examiner: {
-            select: {
-              full_name: true,
-              crm: true,
-            },
-          },
-        },
-        orderBy: { exam_date: 'desc' },
-      },
-      alerts: {
-        select: {
-          id: true,
-          status: true,
-          channel: true,
-          due_date: true,
-          sent_at: true,
-        },
-        orderBy: { due_date: 'desc' },
-      },
-    },
-  })
+  const patient = await getPatientDetailPageData(params.id, userId)
   logPerformanceStep(timer, 'prisma.patient_exams_alerts', patientStartedAt)
 
   if (!patient) {
