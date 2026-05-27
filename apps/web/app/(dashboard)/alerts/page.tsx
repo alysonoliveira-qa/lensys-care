@@ -2,7 +2,7 @@ import React from 'react'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { prisma } from '@/lib/db'
+import { getAlertClinicForUser, getAlertsForClinic } from '@/lib/alerts/alert-data'
 import { ALERT_STATUS_FILTER_OPTIONS, type AlertStatus } from '@/lib/alerts/alert-status-config'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -27,11 +27,7 @@ export default async function AlertsPage({ searchParams }: AlertsPageProps) {
     redirect('/login')
   }
 
-  // Load clinic details
-  const profile = await prisma.profile.findUnique({
-    where: { id: userId },
-    select: { clinic_id: true },
-  })
+  const profile = await getAlertClinicForUser(userId)
 
   if (!profile) {
     redirect('/login')
@@ -42,15 +38,7 @@ export default async function AlertsPage({ searchParams }: AlertsPageProps) {
   // Support filtering by AlertStatus (PENDING, SENT, DISMISSED)
   const activeStatus = (searchParams?.status || 'PENDING') as AlertStatus
 
-  // Fetch alerts from database with Prisma
-  const alerts = await prisma.alert.findMany({
-    where: {
-      status: activeStatus,
-      patient: { clinic_id: clinicId },
-    },
-    include: { patient: true },
-    orderBy: { due_date: 'asc' },
-  })
+  const alerts = await getAlertsForClinic(clinicId, activeStatus)
 
   return (
     <div className="space-y-6 select-none">

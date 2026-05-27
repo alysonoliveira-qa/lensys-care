@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase/server'
-import { prisma } from '@/lib/db'
+import { getAlertByIdForClinic, getAlertClinicForUser } from '@/lib/alerts/alert-data'
 import {
   sendAlertEmail,
   sendAlertWhatsApp,
@@ -63,22 +63,13 @@ export async function POST(
       return NextResponse.json({ error: 'UNAUTHORIZED', message: 'Faça login para continuar.' }, { status: 401 })
     }
 
-    const profile = await prisma.profile.findUnique({
-      where: { id: userId },
-      select: { clinic_id: true },
-    })
+    const profile = await getAlertClinicForUser(userId)
 
     if (!profile) {
       return NextResponse.json({ error: 'PROFILE_NOT_FOUND', message: 'Perfil não encontrado.' }, { status: 404 })
     }
 
-    const ownedAlert = await prisma.alert.findFirst({
-      where: {
-        id: alertId,
-        patient: { clinic_id: profile.clinic_id },
-      },
-      select: { id: true },
-    })
+    const ownedAlert = await getAlertByIdForClinic(alertId, profile.clinic_id)
 
     if (!ownedAlert) {
       return NextResponse.json({ error: 'ALERT_NOT_FOUND', message: 'Alerta não encontrado.' }, { status: 404 })
