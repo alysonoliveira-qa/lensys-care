@@ -48,3 +48,8 @@ coverage/
 
 # Husky
 .husky/_/
+
+# Local AI/MCP tooling
+.agents/
+.mcp.json
+skills-lock.json
