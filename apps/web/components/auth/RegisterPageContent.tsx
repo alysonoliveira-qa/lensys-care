@@ -34,8 +34,18 @@ export default function RegisterPageContent({
   const handleRegister = async (event: React.FormEvent) => {
     event.preventDefault()
 
-    if (!ownerName || !email || !password || !confirmPassword || !clinicName) {
+    if (!ownerName || !email || !clinicName) {
       setError('Por favor, preencha todos os campos obrigatórios.')
+      return
+    }
+
+    if (!password) {
+      setError('A senha é obrigatória.')
+      return
+    }
+
+    if (!confirmPassword) {
+      setError('A confirmação de senha é obrigatória.')
       return
     }
 
