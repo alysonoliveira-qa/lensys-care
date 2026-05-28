@@ -18,7 +18,10 @@ export default function SidebarNavigation({
   return (
     <nav className={`flex-1 space-y-1.5 overflow-y-auto py-6 ${isCollapsed ? 'px-2' : 'px-3 lg:px-4'}`}>
       {SIDEBAR_NAV_ITEMS.map((item) => {
-        const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+        const isDashboardRootItem = item.href === '/dashboard'
+        const isActive = isDashboardRootItem
+          ? pathname === item.href
+          : pathname === item.href || pathname.startsWith(`${item.href}/`)
         const isPending = pendingPath === item.href
         const Icon = item.icon
 

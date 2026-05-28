@@ -24,7 +24,22 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json()
+    const fullNameInput = typeof body?.fullName === 'string' ? body.fullName.trim() : null
     const preferredNameInput = typeof body?.preferredName === 'string' ? body.preferredName.trim() : ''
+
+    if (fullNameInput !== null && fullNameInput.length === 0) {
+      return NextResponse.json(
+        { error: 'INVALID_FULL_NAME', message: 'O nome completo é obrigatório.' },
+        { status: 400 }
+      )
+    }
+
+    if (fullNameInput !== null && fullNameInput.length > 120) {
+      return NextResponse.json(
+        { error: 'INVALID_FULL_NAME', message: 'O nome completo deve ter no máximo 120 caracteres.' },
+        { status: 400 }
+      )
+    }
 
     if (preferredNameInput.length > 60) {
       return NextResponse.json(
@@ -35,26 +50,39 @@ export async function PATCH(request: Request) {
 
     const preferredName = preferredNameInput.length > 0 ? preferredNameInput : null
 
-    const updatedProfiles = await prisma.$queryRaw<UpdatedProfileRow[]>`
-      UPDATE profiles
-      SET preferred_name = ${preferredName}
-      WHERE id = ${user.id}::uuid
-      RETURNING full_name, preferred_name, role::text AS role
-    `
+    const existingProfile = await prisma.profile.findUnique({
+      where: { id: user.id },
+      select: { id: true, full_name: true },
+    })
 
-    const updatedProfile = updatedProfiles[0]
-
-    if (!updatedProfile) {
+    if (!existingProfile) {
       return NextResponse.json(
         { error: 'PROFILE_NOT_FOUND', message: 'Perfil não encontrado.' },
         { status: 404 }
       )
     }
 
+    const updatedProfile = await prisma.profile.update({
+      where: { id: user.id },
+      data: {
+        full_name: fullNameInput ?? existingProfile.full_name,
+        preferred_name: preferredName,
+      },
+      select: {
+        full_name: true,
+        preferred_name: true,
+        role: true,
+      },
+    })
+
     return NextResponse.json({
       success: true,
       message: 'Perfil atualizado com sucesso.',
-      profile: updatedProfile,
+      profile: {
+        full_name: updatedProfile.full_name,
+        preferred_name: updatedProfile.preferred_name,
+        role: updatedProfile.role,
+      } as UpdatedProfileRow,
     })
   } catch (error) {
     console.error('Profile update failed:', error)
