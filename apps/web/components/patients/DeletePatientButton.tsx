@@ -2,20 +2,28 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Trash2 } from 'lucide-react'
+import { Loader2, Lock, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { getDeletePatientButtonState } from '@/components/patients/delete-patient-button-state'
 
 const DELETE_CONFIRMATION_LINES = [
   'Esta ação não pode ser desfeita.',
   'Só é possível excluir pacientes sem exames registrados.',
 ]
 
-export default function DeletePatientButton({ patientId }: { patientId: string }) {
+export default function DeletePatientButton({
+  patientId,
+  hasExams,
+}: {
+  patientId: string
+  hasExams: boolean
+}) {
   const router = useRouter()
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const deleteState = getDeletePatientButtonState(hasExams)
 
   const handleDelete = async () => {
     setIsDeleting(true)
@@ -42,18 +50,38 @@ export default function DeletePatientButton({ patientId }: { patientId: string }
     <div className="flex flex-col gap-3">
       <Button
         type="button"
-        variant="destructive"
-        className="gap-2 font-bold"
+        variant={deleteState.variant}
+        className={`gap-2 font-bold ${
+          deleteState.blocked
+            ? 'border-slate-300 bg-slate-100 text-slate-500 shadow-none hover:bg-slate-100 hover:text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400'
+            : ''
+        }`}
         onClick={() => {
+          if (deleteState.blocked || isDeleting) {
+            return
+          }
+
           setError(null)
           setIsConfirmOpen(true)
         }}
-        disabled={isDeleting}
+        disabled={isDeleting || deleteState.disabled}
+        aria-disabled={deleteState.blocked}
         data-cy="delete-patient-button"
       >
-        <Trash2 className="h-4.5 w-4.5" />
-        Excluir paciente
+        {deleteState.blocked ? <Lock className="h-4.5 w-4.5" /> : <Trash2 className="h-4.5 w-4.5" />}
+        {deleteState.label}
       </Button>
+
+      <p
+        className={`max-w-sm text-sm leading-6 ${
+          deleteState.blocked
+            ? 'font-medium text-slate-600 dark:text-slate-400'
+            : 'text-slate-500 dark:text-slate-400'
+        }`}
+        data-cy={deleteState.blocked ? 'delete-patient-blocked-message' : undefined}
+      >
+        {deleteState.helper}
+      </p>
 
       {isConfirmOpen && (
         <div className="max-w-sm rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-slate-700 shadow-sm dark:text-slate-200">

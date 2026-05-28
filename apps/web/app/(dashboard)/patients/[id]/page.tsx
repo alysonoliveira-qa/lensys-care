@@ -49,7 +49,7 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
   endPerformanceTimer(timer)
   return (
     <div className="space-y-8 select-none">
-      <PatientDetailHeader patientId={patient.id} />
+      <PatientDetailHeader patientId={patient.id} hasExams={patient.exams.length > 0} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <PatientSummaryCard

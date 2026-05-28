@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button'
 
 interface PatientDetailHeaderProps {
   patientId: string
+  hasExams: boolean
 }
 
-export default function PatientDetailHeader({ patientId }: PatientDetailHeaderProps) {
+export default function PatientDetailHeader({ patientId, hasExams }: PatientDetailHeaderProps) {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <Link href="/patients" className="inline-flex items-center text-sm font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white gap-1 transition-colors">
@@ -26,7 +27,7 @@ export default function PatientDetailHeader({ patientId }: PatientDetailHeaderPr
             Editar Paciente
           </Button>
         </Link>
-        <DeletePatientButton patientId={patientId} />
+        <DeletePatientButton patientId={patientId} hasExams={hasExams} />
         <Link href={`/exams/new?patientId=${patientId}`}>
           <Button className="bg-indigo-600 hover:bg-indigo-500 font-bold gap-2 shadow-lg shadow-indigo-500/10" data-cy="new-exam-button">
             <FilePlus2 className="h-4.5 w-4.5" />
