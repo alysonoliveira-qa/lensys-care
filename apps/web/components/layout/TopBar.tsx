@@ -1,50 +1,20 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Bell, Menu, Search } from 'lucide-react'
 
 const MOBILE_SIDEBAR_EVENT = 'lensys:toggle-mobile-sidebar'
 
-export default function TopBar() {
+interface TopBarProps {
+  initialPendingCount: number
+}
+
+export default function TopBar({ initialPendingCount }: TopBarProps) {
   const router = useRouter()
-  const supabase = createClient()
 
   const [searchQuery, setSearchQuery] = useState('')
-  const [pendingCount, setPendingCount] = useState(0)
-
-  useEffect(() => {
-    async function fetchAlerts() {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
-        if (user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('clinic_id')
-            .eq('id', user.id)
-            .single()
-
-          if (profile?.clinic_id) {
-            const { count } = await supabase
-              .from('alerts')
-              .select('*', { count: 'exact', head: true })
-              .eq('status', 'PENDING')
-              .eq('status', 'PENDING')
-
-            if (count !== null) {
-              setPendingCount(count)
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching alerts count:', error)
-      }
-    }
-    fetchAlerts()
-  }, [supabase])
+  const pendingCount = initialPendingCount
 
   const handleSearchSubmit = (event: React.FormEvent) => {
     event.preventDefault()

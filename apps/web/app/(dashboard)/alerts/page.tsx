@@ -1,8 +1,8 @@
 import React from 'react'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
-import { getAlertClinicForUser, getAlertsForClinic } from '@/lib/alerts/alert-data'
+import { getAuthenticatedShellData } from '@/lib/authenticated-shell'
+import { getAlertsForClinic } from '@/lib/alerts/alert-data'
 import { ALERT_STATUS_FILTER_OPTIONS, type AlertStatus } from '@/lib/alerts/alert-status-config'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -19,21 +19,13 @@ interface AlertsPageProps {
 export const revalidate = 0
 
 export default async function AlertsPage({ searchParams }: AlertsPageProps) {
-  const supabase = createClient()
-  const { data, error } = await supabase.auth.getClaims()
-  const userId = data?.claims.sub
+  const shellData = await getAuthenticatedShellData()
 
-  if (error || !userId) {
+  if (!shellData) {
     redirect('/login')
   }
 
-  const profile = await getAlertClinicForUser(userId)
-
-  if (!profile) {
-    redirect('/login')
-  }
-
-  const clinicId = profile.clinic_id
+  const clinicId = shellData.profile.clinic_id
 
   // Support filtering by AlertStatus (PENDING, SENT, DISMISSED)
   const activeStatus = (searchParams?.status || 'PENDING') as AlertStatus

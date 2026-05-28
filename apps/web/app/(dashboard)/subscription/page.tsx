@@ -1,38 +1,19 @@
 import { redirect } from 'next/navigation'
 import { ShieldCheck, Sparkles } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthenticatedShellData } from '@/lib/authenticated-shell'
 import { DASHBOARD_PLANS_VALIDATION_MESSAGE } from '@/lib/plans/plan-display-config'
 import PlanActivationCards from '@/app/dashboard/planos/PlanActivationCards'
 
 export const revalidate = 0
 
 export default async function SubscriptionPage() {
-  const supabase = createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const shellData = await getAuthenticatedShellData()
 
-  if (!user) {
+  if (!shellData) {
     redirect('/login')
   }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('clinic_id, role')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.clinic_id) {
-    redirect('/login')
-  }
-
-  const { data: subscription } = await supabase
-    .from('subscriptions')
-    .select('plan')
-    .eq('clinic_id', profile.clinic_id)
-    .maybeSingle()
-
-  const currentPlan = subscription?.plan === 'CONECTA' ? 'CONECTA' : 'ESSENTIAL'
+  const currentPlan = shellData.subscription?.plan === 'CONECTA' ? 'CONECTA' : 'ESSENTIAL'
+  const canManagePlan = shellData.profile.role === 'OWNER'
 
   return (
     <div className="mx-auto max-w-5xl space-y-7" data-cy="plans-page">
@@ -53,7 +34,7 @@ export default async function SubscriptionPage() {
             <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0" />
             <span>{DASHBOARD_PLANS_VALIDATION_MESSAGE}</span>
           </div>
-          {!profile || profile.role !== 'OWNER' ? (
+          {!canManagePlan ? (
             <p className="text-sm font-medium text-amber-700">
               Somente o proprietário da clínica pode ativar ou trocar o plano.
             </p>
@@ -61,7 +42,7 @@ export default async function SubscriptionPage() {
         </div>
       </section>
 
-      <PlanActivationCards currentPlan={currentPlan} canManagePlan={profile.role === 'OWNER'} />
+      <PlanActivationCards currentPlan={currentPlan} canManagePlan={canManagePlan} />
     </div>
   )
 }

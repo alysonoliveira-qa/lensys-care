@@ -32,16 +32,28 @@ interface SubscriptionSummary {
   status: string
 }
 
-export default function Sidebar() {
+interface SidebarProps {
+  initialAuthEmail: string | null
+  initialClinic: ClinicSummary | null
+  initialProfile: ProfileSummary | null
+  initialSubscription: SubscriptionSummary | null
+}
+
+export default function Sidebar({
+  initialAuthEmail,
+  initialClinic,
+  initialProfile,
+  initialSubscription,
+}: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
 
-  const [clinic, setClinic] = useState<ClinicSummary | null>(null)
-  const [profile, setProfile] = useState<ProfileSummary | null>(null)
-  const [subscription, setSubscription] = useState<SubscriptionSummary | null>(null)
+  const [clinic, setClinic] = useState<ClinicSummary | null>(initialClinic)
+  const [profile, setProfile] = useState<ProfileSummary | null>(initialProfile)
+  const [subscription, setSubscription] = useState<SubscriptionSummary | null>(initialSubscription)
   const [pendingPath, setPendingPath] = useState<string | null>(null)
-  const [authEmail, setAuthEmail] = useState<string | null>(null)
+  const [authEmail, setAuthEmail] = useState<string | null>(initialAuthEmail)
   const {
     asideWidthClass,
     handleToggleCollapse,
@@ -56,66 +68,11 @@ export default function Sidebar() {
   }, [pathname])
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
-
-        if (!user) {
-          setProfile(null)
-          setClinic(null)
-          setSubscription(null)
-          setAuthEmail(null)
-          return
-        }
-
-        setAuthEmail(user.email ?? null)
-
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('full_name, preferred_name, role, clinic_id, clinic:clinics(name)')
-          .eq('id', user.id)
-          .single()
-
-        if (!prof) {
-          setProfile(null)
-          setClinic(null)
-          setSubscription(null)
-          return
-        }
-
-        const typedProfile = prof as unknown as ProfileSummary
-        const normalizedClinic = Array.isArray(typedProfile.clinic)
-          ? typedProfile.clinic[0] ?? null
-          : typedProfile.clinic
-        setProfile(typedProfile)
-        setClinic(normalizedClinic)
-
-        const { data: sub } = await supabase
-          .from('subscriptions')
-          .select('plan, status')
-          .eq('clinic_id', typedProfile.clinic_id)
-          .single()
-
-        if (sub) {
-          setSubscription(sub as SubscriptionSummary)
-        }
-      } catch (error) {
-        console.error('Error loading sidebar data:', error)
-      }
-    }
-
-    loadData()
-
-    window.addEventListener('subscription-updated', loadData)
-    window.addEventListener('profile-updated', loadData)
-
-    return () => {
-      window.removeEventListener('subscription-updated', loadData)
-      window.removeEventListener('profile-updated', loadData)
-    }
-  }, [supabase])
+    setAuthEmail(initialAuthEmail)
+    setProfile(initialProfile)
+    setClinic(initialClinic)
+    setSubscription(initialSubscription)
+  }, [initialAuthEmail, initialClinic, initialProfile, initialSubscription])
 
   const handleLogout = async () => {
     setMobileDrawerOpen(false)

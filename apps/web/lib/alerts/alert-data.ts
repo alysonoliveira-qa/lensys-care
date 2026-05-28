@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/db'
 import type { AlertStatus } from './alert-status-config'
 
+export const ALERTS_INITIAL_LIMIT = 50
+
 export function getAlertClinicForUser(userId: string) {
   return prisma.profile.findUnique({
     where: { id: userId },
@@ -14,8 +16,25 @@ export function getAlertsForClinic(clinicId: string, status: AlertStatus) {
       status,
       patient: { clinic_id: clinicId },
     },
-    include: { patient: true },
     orderBy: { due_date: 'asc' },
+    take: ALERTS_INITIAL_LIMIT,
+    select: {
+      id: true,
+      patient_id: true,
+      exam_id: true,
+      due_date: true,
+      status: true,
+      channel: true,
+      sent_at: true,
+      patient: {
+        select: {
+          id: true,
+          full_name: true,
+          phone: true,
+          email: true,
+        },
+      },
+    },
   })
 }
 

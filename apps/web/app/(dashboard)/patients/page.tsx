@@ -1,7 +1,7 @@
 import React from 'react'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthenticatedShellData } from '@/lib/authenticated-shell'
 import { prisma } from '@/lib/db'
 import {
   endPerformanceTimer,
@@ -50,31 +50,16 @@ export const revalidate = 0
 
 export default async function PatientsPage({ searchParams }: PatientsPageProps) {
   const timer = startPerformanceTimer('page /patients')
-  const supabase = createClient()
   const authStartedAt = startPerformanceStep()
-  const { data, error } = await supabase.auth.getClaims()
-  const userId = data?.claims.sub
-  logPerformanceStep(timer, 'auth.getClaims', authStartedAt)
+  const shellData = await getAuthenticatedShellData()
+  logPerformanceStep(timer, 'auth.shell_context', authStartedAt)
 
-  if (error || !userId) {
+  if (!shellData) {
     endPerformanceTimer(timer, 'redirect_login')
     redirect('/login')
   }
 
-  // Load clinic details
-  const profileStartedAt = startPerformanceStep()
-  const profile = await prisma.profile.findUnique({
-    where: { id: userId },
-    select: { clinic_id: true },
-  })
-  logPerformanceStep(timer, 'prisma.profile_clinic', profileStartedAt)
-
-  if (!profile) {
-    endPerformanceTimer(timer, 'redirect_login_no_profile')
-    redirect('/login')
-  }
-
-  const clinicId = profile.clinic_id
+  const clinicId = shellData.profile.clinic_id
   const search = searchParams?.search || ''
   const page = Number(searchParams?.page) || 1
   const limit = 10
@@ -99,10 +84,16 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
       orderBy: { full_name: 'asc' },
       skip,
       take: limit,
-      include: {
+      select: {
+        id: true,
+        full_name: true,
+        dob: true,
+        phone: true,
+        email: true,
         exams: {
           orderBy: { exam_date: 'desc' },
           take: 1,
+          select: { exam_date: true },
         },
       },
     }),

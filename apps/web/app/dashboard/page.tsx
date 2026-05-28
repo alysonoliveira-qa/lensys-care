@@ -14,7 +14,6 @@ import DashboardSummaryCards from '@/components/dashboard/DashboardSummaryCards'
 import LoginDestinationPerformance from '@/components/performance/LoginDestinationPerformance'
 import {
   getDashboardMetrics,
-  getDashboardProfile,
 } from '@/lib/dashboard/dashboard-data'
 import {
   buildDashboardSummaryCards,
@@ -27,43 +26,34 @@ import {
   startPerformanceTimer,
 } from '@/lib/performance'
 import { getDisplayName } from '@/lib/profile'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthenticatedShellData } from '@/lib/authenticated-shell'
 
 export const revalidate = 0
 
 export default async function DashboardPage() {
   const timer = startPerformanceTimer('page /dashboard')
-  const supabase = createClient()
   const authStartedAt = startPerformanceStep()
-  const { data, error } = await supabase.auth.getClaims()
-  const userId = data?.claims.sub
-  const userEmail = typeof data?.claims.email === 'string' ? data.claims.email : null
-  logPerformanceStep(timer, 'auth.getClaims', authStartedAt)
+  const shellData = await getAuthenticatedShellData()
+  logPerformanceStep(timer, 'auth.shell_context', authStartedAt)
 
-  if (error || !userId) {
+  if (!shellData) {
     endPerformanceTimer(timer, 'redirect_login')
     redirect('/login')
   }
 
-  const profileStartedAt = startPerformanceStep()
-  const profile = await getDashboardProfile(userId)
-  logPerformanceStep(timer, 'prisma.profile_and_clinic', profileStartedAt)
-
-  if (!profile) {
-    endPerformanceTimer(timer, 'redirect_login_no_profile')
-    redirect('/login')
-  }
-
   const clinic = {
-    id: profile.clinic_id,
-    name: profile.clinic_name,
+    id: shellData.profile.clinic_id,
+    name: shellData.profile.clinic_name,
   }
   const displayName = getDisplayName({
-    preferredName: profile.preferred_name,
-    fullName: profile.full_name,
-    email: userEmail,
+    preferredName: shellData.profile.preferred_name,
+    fullName: shellData.profile.full_name,
+    email: shellData.userEmail,
   })
-  const { isConecta, planLabel } = resolveDashboardPlanStatus(profile)
+  const { isConecta, planLabel } = resolveDashboardPlanStatus({
+    subscription_plan: shellData.subscription?.plan ?? null,
+    subscription_status: shellData.subscription?.status ?? null,
+  })
 
   const dashboardQueriesStartedAt = startPerformanceStep()
   const metricsPromise = getDashboardMetrics(clinic.id)
