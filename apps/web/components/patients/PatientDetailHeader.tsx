@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowLeft, Edit3, FilePlus2 } from 'lucide-react'
 
+import DeletePatientButton from '@/components/patients/DeletePatientButton'
 import { Button } from '@/components/ui/button'
 
 interface PatientDetailHeaderProps {
@@ -25,6 +26,7 @@ export default function PatientDetailHeader({ patientId }: PatientDetailHeaderPr
             Editar Paciente
           </Button>
         </Link>
+        <DeletePatientButton patientId={patientId} />
         <Link href={`/exams/new?patientId=${patientId}`}>
           <Button className="bg-indigo-600 hover:bg-indigo-500 font-bold gap-2 shadow-lg shadow-indigo-500/10" data-cy="new-exam-button">
             <FilePlus2 className="h-4.5 w-4.5" />
