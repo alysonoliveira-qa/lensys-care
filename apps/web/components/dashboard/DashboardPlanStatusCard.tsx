@@ -36,7 +36,7 @@ export default function DashboardPlanStatusCard({
             : 'Sua clínica está no plano Essencial. Assine o plano Conecta para desbloquear automações via WhatsApp e SMS.'}
         </p>
         {!isConecta && (
-          <Link href="/dashboard/planos" passHref>
+          <Link href="/subscription" passHref>
             <Button className="h-10 w-full gap-2 rounded-xl bg-indigo-600 text-xs font-bold text-white shadow-lg shadow-indigo-500/15 transition-all duration-200 hover:bg-indigo-500">
               Ativar Plano Conecta
               <ArrowRight className="h-3.5 w-3.5" />

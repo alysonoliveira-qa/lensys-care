@@ -52,7 +52,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
   {
     id: 'plans',
     label: 'Planos e Preços',
-    href: '/dashboard/planos',
+    href: '/subscription',
     icon: CreditCard,
     dataCy: 'sidebar-plans-link',
     description: 'Gestão do plano atual da clínica',

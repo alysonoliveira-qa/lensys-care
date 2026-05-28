@@ -70,6 +70,7 @@ export async function activatePlan(
   }
 
   revalidatePath('/dashboard')
+  revalidatePath('/subscription')
   revalidatePath('/dashboard/planos')
 
   const planLabel = requestedPlan === 'CONECTA' ? 'Conecta' : 'Essencial'

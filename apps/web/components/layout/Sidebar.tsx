@@ -207,7 +207,7 @@ export default function Sidebar() {
           <SidebarPlanStatus
             isCollapsed={isCollapsed}
             isConecta={isConecta}
-            plansHref="/dashboard/planos"
+            plansHref="/subscription"
             onPlansClick={() => {
               if (isMobile) {
                 setMobileDrawerOpen(false)
