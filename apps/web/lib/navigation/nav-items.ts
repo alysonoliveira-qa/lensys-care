@@ -44,7 +44,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
   {
     id: 'account',
     label: 'Minha Conta',
-    href: '/dashboard/conta',
+    href: '/account',
     icon: Settings2,
     dataCy: 'sidebar-account-link',
     description: 'Dados pessoais e identificação do usuário',
