@@ -1,9 +1,18 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 
 import Sidebar from '@/components/layout/Sidebar'
 import TopBar from '@/components/layout/TopBar'
-import { getAuthenticatedShellData } from '@/lib/authenticated-shell'
+import {
+  getAuthenticatedShellData,
+  getPendingAlertsCountForClinic,
+} from '@/lib/authenticated-shell'
+
+async function TopBarWithPendingAlerts({ clinicId }: { clinicId: string }) {
+  const pendingAlertsCount = await getPendingAlertsCountForClinic(clinicId)
+
+  return <TopBar initialPendingCount={pendingAlertsCount} />
+}
 
 export default async function AuthenticatedShellLayout({
   children,
@@ -34,7 +43,9 @@ export default async function AuthenticatedShellLayout({
       />
 
       <div className="flex-1 flex min-w-0 flex-col overflow-hidden">
-        <TopBar initialPendingCount={shellData.pendingAlertsCount} />
+        <Suspense fallback={<TopBar initialPendingCount={0} />}>
+          <TopBarWithPendingAlerts clinicId={shellData.profile.clinic_id} />
+        </Suspense>
 
         <main className={mainClassName}>
           {children}

@@ -17,7 +17,6 @@ export type AuthenticatedShellData = {
     plan: string
     status: string
   } | null
-  pendingAlertsCount: number
 }
 
 type ShellDataRow = {
@@ -28,7 +27,6 @@ type ShellDataRow = {
   clinic_name: string
   subscription_plan: string | null
   subscription_status: string | null
-  pending_alerts_count: number
 }
 
 export const getAuthenticatedShellData = cache(async (): Promise<AuthenticatedShellData | null> => {
@@ -49,14 +47,7 @@ export const getAuthenticatedShellData = cache(async (): Promise<AuthenticatedSh
       p.clinic_id,
       c.name AS clinic_name,
       s.plan::text AS subscription_plan,
-      s.status::text AS subscription_status,
-      (
-        SELECT COUNT(*)::integer
-        FROM alerts a
-        INNER JOIN patients pa ON pa.id = a.patient_id
-        WHERE pa.clinic_id = p.clinic_id
-          AND a.status = 'PENDING'
-      ) AS pending_alerts_count
+      s.status::text AS subscription_status
     FROM profiles p
     INNER JOIN clinics c ON c.id = p.clinic_id
     LEFT JOIN subscriptions s ON s.clinic_id = p.clinic_id
@@ -84,6 +75,16 @@ export const getAuthenticatedShellData = cache(async (): Promise<AuthenticatedSh
           status: row.subscription_status,
         }
       : null,
-    pendingAlertsCount: row.pending_alerts_count,
   }
+})
+
+export const getPendingAlertsCountForClinic = cache(async (clinicId: string): Promise<number> => {
+  const result = await prisma.alert.count({
+    where: {
+      status: 'PENDING',
+      patient: { clinic_id: clinicId },
+    },
+  })
+
+  return result
 })

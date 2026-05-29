@@ -5,34 +5,6 @@ import type {
   DashboardMetrics,
 } from './dashboard-mappers'
 
-export type DashboardProfileRow = {
-  full_name: string
-  preferred_name: string | null
-  clinic_id: string
-  clinic_name: string
-  subscription_plan: string | null
-  subscription_status: string | null
-}
-
-export async function getDashboardProfile(userId: string) {
-  const [profile] = await prisma.$queryRaw<DashboardProfileRow[]>`
-    SELECT
-      p.full_name,
-      p.preferred_name,
-      c.id AS clinic_id,
-      c.name AS clinic_name,
-      s.plan::text AS subscription_plan,
-      s.status::text AS subscription_status
-    FROM profiles p
-    INNER JOIN clinics c ON c.id = p.clinic_id
-    LEFT JOIN subscriptions s ON s.clinic_id = c.id
-    WHERE p.id = ${userId}::uuid
-    LIMIT 1
-  `
-
-  return profile
-}
-
 export async function getDashboardMetrics(clinicId: string) {
   const [metrics] = await prisma.$queryRaw<DashboardMetrics[]>`
     SELECT
