@@ -9,15 +9,21 @@ import {
   startPerformanceStep,
   startPerformanceTimer,
 } from '@/lib/performance'
+import {
+  buildPatientsListQuery,
+  getPatientOrderBy,
+  parsePatientSort,
+} from '@/lib/patients/patient-list-sorting'
+import PatientsListFilters from '@/components/patients/PatientsListFilters'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Users, Search, Plus, Calendar, Mail, Phone, ChevronLeft, ChevronRight, FileText } from 'lucide-react'
+import { Users, Plus, Calendar, Mail, Phone, ChevronLeft, ChevronRight, FileText } from 'lucide-react'
 
 interface PatientsPageProps {
   searchParams?: {
     search?: string
     page?: string
+    sort?: string
   }
 }
 
@@ -62,6 +68,7 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
   const clinicId = shellData.profile.clinic_id
   const search = searchParams?.search || ''
   const page = Number(searchParams?.page) || 1
+  const sort = parsePatientSort(searchParams?.sort)
   const limit = 10
   const skip = (page - 1) * limit
 
@@ -81,7 +88,7 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
   const [patients, totalCount] = await Promise.all([
     prisma.patient.findMany({
       where: whereClause,
-      orderBy: { full_name: 'asc' },
+      orderBy: getPatientOrderBy(sort),
       skip,
       take: limit,
       select: {
@@ -130,21 +137,7 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
       {/* Search Filter Card */}
       <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800">
         <CardContent className="p-4">
-          <form method="GET" action="/patients" className="flex gap-2">
-            <div className="relative flex-1">
-              <Input
-                name="search"
-                type="text"
-                defaultValue={search}
-                placeholder="Pesquisar por nome completo ou e-mail..."
-                className="bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800 h-10 pl-9"
-              />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            </div>
-            <Button type="submit" variant="secondary" className="h-10 px-6 font-semibold">
-              Filtrar
-            </Button>
-          </form>
+          <PatientsListFilters initialSearch={search} initialSort={sort} />
         </CardContent>
       </Card>
 
@@ -229,13 +222,13 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
             Página {page} de {totalPages} ({totalCount} pacientes no total)
           </span>
           <div className="flex gap-2">
-            <Link href={`/patients?search=${encodeURIComponent(search)}&page=${page - 1}`} passHref>
+            <Link href={buildPatientsListQuery({ search, sort, page: page - 1 })} passHref>
               <Button size="sm" variant="outline" className="h-8 font-bold" disabled={page <= 1}>
                 <ChevronLeft className="mr-1 h-4 w-4" />
                 Anterior
               </Button>
             </Link>
-            <Link href={`/patients?search=${encodeURIComponent(search)}&page=${page + 1}`} passHref>
+            <Link href={buildPatientsListQuery({ search, sort, page: page + 1 })} passHref>
               <Button size="sm" variant="outline" className="h-8 font-bold" disabled={page >= totalPages}>
                 Próximo
                 <ChevronRight className="ml-1 h-4 w-4" />
