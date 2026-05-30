@@ -106,12 +106,12 @@ export default function Sidebar({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 ${mobileDrawerOpen ? 'translate-x-0' : '-translate-x-full'} w-[min(20rem,86vw)] flex h-screen flex-col border-r border-slate-800 bg-slate-900 text-slate-400 shadow-2xl shadow-slate-950/20 transition-[width,transform] duration-300 select-none md:relative md:left-auto md:z-20 md:translate-x-0 md:shadow-none ${asideWidthClass}`}
+        className={`fixed inset-y-0 left-0 z-40 ${mobileDrawerOpen ? 'translate-x-0' : '-translate-x-full'} w-[min(20rem,86vw)] flex h-screen flex-col border-r border-slate-800 bg-slate-900 text-slate-400 shadow-2xl shadow-slate-950/20 transition-[width,transform] duration-300 select-none md:relative md:left-auto md:z-20 md:translate-x-0 md:overflow-visible md:shadow-none ${asideWidthClass}`}
         data-cy={isMobile ? 'mobile-sidebar-drawer' : undefined}
       >
         <div className="pointer-events-none absolute left-0 top-0 h-24 w-24 rounded-full bg-violet-600/5 blur-xl" />
 
-        <div className={`flex h-16 items-center border-b border-slate-800 ${isCollapsed ? 'justify-center px-2' : 'justify-between gap-3 px-4 lg:px-6'}`}>
+        <div className={`relative flex h-16 items-center border-b border-slate-800 ${isCollapsed ? 'justify-center px-2' : 'justify-between gap-3 px-4 lg:px-6'}`}>
           <div className="flex min-w-0 items-center gap-3 overflow-hidden">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/10">
               <Sparkles className="h-4.5 w-4.5 text-white" />
@@ -132,7 +132,11 @@ export default function Sidebar({
             <button
               type="button"
               onClick={handleToggleCollapse}
-              className="rounded-lg border border-slate-800 bg-slate-950/50 p-2 text-slate-400 transition-colors hover:border-slate-700 hover:bg-slate-800 hover:text-white"
+              className={`transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/60 ${
+                isCollapsed
+                  ? 'absolute -right-3 top-1/2 z-10 -translate-y-1/2 rounded-r-xl rounded-l-none border border-slate-700 border-l-slate-800 bg-slate-900 px-2 py-3 text-slate-300 shadow-lg shadow-slate-950/30 hover:border-slate-600 hover:bg-slate-800 hover:text-white'
+                  : 'rounded-lg border border-slate-800 bg-slate-950/50 p-2 text-slate-400 hover:border-slate-700 hover:bg-slate-800 hover:text-white'
+              }`}
               aria-label={isCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
               title={isCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
               data-cy="sidebar-collapse-button"
