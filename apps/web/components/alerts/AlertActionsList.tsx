@@ -24,10 +24,9 @@ export interface AlertData {
 
 interface AlertActionsListProps {
   alerts: AlertData[]
-  activeStatus: 'PENDING' | 'SENT' | 'DISMISSED'
 }
 
-export default function AlertActionsList({ alerts, activeStatus }: AlertActionsListProps) {
+export default function AlertActionsList({ alerts }: AlertActionsListProps) {
   const router = useRouter()
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [successAlert, setSuccessAlert] = useState<string | null>(null)
@@ -87,7 +86,6 @@ export default function AlertActionsList({ alerts, activeStatus }: AlertActionsL
                   <AlertActionRow
                     key={alert.id}
                     alert={alert}
-                    activeStatus={activeStatus}
                     isLoading={isLoading}
                     isSuccess={isSuccess}
                     onDismiss={() => handleAction(alert.id, 'dismiss')}

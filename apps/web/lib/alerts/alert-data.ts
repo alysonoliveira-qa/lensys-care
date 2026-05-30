@@ -1,7 +1,10 @@
 import { prisma } from '@/lib/db'
-import type { AlertStatus } from './alert-status-config'
-
-export const ALERTS_INITIAL_LIMIT = 50
+import {
+  ALERTS_PAGE_SIZE,
+  getAlertOrderBy,
+  type AlertSortOption,
+  type AlertStatusFilter,
+} from './alerts-list-query'
 
 export function getAlertClinicForUser(userId: string) {
   return prisma.profile.findUnique({
@@ -10,32 +13,54 @@ export function getAlertClinicForUser(userId: string) {
   })
 }
 
-export function getAlertsForClinic(clinicId: string, status: AlertStatus) {
-  return prisma.alert.findMany({
-    where: {
-      status,
-      patient: { clinic_id: clinicId },
-    },
-    orderBy: { due_date: 'asc' },
-    take: ALERTS_INITIAL_LIMIT,
-    select: {
-      id: true,
-      patient_id: true,
-      exam_id: true,
-      due_date: true,
-      status: true,
-      channel: true,
-      sent_at: true,
-      patient: {
-        select: {
-          id: true,
-          full_name: true,
-          phone: true,
-          email: true,
+export async function getAlertsForClinic(params: {
+  clinicId: string
+  status: AlertStatusFilter
+  sort: AlertSortOption
+  page: number
+}) {
+  const where = {
+    ...(params.status !== 'ALL' ? { status: params.status } : {}),
+    patient: { clinic_id: params.clinicId },
+  }
+
+  const skip = (params.page - 1) * ALERTS_PAGE_SIZE
+
+  const [alerts, totalCount] = await Promise.all([
+    prisma.alert.findMany({
+      where,
+      orderBy: getAlertOrderBy(params.sort),
+      skip,
+      take: ALERTS_PAGE_SIZE,
+      select: {
+        id: true,
+        patient_id: true,
+        exam_id: true,
+        due_date: true,
+        status: true,
+        channel: true,
+        sent_at: true,
+        patient: {
+          select: {
+            id: true,
+            full_name: true,
+            phone: true,
+            email: true,
+          },
         },
       },
-    },
-  })
+    }),
+    prisma.alert.count({
+      where,
+    }),
+  ])
+
+  return {
+    alerts,
+    totalCount,
+    totalPages: Math.ceil(totalCount / ALERTS_PAGE_SIZE),
+    pageSize: ALERTS_PAGE_SIZE,
+  }
 }
 
 export function getAlertByIdForClinic(alertId: string, clinicId: string) {

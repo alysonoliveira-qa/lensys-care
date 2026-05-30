@@ -10,7 +10,6 @@ import type { AlertData } from './AlertActionsList'
 
 interface AlertActionRowProps {
   alert: AlertData
-  activeStatus: 'PENDING' | 'SENT' | 'DISMISSED'
   isLoading: boolean
   isSuccess: boolean
   onDismiss: () => void
@@ -19,7 +18,6 @@ interface AlertActionRowProps {
 
 export default function AlertActionRow({
   alert,
-  activeStatus,
   isLoading,
   isSuccess,
   onDismiss,
@@ -69,7 +67,7 @@ export default function AlertActionRow({
       </td>
       <td className="space-x-1.5 px-6 py-4 text-right">
         <AlertActionButtons
-          activeStatus={activeStatus}
+          alertStatus={alert.status}
           isLoading={isLoading}
           isSuccess={isSuccess}
           patientId={alert.patient_id}

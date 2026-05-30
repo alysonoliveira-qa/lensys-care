@@ -6,7 +6,7 @@ import { CheckCircle2, Eye, Loader2, RefreshCw, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface AlertActionButtonsProps {
-  activeStatus: 'PENDING' | 'SENT' | 'DISMISSED'
+  alertStatus: 'PENDING' | 'SENT' | 'DISMISSED'
   isLoading: boolean
   isSuccess: boolean
   patientId: string
@@ -15,7 +15,7 @@ interface AlertActionButtonsProps {
 }
 
 export default function AlertActionButtons({
-  activeStatus,
+  alertStatus,
   isLoading,
   isSuccess,
   patientId,
@@ -35,7 +35,7 @@ export default function AlertActionButtons({
         </Button>
       </Link>
 
-      {activeStatus === 'PENDING' && (
+      {alertStatus === 'PENDING' && (
         <>
           <Button
             size="sm"
