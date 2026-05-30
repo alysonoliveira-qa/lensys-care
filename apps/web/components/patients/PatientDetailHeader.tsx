@@ -20,18 +20,20 @@ export default function PatientDetailHeader({
       <div className="absolute -bottom-20 left-10 h-44 w-44 rounded-full bg-indigo-200/30 blur-3xl dark:bg-indigo-900/20" />
 
       <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-        <div className="space-y-4">
-          <Link
-            href="/patients"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition-colors hover:text-slate-900 dark:hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar para Pacientes
-          </Link>
+        <div className="space-y-5">
+          <div className="space-y-3">
+            <Link
+              href="/patients"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition-colors hover:text-slate-900 dark:hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Voltar para Pacientes
+            </Link>
 
-          <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-white/80 px-3 py-1 text-xs font-semibold text-violet-700 shadow-sm dark:border-violet-900/60 dark:bg-slate-900/80 dark:text-violet-300">
-            <Sparkles className="h-3.5 w-3.5" />
-            Ficha do paciente
+            <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-white/80 px-3 py-1 text-xs font-semibold text-violet-700 shadow-sm dark:border-violet-900/60 dark:bg-slate-900/80 dark:text-violet-300">
+              <Sparkles className="h-3.5 w-3.5" />
+              Ficha do paciente
+            </div>
           </div>
 
           <div className="space-y-2">
