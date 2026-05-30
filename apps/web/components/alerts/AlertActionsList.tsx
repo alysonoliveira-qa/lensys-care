@@ -61,20 +61,27 @@ export default function AlertActionsList({ alerts }: AlertActionsListProps) {
   return (
     <div className="select-none" data-cy="alerts-list">
       {alerts.length === 0 ? (
-        <div className="py-12 text-center text-sm text-slate-400 flex flex-col items-center justify-center gap-2">
-          <Bell className="h-12 w-12 text-slate-300 dark:text-slate-700 animate-pulse" />
-          <span>Nenhum lembrete encontrado nesta categoria.</span>
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-12 text-center dark:border-slate-800 dark:bg-slate-950/30">
+          <Bell className="h-10 w-10 text-slate-300 dark:text-slate-700" />
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+              Nenhum lembrete encontrado nesta categoria.
+            </p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              Os alertas aparecem aqui conforme a fila e os filtros selecionados.
+            </p>
+          </div>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
+        <div className="overflow-x-auto rounded-2xl border border-slate-100 dark:border-slate-800">
+          <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-100 dark:border-slate-800 text-xs text-slate-400 font-bold uppercase tracking-wider bg-slate-50/50 dark:bg-slate-950/40">
-                <th className="py-3 px-6">Paciente</th>
-                <th className="py-3 px-6">Data Vencimento</th>
-                <th className="py-3 px-6">Canal</th>
-                <th className="py-3 px-6">Status</th>
-                <th className="py-3 px-6 text-right">Ações</th>
+              <tr className="bg-slate-50/80 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:bg-slate-950/50">
+                <th className="px-6 py-3">Paciente</th>
+                <th className="px-6 py-3">Renovação</th>
+                <th className="px-6 py-3">Canal</th>
+                <th className="px-6 py-3">Status</th>
+                <th className="px-6 py-3 text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">

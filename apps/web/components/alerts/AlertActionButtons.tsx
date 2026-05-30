@@ -23,24 +23,24 @@ export default function AlertActionButtons({
   onResend,
 }: AlertActionButtonsProps) {
   return (
-    <>
+    <div className="flex flex-wrap items-center justify-end gap-2">
       <Link href={`/patients/${patientId}`} passHref>
         <Button
           size="sm"
           variant="outline"
-          className="h-8 border-slate-200 text-xs font-bold dark:border-slate-800"
+          className="h-8 rounded-lg border-slate-200 px-2.5 text-[11px] font-semibold dark:border-slate-800"
           title="Ver ficha"
         >
           <Eye className="h-3.5 w-3.5" />
         </Button>
       </Link>
 
-      {alertStatus === 'PENDING' && (
+      {alertStatus === 'PENDING' ? (
         <>
           <Button
             size="sm"
             variant="outline"
-            className="h-8 border-slate-200 text-xs font-bold hover:border-red-500/20 hover:text-red-500 dark:border-slate-800"
+            className="h-8 rounded-lg border-slate-200 px-2.5 text-[11px] font-semibold hover:border-red-500/20 hover:text-red-500 dark:border-slate-800"
             onClick={onDismiss}
             disabled={isLoading}
             title="Dispensar alerta"
@@ -54,7 +54,7 @@ export default function AlertActionButtons({
 
           <Button
             size="sm"
-            className="inline-flex h-8 items-center gap-1 bg-indigo-600 text-xs font-bold hover:bg-indigo-500"
+            className="inline-flex h-8 items-center gap-1 rounded-lg bg-indigo-600 px-3 text-[11px] font-semibold hover:bg-indigo-500"
             onClick={onResend}
             disabled={isLoading}
           >
@@ -76,7 +76,7 @@ export default function AlertActionButtons({
             )}
           </Button>
         </>
-      )}
-    </>
+      ) : null}
+    </div>
   )
 }
