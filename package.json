@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "turbo run dev",
+    "dev:web:manual": "pnpm --filter web dev:manual",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",

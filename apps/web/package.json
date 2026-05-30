@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:manual": "next dev -p 3001",
     "build": "pnpm --filter db generate && next build",
     "start": "next start",
     "lint": "next lint",

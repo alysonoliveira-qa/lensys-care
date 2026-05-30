@@ -94,6 +94,20 @@ pnpm --filter web dev
 
 Por padrao, a aplicacao sobe em `http://localhost:3000`.
 
+Para desenvolvimento manual no navegador, use `http://localhost:3001`:
+
+```bash
+pnpm --filter web dev:manual
+```
+
+Se precisar passar a porta explicitamente:
+
+```bash
+pnpm --filter web dev -- -p 3001
+```
+
+As instrucoes curtas de desenvolvimento local estao em [docs/local-development.md](docs/local-development.md).
+
 ### Gerar build de producao local
 
 ```bash
@@ -167,6 +181,12 @@ CYPRESS_BASE_URL=https://lensys-care.vercel.app pnpm cypress open
 ```
 
 Use `CYPRESS_BASE_URL` para alternar entre ambiente local, preview ou producao.
+
+Convencao local:
+
+- manual no navegador: `http://localhost:3001`
+- Cypress/Codex: `http://localhost:3000` ou o valor definido em `CYPRESS_BASE_URL`
+- se a porta travar no Windows: `taskkill /F /IM node.exe`
 
 ### Credenciais de teste E2E
 
