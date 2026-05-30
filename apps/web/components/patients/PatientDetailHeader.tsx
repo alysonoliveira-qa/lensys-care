@@ -20,8 +20,8 @@ export default function PatientDetailHeader({
       <div className="absolute -bottom-20 left-10 h-44 w-44 rounded-full bg-indigo-200/30 blur-3xl dark:bg-indigo-900/20" />
 
       <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-        <div className="space-y-5">
-          <div className="space-y-3">
+        <div className="space-y-6">
+          <div>
             <Link
               href="/patients"
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition-colors hover:text-slate-900 dark:hover:text-white"
@@ -29,22 +29,24 @@ export default function PatientDetailHeader({
               <ArrowLeft className="h-4 w-4" />
               Voltar para Pacientes
             </Link>
+          </div>
 
+          <div className="space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-white/80 px-3 py-1 text-xs font-semibold text-violet-700 shadow-sm dark:border-violet-900/60 dark:bg-slate-900/80 dark:text-violet-300">
               <Sparkles className="h-3.5 w-3.5" />
               Ficha do paciente
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <h2 className="flex items-center gap-2 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 sm:text-4xl">
-              <FileText className="h-7 w-7 text-indigo-500" />
-              <span>Ficha do Paciente</span>
-            </h2>
-            <p className="max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-              Acompanhe dados cadastrais, histórico clínico e ações operacionais do paciente em um
-              único fluxo.
-            </p>
+            <div className="space-y-2">
+              <h2 className="flex items-center gap-2 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 sm:text-4xl">
+                <FileText className="h-7 w-7 text-indigo-500" />
+                <span>Ficha do Paciente</span>
+              </h2>
+              <p className="max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+                Acompanhe dados cadastrais, histórico clínico e ações operacionais do paciente em um
+                único fluxo.
+              </p>
+            </div>
           </div>
         </div>
 
