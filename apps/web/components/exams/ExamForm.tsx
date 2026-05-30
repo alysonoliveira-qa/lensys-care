@@ -16,7 +16,7 @@ import {
   QUICK_PRESCRIPTION_OPTIONS,
   type QuickPrescriptionOptionId,
 } from '@/lib/exams/exam-options'
-import { Sparkles, Loader2, ClipboardCheck, AlertCircle, CalendarDays, FileText } from 'lucide-react'
+import { Sparkles, Loader2, ClipboardCheck, AlertCircle, CalendarDays } from 'lucide-react'
 
 export interface PatientData {
   id: string
