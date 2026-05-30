@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search } from 'lucide-react'
+import { ChevronDown, Search } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,38 +42,65 @@ export default function PatientsListFilters({
     navigate(search, nextSort)
   }
 
+  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setSearch(event.target.value)
+  }
+
+  const inputClassName =
+    'h-11 w-full rounded-xl border border-slate-200/80 bg-white pl-10 pr-4 text-sm font-medium text-slate-700 shadow-sm shadow-slate-200/40 outline-none transition-all duration-200 placeholder:font-normal placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/15 dark:border-slate-800 dark:bg-slate-950/30 dark:text-slate-200 dark:shadow-none dark:hover:border-slate-700 dark:placeholder:text-slate-500'
+
+  const selectClassName =
+    'h-11 w-full appearance-none rounded-xl border border-slate-200/80 bg-white px-4 pr-10 text-sm font-medium text-slate-700 shadow-sm shadow-slate-200/40 outline-none transition-all duration-200 hover:border-slate-300 focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/15 dark:border-slate-800 dark:bg-slate-950/30 dark:text-slate-200 dark:shadow-none dark:hover:border-slate-700'
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3 md:flex-row md:items-end">
-      <div className="relative flex-1">
-        <Input
-          name="search"
-          type="text"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Pesquisar por nome completo ou e-mail..."
-          className="h-10 border-slate-200 bg-slate-50 pl-9 dark:border-slate-800 dark:bg-slate-950/20"
-        />
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <div className="flex-1">
+        <label
+          htmlFor="patients-search"
+          className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+        >
+          Busca
+        </label>
+        <div className="relative">
+          <Input
+            id="patients-search"
+            name="search"
+            type="text"
+            value={search}
+            onChange={handleSearchChange}
+            placeholder="Pesquisar por nome completo ou e-mail..."
+            className={inputClassName}
+            data-cy="patients-search-input"
+          />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        </div>
       </div>
 
       <div className="flex flex-col gap-1 md:w-56">
         <label htmlFor="patients-sort" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
           Ordenar por
         </label>
-        <select
-          id="patients-sort"
-          value={sort}
-          onChange={(event) => handleSortChange(event.target.value as PatientSortOption)}
-          className="h-10 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none transition-colors focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-950/20 dark:text-slate-200"
-          data-cy="patients-sort-select"
-        >
-          <option value="recent">Mais recentes</option>
-          <option value="name">Nome A-Z</option>
-          <option value="birthdate">Data de nascimento</option>
-        </select>
+        <div className="relative">
+          <select
+            id="patients-sort"
+            value={sort}
+            onChange={(event) => handleSortChange(event.target.value as PatientSortOption)}
+            className={selectClassName}
+            data-cy="patients-sort-select"
+          >
+            <option value="recent">Mais recentes</option>
+            <option value="name">Nome A-Z</option>
+            <option value="birthdate">Data de nascimento</option>
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        </div>
       </div>
 
-      <Button type="submit" variant="secondary" className="h-10 px-6 font-semibold">
+      <Button
+        type="submit"
+        variant="secondary"
+        className="h-11 rounded-xl border border-slate-200/80 bg-white px-6 font-semibold text-slate-700 shadow-sm shadow-slate-200/40 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950/30 dark:text-slate-200 dark:shadow-none dark:hover:border-slate-700 dark:hover:bg-slate-950"
+      >
         Filtrar
       </Button>
     </form>
