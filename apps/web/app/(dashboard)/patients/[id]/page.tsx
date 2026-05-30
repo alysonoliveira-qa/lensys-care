@@ -47,11 +47,12 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
   const summary = mapPatientDetailSummary(patient)
 
   endPerformanceTimer(timer)
+
   return (
     <div className="space-y-8 select-none">
       <PatientDetailHeader patientId={patient.id} hasExams={patient.exams.length > 0} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <PatientSummaryCard
           fullName={patient.full_name}
           dob={patient.dob}
@@ -62,11 +63,18 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
           ageGroupLabel={summary.ageGroupLabel}
         />
 
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6 lg:col-span-2">
           <PatientRecallsCard alerts={patient.alerts} />
 
           <div className="space-y-4">
-            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Histórico de Exames</h3>
+            <div className="space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Histórico clínico
+              </p>
+              <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">
+                Histórico de Exames
+              </h3>
+            </div>
             <PatientExamHistory exams={patient.exams} patientId={patient.id} />
           </div>
         </div>

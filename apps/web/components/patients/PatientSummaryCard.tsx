@@ -1,4 +1,4 @@
-import { Calendar, Mail, Phone } from 'lucide-react'
+import { Calendar, Mail, Phone, StickyNote } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,58 +23,76 @@ export default function PatientSummaryCard({
   ageGroupLabel,
 }: PatientSummaryCardProps) {
   return (
-    <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 lg:col-span-1 shadow-sm">
-      <CardHeader className="pb-4">
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Perfil do Paciente</span>
-        <CardTitle className="text-xl font-bold truncate">{fullName}</CardTitle>
-        <div className="flex items-center gap-2 pt-1.5 flex-wrap">
-          <Badge variant="premium" className="text-[9px] py-0.5 px-2">
+    <Card className="overflow-hidden rounded-2xl border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none lg:col-span-1">
+      <div className="h-1 w-full bg-gradient-to-r from-violet-500 via-indigo-500 to-sky-500" />
+      <CardHeader className="space-y-4 pb-4">
+        <div className="space-y-2">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+            Perfil do paciente
+          </span>
+          <CardTitle className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            {fullName}
+          </CardTitle>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="premium" className="px-2 py-0.5 text-[10px]">
             {age} anos
           </Badge>
-          <Badge variant="secondary" className="text-[9px] py-0.5 px-2">
+          <Badge variant="secondary" className="px-2 py-0.5 text-[10px]">
             {ageGroupLabel}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3.5 text-sm">
+        <div className="space-y-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/20">
           <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-300">
             <Calendar className="h-4.5 w-4.5 text-slate-400" />
             <div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none">Nascimento</div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Data de nascimento
+              </div>
               <span className="font-semibold">{new Date(dob).toLocaleDateString('pt-BR')}</span>
             </div>
           </div>
 
-          {phone && (
+          {phone ? (
             <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-300">
               <Phone className="h-4.5 w-4.5 text-slate-400" />
               <div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none">WhatsApp / Celular</div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  WhatsApp / Celular
+                </div>
                 <span className="font-semibold">{phone}</span>
               </div>
             </div>
-          )}
+          ) : null}
 
-          {email && (
+          {email ? (
             <div className="flex items-center gap-2.5 text-slate-600 dark:text-slate-300">
               <Mail className="h-4.5 w-4.5 text-slate-400" />
               <div className="min-w-0">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none">E-mail</div>
-                <span className="font-semibold truncate block">{email}</span>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  E-mail
+                </div>
+                <span className="block truncate font-semibold">{email}</span>
               </div>
             </div>
-          )}
+          ) : null}
         </div>
 
-        {notes && (
-          <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-2">Observações Clínicas</div>
-            <div className="p-3 bg-slate-50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800 rounded-xl text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-semibold">
-              {notes}
+        {notes ? (
+          <div className="space-y-2 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/20">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+              <StickyNote className="h-4.5 w-4.5" />
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em]">
+                Observações clínicas
+              </span>
             </div>
+            <p className="text-xs font-semibold leading-relaxed text-slate-600 dark:text-slate-400">
+              {notes}
+            </p>
           </div>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   )

@@ -40,18 +40,22 @@ export default function DeletePatientButton({
       router.push('/patients')
       router.refresh()
     } catch (deleteError: unknown) {
-      setError(deleteError instanceof Error ? deleteError.message : 'Não foi possível excluir o paciente.')
+      setError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : 'Não foi possível excluir o paciente.'
+      )
       setIsDeleting(false)
       setIsConfirmOpen(false)
     }
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-1 flex-col gap-3">
       <Button
         type="button"
         variant={deleteState.variant}
-        className={`gap-2 font-bold ${
+        className={`h-11 w-full gap-2 rounded-xl font-semibold ${
           deleteState.blocked
             ? 'border-slate-300 bg-slate-100 text-slate-500 shadow-none hover:bg-slate-100 hover:text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400'
             : ''
@@ -68,7 +72,11 @@ export default function DeletePatientButton({
         aria-disabled={deleteState.blocked}
         data-cy="delete-patient-button"
       >
-        {deleteState.blocked ? <Lock className="h-4.5 w-4.5" /> : <Trash2 className="h-4.5 w-4.5" />}
+        {deleteState.blocked ? (
+          <Lock className="h-4.5 w-4.5" />
+        ) : (
+          <Trash2 className="h-4.5 w-4.5" />
+        )}
         {deleteState.label}
       </Button>
 
@@ -83,9 +91,11 @@ export default function DeletePatientButton({
         {deleteState.helper}
       </p>
 
-      {isConfirmOpen && (
-        <div className="max-w-sm rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-slate-700 shadow-sm dark:text-slate-200">
-          <p className="font-semibold text-red-600 dark:text-red-400">Confirmar exclusão definitiva?</p>
+      {isConfirmOpen ? (
+        <div className="max-w-sm rounded-2xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-slate-700 shadow-sm dark:text-slate-200">
+          <p className="font-semibold text-red-600 dark:text-red-400">
+            Confirmar exclusão definitiva?
+          </p>
           {DELETE_CONFIRMATION_LINES.map((line) => (
             <p key={line} className="mt-2 text-sm leading-6">
               {line}
@@ -95,7 +105,7 @@ export default function DeletePatientButton({
             <Button
               type="button"
               variant="destructive"
-              className="gap-2 font-semibold"
+              className="gap-2 rounded-xl font-semibold"
               onClick={handleDelete}
               disabled={isDeleting}
               data-cy="confirm-delete-patient-button"
@@ -112,7 +122,7 @@ export default function DeletePatientButton({
             <Button
               type="button"
               variant="outline"
-              className="font-semibold"
+              className="rounded-xl font-semibold"
               onClick={() => {
                 if (isDeleting) {
                   return
@@ -127,13 +137,13 @@ export default function DeletePatientButton({
             </Button>
           </div>
         </div>
-      )}
+      ) : null}
 
-      {error && (
-        <div className="max-w-sm rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm font-semibold text-red-600 dark:text-red-400">
+      {error ? (
+        <div className="max-w-sm rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm font-semibold text-red-600 dark:text-red-400">
           {error}
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

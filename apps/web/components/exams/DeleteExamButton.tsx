@@ -43,7 +43,7 @@ export default function DeleteExamButton({ examId, onDeleted }: DeleteExamButton
       type="button"
       variant="ghost"
       size="sm"
-      className="h-7 gap-1.5 px-2 text-[11px] text-slate-400 hover:bg-red-500/10 hover:text-red-400"
+      className="h-8 gap-1.5 rounded-lg px-2.5 text-[11px] text-slate-400 hover:bg-red-500/10 hover:text-red-400"
       onClick={handleDelete}
       disabled={deleting}
       data-cy="delete-exam-button"

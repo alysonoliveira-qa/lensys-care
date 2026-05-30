@@ -1,3 +1,5 @@
+import { Bell } from 'lucide-react'
+
 import { ALERT_STATUS_CONFIG } from '@/lib/alerts/alert-status-config'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,13 +18,18 @@ interface PatientRecallsCardProps {
 
 export default function PatientRecallsCard({ alerts }: PatientRecallsCardProps) {
   return (
-    <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800">
+    <Card className="rounded-2xl border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-bold">Lembretes & Recalls do Paciente</CardTitle>
+        <div className="flex items-center gap-2">
+          <Bell className="h-4.5 w-4.5 text-indigo-500" />
+          <CardTitle className="text-base font-bold">Lembretes e recalls do paciente</CardTitle>
+        </div>
       </CardHeader>
       <CardContent>
         {alerts.length === 0 ? (
-          <div className="text-xs text-slate-400 font-semibold italic">Nenhum lembrete gerado ainda. Lembretes sao criados automaticamente ao salvar um exame.</div>
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-6 text-sm font-semibold text-slate-500 dark:border-slate-800 dark:bg-slate-950/30 dark:text-slate-400">
+            Nenhum lembrete gerado ainda. Lembretes são criados automaticamente ao salvar um exame.
+          </div>
         ) : (
           <div className="space-y-3">
             {alerts.map((alert) => {
@@ -32,29 +39,26 @@ export default function PatientRecallsCard({ alerts }: PatientRecallsCardProps) 
               return (
                 <div
                   key={alert.id}
-                  className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/10 flex items-center justify-between text-xs"
+                  className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/70 p-4 text-xs dark:border-slate-800 dark:bg-slate-950/20"
                 >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1.5">
+                  <div className="space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <span className="font-bold text-slate-700 dark:text-slate-300">
                         Lembrete de Consulta Anual ({alert.channel})
                       </span>
-                      <Badge
-                        variant={statusConfig.badgeVariant}
-                        className="text-[9px] py-0 px-1.5"
-                      >
+                      <Badge variant={statusConfig.badgeVariant} className="px-1.5 py-0 text-[9px]">
                         {statusConfig.compactLabel ?? statusConfig.label}
                       </Badge>
                     </div>
-                    <p className="text-[10px] text-slate-400">
-                      Vencimento do Exame: {new Date(alert.due_date).toLocaleDateString('pt-BR')}
+                    <p className="text-[11px] text-slate-400">
+                      Vencimento do exame: {new Date(alert.due_date).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
-                  {isSent && alert.sent_at && (
-                    <div className="text-slate-500 font-semibold text-[10px]">
+                  {isSent && alert.sent_at ? (
+                    <div className="text-[11px] font-semibold text-slate-500">
                       Disparado em: {new Date(alert.sent_at).toLocaleDateString('pt-BR')}
                     </div>
-                  )}
+                  ) : null}
                 </div>
               )
             })}
