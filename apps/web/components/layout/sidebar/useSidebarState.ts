@@ -111,8 +111,8 @@ export default function useSidebarState(pathname: string) {
       ? hasLoadedCollapsePreference && desktopCollapsed
       : false
   const asideWidthClass = viewportMode === 'tablet'
-    ? (isCollapsed ? 'md:w-20 lg:w-20' : 'md:w-56 lg:w-56')
-    : (isCollapsed ? 'md:w-20 lg:w-20' : 'md:w-20 lg:w-64')
+    ? (isCollapsed ? 'md:w-[4.5rem] lg:w-[4.5rem]' : 'md:w-56 lg:w-56')
+    : (isCollapsed ? 'md:w-[4.5rem] lg:w-[4.5rem]' : 'md:w-20 lg:w-64')
 
   return {
     asideWidthClass,
