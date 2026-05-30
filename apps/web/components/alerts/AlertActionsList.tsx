@@ -45,21 +45,21 @@ export default function AlertActionsList({ alerts }: AlertActionsListProps) {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.message || 'Erro ao realizar ação.')
+        throw new Error(data.message || 'Erro ao realizar a ação.')
       }
 
       setSuccessAlert(alertId)
       setTimeout(() => setSuccessAlert(null), 3000)
       router.refresh()
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Erro ao realizar ação. Tente novamente.')
+      alert(err instanceof Error ? err.message : 'Erro ao realizar a ação. Tente novamente.')
     } finally {
       setActionLoading(null)
     }
   }
 
   return (
-    <div className="select-none">
+    <div className="select-none" data-cy="alerts-list">
       {alerts.length === 0 ? (
         <div className="py-12 text-center text-sm text-slate-400 flex flex-col items-center justify-center gap-2">
           <Bell className="h-12 w-12 text-slate-300 dark:text-slate-700 animate-pulse" />

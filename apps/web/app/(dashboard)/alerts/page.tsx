@@ -1,6 +1,8 @@
 import React from 'react'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { Bell, ChevronLeft, ChevronRight } from 'lucide-react'
+
 import { getAuthenticatedShellData } from '@/lib/authenticated-shell'
 import { getAlertsForClinic } from '@/lib/alerts/alert-data'
 import {
@@ -13,7 +15,6 @@ import { Button } from '@/components/ui/button'
 import AlertsListControls from '@/components/alerts/AlertsListControls'
 import AlertActionsList from '@/components/alerts/AlertActionsList'
 import type { AlertData } from '@/components/alerts/AlertActionsList'
-import { Bell, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface AlertsPageProps {
   searchParams?: {
@@ -46,14 +47,13 @@ export default async function AlertsPage({ searchParams }: AlertsPageProps) {
 
   return (
     <div className="space-y-6 select-none">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-extrabold tracking-tight flex items-center gap-2">
+          <h2 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
             <Bell className="h-6 w-6 text-indigo-500" />
             <span>Fila de Recalls & Lembretes</span>
           </h2>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="mt-1 text-sm text-slate-500">
             Acompanhe e controle os alertas automáticos e manuais de retorno de exames.
           </p>
         </div>
@@ -61,8 +61,7 @@ export default async function AlertsPage({ searchParams }: AlertsPageProps) {
 
       <AlertsListControls initialStatus={status} initialSort={sort} />
 
-      {/* Alerts Table with Action Component */}
-      <Card className="bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800">
+      <Card className="border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-900">
         <CardContent className="p-0">
           <AlertActionsList alerts={alerts as AlertData[]} />
         </CardContent>
@@ -71,7 +70,7 @@ export default async function AlertsPage({ searchParams }: AlertsPageProps) {
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
           <span className="text-xs font-semibold text-slate-400">
-            PÃ¡gina {page} de {totalPages} ({totalCount} alertas no total)
+            Página {page} de {totalPages} ({totalCount} alertas no total)
           </span>
           <div className="flex gap-2">
             <Link href={buildAlertsListQuery({ status, sort, page: page - 1 })} passHref>
@@ -94,7 +93,7 @@ export default async function AlertsPage({ searchParams }: AlertsPageProps) {
                 disabled={page >= totalPages}
                 data-cy="alerts-pagination-next"
               >
-                PrÃ³ximo
+                Próximo
                 <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             </Link>
