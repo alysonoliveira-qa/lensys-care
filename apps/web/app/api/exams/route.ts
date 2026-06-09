@@ -56,6 +56,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'EXAMINER_NOT_FOUND', message: 'Perfil do examinador não encontrado.' }, { status: 404 })
     }
 
+    if (examiner.role === 'RECEPTIONIST') {
+      return NextResponse.json(
+        { error: 'FORBIDDEN', message: 'Você não tem permissão para realizar esta ação.' },
+        { status: 403 }
+      )
+    }
+
     const patientStartedAt = startPerformanceStep()
     const patient = await prisma.patient.findFirst({
       where: {

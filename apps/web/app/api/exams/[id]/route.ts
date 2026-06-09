@@ -13,6 +13,19 @@ export async function PATCH(
       return NextResponse.json({ error: 'UNAUTHORIZED', message: 'Faca login para continuar.' }, { status: 401 })
     }
 
+    const { data: editorProfile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', data.claims.sub)
+      .single()
+
+    if (editorProfile?.role === 'RECEPTIONIST') {
+      return NextResponse.json(
+        { error: 'FORBIDDEN', message: 'Você não tem permissão para realizar esta ação.' },
+        { status: 403 }
+      )
+    }
+
     const body = await request.json()
     const {
       examDate,
@@ -84,6 +97,37 @@ export async function DELETE(
 
     if (authError || !data?.claims.sub) {
       return NextResponse.json({ error: 'UNAUTHORIZED', message: 'Faca login para continuar.' }, { status: 401 })
+    }
+
+    const userId = data.claims.sub
+
+    const { data: removerProfile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single()
+
+    if (removerProfile?.role === 'RECEPTIONIST') {
+      return NextResponse.json(
+        { error: 'FORBIDDEN', message: 'Você não tem permissão para realizar esta ação.' },
+        { status: 403 }
+      )
+    }
+
+    // OPTOMETRIST só pode excluir exames realizados por ele mesmo.
+    if (removerProfile?.role === 'OPTOMETRIST') {
+      const { data: targetExam } = await supabase
+        .from('exams')
+        .select('performed_by')
+        .eq('id', params.id)
+        .maybeSingle()
+
+      if (targetExam && targetExam.performed_by !== userId) {
+        return NextResponse.json(
+          { error: 'FORBIDDEN', message: 'Você só pode excluir exames realizados por você.' },
+          { status: 403 }
+        )
+      }
     }
 
     const { data: deletedExam, error } = await supabase

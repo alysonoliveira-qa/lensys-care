@@ -22,7 +22,11 @@ export async function updateSession(request: NextRequest) {
   })
 
   // Public paths do not need session validation or refresh.
-  const isPublicPage = pathname === '/' || pathname === '/planos'
+  const isPublicPage =
+    pathname === '/' ||
+    pathname === '/planos' ||
+    pathname === '/convite' ||
+    pathname.startsWith('/convite/') // invite acceptance page (no auth required)
   const isAuthPage =
     pathname === '/login' ||
     pathname === '/register' ||
@@ -37,6 +41,7 @@ export async function updateSession(request: NextRequest) {
   // APIs that have their own validation: Stripe webhooks, Supabase alerts cron, etc.
   const isPublicApi =
     pathname === '/api/auth/register' ||
+    pathname === '/api/invites/accept' || // invitee is not logged in yet
     pathname.startsWith('/api/webhooks') ||
     pathname === '/api/alerts/send' ||
     pathname.startsWith('/api/stripe/webhooks') // fallback just in case

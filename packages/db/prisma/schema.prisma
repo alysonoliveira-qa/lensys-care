@@ -45,6 +45,15 @@ enum Plan {
   @@map("plan")
 }
 
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+
+  @@map("invite_status")
+}
+
 enum SubscriptionStatus {
   ACTIVE
   TRIALING
@@ -73,6 +82,7 @@ model Clinic {
   phone      String?
   email      String
   logo_url   String?
+  owner_id   String?  @db.Uuid // Profile.id of the clinic owner (set on registration)
   created_at DateTime @default(now()) @db.Timestamptz
 
   // Relations
@@ -81,6 +91,7 @@ model Clinic {
   subscription    Subscription?
   stripe_customer StripeCustomer?
   payments        Payment[]
+  invites         Invite[]
 
   @@map("clinics")
 }
@@ -95,6 +106,7 @@ model Profile {
   role       Role     @default(OPTOMETRIST)
   crm        String?
   created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
 
   // Relations
   clinic Clinic  @relation(fields: [clinic_id], references: [id], onDelete: Cascade)
@@ -232,4 +244,30 @@ model Payment {
   clinic Clinic @relation(fields: [clinic_id], references: [id], onDelete: Cascade)
 
   @@map("payments")
+}
+
+// ─── Invite (Team Member Invitation) ──────────────────────────────────────────
+
+model Invite {
+  id          String       @id @default(uuid()) @db.Uuid
+  clinic_id   String       @db.Uuid
+  email       String
+  role        Role
+  token       String       @unique @default(uuid()) @db.Uuid
+  status      InviteStatus @default(PENDING)
+  invited_by  String       @db.Uuid // Profile.id of the OWNER who created the invite
+  expires_at  DateTime     @db.Timestamptz
+  accepted_at DateTime?    @db.Timestamptz
+  created_at  DateTime     @default(now()) @db.Timestamptz
+
+  // Relations
+  clinic Clinic @relation(fields: [clinic_id], references: [id], onDelete: Cascade)
+
+  @@index([clinic_id, status])
+  @@index([email])
+  @@index([clinic_id, email])
+  // NB: "apenas um convite PENDING por (clinic_id, email)" é garantido por um
+  // índice único PARCIAL (WHERE status = 'PENDING') que vive somente no SQL
+  // (migration 007) — o Prisma não representa índices parciais.
+  @@map("invites")
 }

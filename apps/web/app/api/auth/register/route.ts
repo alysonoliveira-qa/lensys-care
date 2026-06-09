@@ -181,6 +181,13 @@ export async function POST(request: Request) {
         WHERE id = ${profile.id}::uuid
       `
 
+      // Record the clinic owner now that the OWNER profile exists.
+      await tx.$executeRaw`
+        UPDATE clinics
+        SET owner_id = ${profile.id}::uuid
+        WHERE id = ${clinic.id}::uuid
+      `
+
       const subscription = await txClient.subscription.create({
         data: {
           clinic_id: clinic.id,

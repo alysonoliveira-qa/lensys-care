@@ -15,12 +15,14 @@ interface LoginPageContentProps {
   sourcePath: '/login' | '/auth/login'
   showHomeLink?: boolean
   includeTestSelectors?: boolean
+  notice?: string | null
 }
 
 export default function LoginPageContent({
   sourcePath,
   showHomeLink = false,
   includeTestSelectors = false,
+  notice = null,
 }: LoginPageContentProps) {
   const router = useRouter()
   const supabase = createClient()
@@ -121,6 +123,15 @@ export default function LoginPageContent({
           </CardHeader>
           <CardContent className="space-y-4">
             <form onSubmit={handleLogin} className="space-y-4" data-cy={includeTestSelectors ? 'login-form' : undefined}>
+              {notice && (
+                <div
+                  className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-center text-xs font-medium text-emerald-400"
+                  data-cy="login-notice"
+                >
+                  {notice}
+                </div>
+              )}
+
               {error && (
                 <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-center text-xs font-medium text-red-400 animate-shake">
                   {error}
