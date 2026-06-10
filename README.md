@@ -1,53 +1,63 @@
 # Lensys Care
 
-**Sistema de gestao para optometria clinica**
+**Sistema de gestão para optometria clínica**
 
-Lensys Care e um SaaS em fase beta para profissionais e clinicas de optometria. O foco atual do projeto e organizar o fluxo clinico principal em uma aplicacao web: autenticacao, pacientes, exames/refracao, historico clinico e impressao de receituario.
+Lensys Care é um SaaS em fase beta para profissionais e clínicas de optometria. O foco atual é organizar o fluxo clínico principal em uma aplicação web: autenticação, pacientes, exames/refração, histórico clínico, impressão de receituário e gestão de equipe multi-membro.
+
+🌐 **Produção:** [lensyscare.com.br](https://www.lensyscare.com.br)
 
 ## Status do projeto
 
-- **Fase atual:** beta / validacao de MVP
-- **Deploy:** Vercel
+- **Fase atual:** beta / validação de MVP
+- **Deploy:** Vercel → `www.lensyscare.com.br`
 - **App principal:** `apps/web`
 - **Banco e auth:** Supabase
-- **Camada ORM legada/atual de dominio:** Prisma
+- **ORM de domínio:** Prisma
+- **Email transacional:** Resend (`noreply@lensyscare.com.br`)
 - **Testes E2E:** Cypress
 
-O projeto ja possui fluxos reais implementados e uma base inicial de automacao E2E para smoke tests.
+## Funcionalidades implementadas
 
-## Funcionalidades atuais
-
-- Landing publica
-- Pagina publica de planos
-- Cadastro de clinica/usuario
+### Clínica e autenticação
+- Landing pública
+- Página pública de planos
+- Cadastro de clínica/usuário
 - Login e logout
-- Dashboard clinico
+
+### Gestão de equipe (multi-membro)
+- Convite de membros por email (link seguro com token, validade 72h)
+- Aceitação de convite via página pública `/convite/[token]`
+- Roles: Proprietário, Optometrista, Recepcionista
+- Guards de permissão por role (recepcionista não cria exames)
+- Gestão de membros: trocar role, remover membro
+- Revogar convites pendentes
+- Email de convite enviado via Resend
+
+### Fluxo clínico
+- Dashboard clínico
 - Cadastro, listagem e ficha de pacientes
-- Criacao de exame / refracao
-- Edicao de exame
-- Exclusao de exame
-- Impressao de exame / receita
+- Criação de exame / refração
+- Edição de exame
+- Exclusão de exame
+- Impressão de exame / receita
 - Acuidade visual com valores comuns e modo manual
-- Reaproveitamento do exame anterior como referencia ao criar novo exame
-- Observacoes padrao de receituario
-- Checkboxes rapidos para receita:
-  - Antirreflexo
-  - Filtro azul
-  - Fotossensivel
-- Cypress E2E preparado para validacao dos fluxos principais
-- Smoke tests cobrindo:
-  - navegacao publica
-  - login
-  - criacao de paciente
-  - fluxo clinico basico: criar paciente, criar exame, editar exame e abrir impressao
+- Reaproveitamento do exame anterior como referência ao criar novo
+- Observações padrão de receituário
+- Checkboxes rápidos para receita: Antirreflexo, Filtro azul, Fotossensível
+
+### Testes
+- Cypress E2E: smoke tests cobrindo navegação pública, login, criação de paciente, fluxo clínico básico
+- Spec E2E para fluxo de convite (`cypress/e2e/invite-flow.cy.ts`)
 
 ## Stack
 
-- Next.js App Router
+- Next.js 14 App Router
 - TypeScript
 - Tailwind CSS
-- Supabase
+- Supabase (Postgres + Auth + RLS)
 - Prisma
+- Resend
+- Stripe
 - Cypress
 - Vercel
 - pnpm workspace / monorepo
@@ -57,21 +67,18 @@ O projeto ja possui fluxos reais implementados e uma base inicial de automacao E
 
 ```text
 .
-|-- apps/
-|   `-- web/               # aplicacao principal Next.js
-|-- packages/
-|   `-- db/                # schema Prisma e utilitarios de banco
-|-- supabase/              # artefatos e migrations relacionadas ao Supabase
-|-- package.json           # scripts da raiz do monorepo
-|-- pnpm-workspace.yaml
-`-- turbo.json
+├── apps/
+│   └── web/               # aplicação principal Next.js
+├── packages/
+│   └── db/                # schema Prisma e utilitários de banco
+├── supabase/
+│   └── migrations/        # migrations SQL (001 a 007)
+├── cypress/               # testes E2E
+├── docs/                  # arquitetura, roadmap, padrões
+├── package.json
+├── pnpm-workspace.yaml
+└── turbo.json
 ```
-
-Pontos importantes:
-
-- `apps/web` concentra a interface, rotas App Router, componentes e integracoes do frontend/server.
-- `packages/db` concentra o schema Prisma e a geracao do Prisma Client.
-- `supabase` agrupa o material de banco relacionado ao projeto Supabase.
 
 ## Como rodar localmente
 
@@ -80,47 +87,33 @@ Pontos importantes:
 - Node.js 20+
 - pnpm 9+
 
-### Instalar dependencias
+### Instalar dependências
 
 ```bash
 pnpm install
 ```
 
-### Subir a aplicacao web
+### Subir a aplicação web
 
 ```bash
 pnpm --filter web dev
 ```
 
-Por padrao, a aplicacao sobe em `http://localhost:3000`.
-
-Para desenvolvimento manual no navegador, use `http://localhost:3001`:
+Por padrão sobe em `http://localhost:3000`. Para desenvolvimento manual no navegador:
 
 ```bash
-pnpm --filter web dev:manual
+pnpm --filter web dev:manual   # porta 3001
 ```
 
-Se precisar passar a porta explicitamente:
-
-```bash
-pnpm --filter web dev -- -p 3001
-```
-
-As instrucoes curtas de desenvolvimento local estao em [docs/local-development.md](docs/local-development.md).
-
-### Gerar build de producao local
+### Gerar build de produção local
 
 ```bash
 pnpm --filter web build
 ```
 
-Esse comando ja executa a geracao do Prisma Client antes do `next build`.
+## Variáveis de ambiente
 
-## Variaveis de ambiente
-
-Use `.env.local` para ambiente local. Nao commite arquivos com segredos.
-
-Variaveis principais usadas pelo projeto:
+Use `.env.local` para ambiente local. Não commite arquivos com segredos.
 
 ```env
 DATABASE_URL=
@@ -129,35 +122,27 @@ SUPABASE_SERVICE_ROLE_KEY=
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 NEXT_PUBLIC_APP_NAME=
-NEXT_PUBLIC_APP_URL=
+NEXT_PUBLIC_APP_URL=http://localhost:3001
+RESEND_API_KEY=
+RESEND_FROM_EMAIL=Lensys Care <noreply@lensyscare.com.br>
 ```
 
-Observacoes:
+> Em produção, `NEXT_PUBLIC_APP_URL=https://www.lensyscare.com.br`
 
-- `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` sao usadas no app web.
-- `SUPABASE_SERVICE_ROLE_KEY` deve ficar restrita ao backend/server-side.
-- `DATABASE_URL` e `DIRECT_URL` sao usadas pelo Prisma.
-- Nao exponha secrets em README, screenshots, issues ou arquivos versionados.
-
-## Scripts uteis
-
-Na raiz do monorepo:
+## Scripts úteis
 
 ```bash
+# Raiz do monorepo
 pnpm dev
 pnpm build
 pnpm lint
 pnpm type-check
 pnpm test
-pnpm db:generate
+pnpm db:generate        # ou: pnpm --filter db prisma generate
 pnpm db:migrate
-pnpm db:migrate:deploy
 pnpm db:studio
-```
 
-No app web:
-
-```bash
+# App web
 pnpm --filter web dev
 pnpm --filter web build
 pnpm --filter web lint
@@ -166,83 +151,57 @@ pnpm --filter web test
 
 ## Testes E2E com Cypress
 
-O projeto usa Cypress para validar os fluxos criticos da aplicacao. Os seletores `data-cy` dos fluxos principais ja foram preparados para dar estabilidade aos testes.
-
-### Abrir Cypress localmente
-
 ```bash
 pnpm cypress open
+
+# Apontar para produção
+CYPRESS_BASE_URL=https://www.lensyscare.com.br pnpm cypress open
 ```
 
-### Abrir Cypress apontando para producao
+Convenção: manual no navegador usa `localhost:3001`, Cypress usa `localhost:3000`.
 
-```bash
-CYPRESS_BASE_URL=https://lensys-care.vercel.app pnpm cypress open
-```
+## Migrations
 
-Use `CYPRESS_BASE_URL` para alternar entre ambiente local, preview ou producao.
+As migrations são aplicadas via **Supabase SQL Editor** ou `supabase db push`, **não** via `prisma migrate dev`.
 
-Convencao local:
-
-- manual no navegador: `http://localhost:3001`
-- Cypress/Codex: `http://localhost:3000` ou o valor definido em `CYPRESS_BASE_URL`
-- se a porta travar no Windows: `taskkill /F /IM node.exe`
-
-### Credenciais de teste E2E
-
-Use variaveis locais para o usuario de teste:
-
-```env
-E2E_USER_EMAIL=
-E2E_USER_PASSWORD=
-```
-
-### Arquivo local do Cypress
-
-Se o time usar `cypress.env.json` para dados locais, **esse arquivo nao deve ser commitado**.
-
-Boas praticas:
-
-- manter `cypress.env.json` apenas no ambiente local do desenvolvedor
-- usar `CYPRESS_BASE_URL` para apontar os testes para o ambiente correto
-- evitar credenciais reais de producao em arquivos versionados
+| Arquivo | Descrição |
+|---------|-----------|
+| `001_initial_schema.sql` | Schema inicial |
+| `002_rls_policies.sql` | Políticas RLS |
+| `003_pgcron_alerts.sql` | pgcron para alertas |
+| `004_harden_schema_and_defer_pg_net.sql` | Hardening |
+| `005_add_preferred_name_to_profiles.sql` | Nome preferido |
+| `006_add_multi_member_support.sql` | Multi-membro: owner_id, invites, RLS |
+| `007_fix_invites_pending_unique.sql` | Fix índice parcial de convites |
 
 ## Deploy
 
 - **Hospedagem:** Vercel
-- **App principal:** `apps/web`
-- **Root Directory na Vercel:** `apps/web`
-
-Fluxo geral:
-
-1. push para o repositorio
-2. Vercel executa o build do app web
-3. o build gera Prisma Client e roda `next build`
-4. o deploy fica disponivel no ambiente configurado
-
-Para validacoes de demo, os testes E2E podem rodar:
-
-- localmente, contra `http://localhost:3000`
-- contra preview da Vercel
-- contra producao, usando `CYPRESS_BASE_URL`
+- **Root Directory:** `apps/web`
+- **Domínio:** `lensyscare.com.br` (DNS no registro.br apontando pro Vercel)
 
 ## Roadmap
 
-- Melhorias visuais internas
-- Configuracoes de receita por clinica
-- Alertas e recalls mais avancados
-- Melhorias de performance
-- Expansao da cobertura de testes E2E
-- Integracoes futuras de comunicacao
+### Próximos passos
+- Alteração de senha na página de conta
+- Configurações de receita por clínica
+- Alertas e recalls mais avançados
+- Expansão da cobertura de testes E2E (incluindo fluxo de convite)
+- DMARC no DNS (melhora entregabilidade do email)
 
-## Observacoes de seguranca
+### Futuro
+- Integração real WhatsApp/SMS (plano Conecta — Twilio/Z-API)
+- Melhorias de performance
+- Integrações futuras de comunicação
+
+## Observações de segurança
 
 - Nunca use `service_role` no frontend.
 - Restrinja segredos a ambiente server-side.
-- Nao commite `.env.local`, `cypress.env.json` ou qualquer arquivo com credenciais reais.
-- Revise cuidadosamente qualquer uso de dados sensiveis de pacientes.
-- Antes de expandir o produto, mantenha o modelo de acesso e isolamento de dados coerente com a estrategia de auth e banco.
+- Não commite `.env.local`, `cypress.env.json` ou qualquer arquivo com credenciais reais.
+- Revise cuidadosamente qualquer uso de dados sensíveis de pacientes.
+- Guards de role devem ser validados no servidor, nunca só na UI.
 
-## Observacoes finais
+## Observações finais
 
-Lensys Care esta em evolucao incremental. O objetivo atual nao e fechar todo o SaaS de uma vez, e sim consolidar um nucleo clinico confiavel para demo, validacao com usuarios e ampliacao segura do produto.
+Lensys Care está em evolução incremental. O objetivo atual não é fechar todo o SaaS de uma vez, e sim consolidar um núcleo clínico confiável para demo, validação com usuários e ampliação segura do produto.
