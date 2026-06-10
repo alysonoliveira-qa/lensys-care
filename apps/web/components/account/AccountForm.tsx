@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Loader2, LockKeyhole, Mail, ShieldCheck, Sparkles, Users } from 'lucide-react'
+import { Loader2, Mail, ShieldCheck, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import PasswordCard from '@/components/account/PasswordCard'
 
 interface AccountFormProps {
   initialValues: {
@@ -235,49 +236,7 @@ export default function AccountForm({ initialValues }: AccountFormProps) {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <Card className="rounded-2xl border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="rounded-2xl border border-slate-200/80 bg-slate-50 p-3 text-slate-600 dark:border-slate-800 dark:bg-slate-950/20 dark:text-slate-300">
-                <LockKeyhole className="h-5 w-5" />
-              </div>
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  Em breve
-                </p>
-                <h3 className="text-base font-bold text-slate-900 dark:text-slate-50">Senha</h3>
-                <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
-                  A alteração de senha será adicionada futuramente, mantendo a mesma experiência
-                  visual das demais configurações da conta.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="rounded-2xl border border-slate-200/80 bg-slate-50 p-3 text-slate-600 dark:border-slate-800 dark:bg-slate-950/20 dark:text-slate-300">
-                <Users className="h-5 w-5" />
-              </div>
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  Gestão futura
-                </p>
-                <h3 className="text-base font-bold text-slate-900 dark:text-slate-50">
-                  Gestão de equipe
-                </h3>
-                <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
-                  Em breve será possível adicionar recepcionistas e outros profissionais da clínica
-                  com permissões específicas.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <PasswordCard />
     </div>
   )
 }

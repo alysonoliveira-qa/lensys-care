@@ -259,3 +259,61 @@ export async function changeMemberRole(
 
   return { status: 'success', message: 'Função do membro atualizada.' }
 }
+
+// ─── changePassword ──────────────────────────────────────────────────────────
+// Altera a senha do usuário autenticado. Confirma a senha atual via
+// signInWithPassword antes de aplicar a nova senha com updateUser.
+
+export interface ChangePasswordState {
+  status: 'idle' | 'success' | 'error'
+  message: string
+}
+
+export async function changePassword(
+  _previousState: ChangePasswordState,
+  formData: FormData
+): Promise<ChangePasswordState> {
+  const currentPassword = formData.get('current_password')?.toString()
+  const newPassword = formData.get('new_password')?.toString()
+  const confirmPassword = formData.get('confirm_password')?.toString()
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return { status: 'error', message: 'Preencha todos os campos.' }
+  }
+  if (newPassword.length < 8) {
+    return { status: 'error', message: 'A nova senha deve ter pelo menos 8 caracteres.' }
+  }
+  if (newPassword !== confirmPassword) {
+    return { status: 'error', message: 'A confirmação não confere com a nova senha.' }
+  }
+  if (currentPassword === newPassword) {
+    return { status: 'error', message: 'A nova senha não pode ser igual à atual.' }
+  }
+
+  const supabase = createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user?.email) {
+    return { status: 'error', message: 'Sua sessão expirou. Entre novamente.' }
+  }
+
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: currentPassword,
+  })
+
+  if (signInError) {
+    return { status: 'error', message: 'Senha atual incorreta.' }
+  }
+
+  const { error: updateError } = await supabase.auth.updateUser({ password: newPassword })
+
+  if (updateError) {
+    console.error('changePassword — updateUser error:', updateError)
+    return { status: 'error', message: 'Não foi possível atualizar a senha. Tente novamente.' }
+  }
+
+  return { status: 'success', message: 'Senha alterada com sucesso.' }
+}
