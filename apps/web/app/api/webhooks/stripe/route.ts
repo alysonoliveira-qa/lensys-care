@@ -9,6 +9,12 @@ const Plan = {
   CONECTA: 'CONECTA',
 } as const
 
+// Mapeia o price_id do Stripe para o plano interno correspondente.
+const PRICE_TO_PLAN: Record<string, typeof Plan[keyof typeof Plan]> = {
+  [process.env.STRIPE_ESSENCIAL_MONTHLY_PRICE_ID!]: Plan.ESSENTIAL,
+  [process.env.STRIPE_CONECTA_MONTHLY_PRICE_ID!]:   Plan.CONECTA,
+}
+
 const SubscriptionStatus = {
   ACTIVE: 'ACTIVE',
   TRIALING: 'TRIALING',
@@ -117,7 +123,7 @@ export async function POST(request: Request) {
           await prisma.subscription.upsert({
             where: { clinic_id: clinicId },
             update: {
-              plan: Plan.CONECTA,
+              plan: PRICE_TO_PLAN[subscription.items.data[0].price.id] ?? Plan.ESSENTIAL,
               status: mapStripeStatus(subscription.status),
               stripe_subscription_id: subscription.id,
               stripe_price_id: subscription.items.data[0].price.id,
@@ -127,7 +133,7 @@ export async function POST(request: Request) {
             },
             create: {
               clinic_id: clinicId,
-              plan: Plan.CONECTA,
+              plan: PRICE_TO_PLAN[subscription.items.data[0].price.id] ?? Plan.ESSENTIAL,
               status: mapStripeStatus(subscription.status),
               stripe_subscription_id: subscription.id,
               stripe_price_id: subscription.items.data[0].price.id,
@@ -220,7 +226,7 @@ export async function POST(request: Request) {
             amount_cents: invoice.amount_paid,
             currency: invoice.currency,
             status: PaymentStatus.SUCCEEDED,
-            description: invoice.billing_reason || 'Mensalidade Plano Conecta',
+            description: invoice.billing_reason || 'Mensalidade Lensys Care',
             paid_at: new Date(),
           },
         })
