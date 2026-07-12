@@ -2,6 +2,12 @@ import React from 'react'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
+import {
+  endPerformanceTimer,
+  logPerformanceStep,
+  startPerformanceStep,
+  startPerformanceTimer,
+} from '@/lib/performance'
 import ExamForm from '@/components/exams/ExamForm'
 
 interface EditExamPageProps {
@@ -13,14 +19,19 @@ interface EditExamPageProps {
 export const revalidate = 0
 
 export default async function EditExamPage({ params }: EditExamPageProps) {
+  const timer = startPerformanceTimer('page /exams/[id]/edit')
   const supabase = createClient()
+  const authStartedAt = startPerformanceStep()
   const { data, error } = await supabase.auth.getClaims()
   const userId = data?.claims.sub
+  logPerformanceStep(timer, 'auth.getClaims', authStartedAt)
 
   if (error || !userId) {
+    endPerformanceTimer(timer, 'redirect_login')
     redirect('/login')
   }
 
+  const examStartedAt = startPerformanceStep()
   const exam = await prisma.exam.findFirst({
     where: {
       id: params.id,
@@ -58,9 +69,14 @@ export default async function EditExamPage({ params }: EditExamPageProps) {
     },
   })
 
+  logPerformanceStep(timer, 'prisma.exam_with_patient', examStartedAt)
+
   if (!exam) {
+    endPerformanceTimer(timer, 'not_found_or_out_of_clinic')
     notFound()
   }
+
+  endPerformanceTimer(timer)
 
   return (
     <div className="space-y-6">
