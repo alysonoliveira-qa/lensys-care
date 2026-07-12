@@ -92,6 +92,7 @@ Multi-tenant com **Clinic** como tenant raiz:
 | `005_add_preferred_name_to_profiles.sql` | Nome preferido |
 | `006_add_multi_member_support.sql` | owner_id, updated_at, InviteStatus, tabela invites + RLS |
 | `007_fix_invites_pending_unique.sql` | Fix constraint: índice parcial WHERE status='PENDING' |
+| `008_add_patient_search_trgm.sql` | pg_trgm + índices GIN para busca ILIKE em pacientes |
 
 > **Importante:** O projeto usa SQL direto no Supabase, NÃO `prisma migrate dev`
 > (histórico de migrations está em `supabase/migrations/`).
