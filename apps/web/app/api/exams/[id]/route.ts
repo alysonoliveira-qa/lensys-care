@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { prisma } from '@/lib/db'
 
 export async function PATCH(
   request: Request,
@@ -13,16 +14,33 @@ export async function PATCH(
       return NextResponse.json({ error: 'UNAUTHORIZED', message: 'Faca login para continuar.' }, { status: 401 })
     }
 
-    const { data: editorProfile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', data.claims.sub)
-      .single()
+    const editorProfile = await prisma.profile.findUnique({
+      where: { id: data.claims.sub },
+      select: { role: true, clinic_id: true },
+    })
 
-    if (editorProfile?.role === 'RECEPTIONIST') {
+    if (!editorProfile) {
+      return NextResponse.json({ error: 'PROFILE_NOT_FOUND', message: 'Perfil não encontrado.' }, { status: 404 })
+    }
+
+    if (editorProfile.role === 'RECEPTIONIST') {
       return NextResponse.json(
         { error: 'FORBIDDEN', message: 'Você não tem permissão para realizar esta ação.' },
         { status: 403 }
+      )
+    }
+
+    // Defesa em profundidade: valida ownership do tenant explicitamente antes de mutar,
+    // além da RLS. Prisma bypassa RLS, então a checagem explícita é a garantia primária.
+    const ownedExam = await prisma.exam.findFirst({
+      where: { id: params.id, patient: { clinic_id: editorProfile.clinic_id } },
+      select: { id: true },
+    })
+
+    if (!ownedExam) {
+      return NextResponse.json(
+        { error: 'EXAM_NOT_FOUND', message: 'Exame nao encontrado ou sem permissao para editar.' },
+        { status: 404 }
       )
     }
 
@@ -101,33 +119,42 @@ export async function DELETE(
 
     const userId = data.claims.sub
 
-    const { data: removerProfile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .single()
+    const removerProfile = await prisma.profile.findUnique({
+      where: { id: userId },
+      select: { role: true, clinic_id: true },
+    })
 
-    if (removerProfile?.role === 'RECEPTIONIST') {
+    if (!removerProfile) {
+      return NextResponse.json({ error: 'PROFILE_NOT_FOUND', message: 'Perfil não encontrado.' }, { status: 404 })
+    }
+
+    if (removerProfile.role === 'RECEPTIONIST') {
       return NextResponse.json(
         { error: 'FORBIDDEN', message: 'Você não tem permissão para realizar esta ação.' },
         { status: 403 }
       )
     }
 
-    // OPTOMETRIST só pode excluir exames realizados por ele mesmo.
-    if (removerProfile?.role === 'OPTOMETRIST') {
-      const { data: targetExam } = await supabase
-        .from('exams')
-        .select('performed_by')
-        .eq('id', params.id)
-        .maybeSingle()
+    // Defesa em profundidade: valida ownership do tenant explicitamente antes de excluir,
+    // além da RLS. Prisma bypassa RLS, então a checagem explícita é a garantia primária.
+    const ownedExam = await prisma.exam.findFirst({
+      where: { id: params.id, patient: { clinic_id: removerProfile.clinic_id } },
+      select: { id: true, performed_by: true },
+    })
 
-      if (targetExam && targetExam.performed_by !== userId) {
-        return NextResponse.json(
-          { error: 'FORBIDDEN', message: 'Você só pode excluir exames realizados por você.' },
-          { status: 403 }
-        )
-      }
+    if (!ownedExam) {
+      return NextResponse.json(
+        { error: 'EXAM_NOT_FOUND', message: 'Exame nao encontrado ou sem permissao para excluir.' },
+        { status: 404 }
+      )
+    }
+
+    // OPTOMETRIST só pode excluir exames realizados por ele mesmo.
+    if (removerProfile.role === 'OPTOMETRIST' && ownedExam.performed_by !== userId) {
+      return NextResponse.json(
+        { error: 'FORBIDDEN', message: 'Você só pode excluir exames realizados por você.' },
+        { status: 403 }
+      )
     }
 
     const { data: deletedExam, error } = await supabase

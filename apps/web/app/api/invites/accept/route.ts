@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { prisma } from '@/lib/db'
+import { findAuthUserByEmail } from '@/lib/invites/find-auth-user'
 
 // ─── POST /api/invites/accept ─────────────────────────────────────────────────
 // Chamado pela página /convite/[token] após o usuário preencher
@@ -67,10 +68,7 @@ export async function POST(request: Request) {
     )
 
     // Verifica se já existe usuário com este email no Supabase Auth
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
-    const existingAuthUser = existingUsers?.users?.find(
-      (u) => u.email?.toLowerCase() === invite.email.toLowerCase()
-    )
+    const existingAuthUser = await findAuthUserByEmail(supabaseAdmin, invite.email)
 
     let userId: string
 

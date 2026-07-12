@@ -9,18 +9,21 @@ import { sendInviteEmail } from '@/lib/email/invite'
 
 export async function POST(request: Request) {
   try {
-    const { to, token, clinicName, role } = await request.json()
+    const { token } = await request.json()
 
-    if (!to || !token || !clinicName || !role) {
+    if (!token) {
       return NextResponse.json(
-        { error: 'MISSING_FIELDS', message: 'Campos obrigatórios ausentes.' },
+        { error: 'MISSING_TOKEN', message: 'Token de convite não informado.' },
         { status: 400 }
       )
     }
 
-    // Valida que o token existe e ainda está PENDING
+    // Valida que o token existe e ainda está PENDING.
+    // Segurança: destinatário, clínica e função são derivados do registro Invite,
+    // nunca do corpo da requisição — impede spoofing/phishing pelo domínio verificado.
     const invite = await prisma.invite.findUnique({
       where: { token },
+      include: { clinic: { select: { name: true } } },
     })
 
     if (!invite || invite.status !== 'PENDING' || invite.expires_at < new Date()) {
@@ -30,7 +33,12 @@ export async function POST(request: Request) {
       )
     }
 
-    await sendInviteEmail({ to, token, clinicName, role })
+    await sendInviteEmail({
+      to: invite.email,
+      token: invite.token,
+      clinicName: invite.clinic.name,
+      role: invite.role,
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {
