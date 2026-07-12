@@ -2,6 +2,12 @@ import React from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
+import {
+  endPerformanceTimer,
+  logPerformanceStep,
+  startPerformanceStep,
+  startPerformanceTimer,
+} from '@/lib/performance'
 import ExamForm from '@/components/exams/ExamForm'
 
 interface NewExamPageProps {
@@ -13,20 +19,26 @@ interface NewExamPageProps {
 export const revalidate = 0
 
 export default async function NewExamPage({ searchParams }: NewExamPageProps) {
+  const timer = startPerformanceTimer('page /exams/new')
   const supabase = createClient()
+  const authStartedAt = startPerformanceStep()
   const { data, error } = await supabase.auth.getClaims()
   const userId = data?.claims.sub
+  logPerformanceStep(timer, 'auth.getClaims', authStartedAt)
 
   if (error || !userId) {
+    endPerformanceTimer(timer, 'redirect_login')
     redirect('/login')
   }
 
   const patientId = searchParams?.patientId
 
   if (!patientId) {
+    endPerformanceTimer(timer, 'redirect_no_patient')
     redirect('/patients')
   }
 
+  const patientStartedAt = startPerformanceStep()
   const patient = await prisma.patient.findFirst({
     where: {
       id: patientId,
@@ -64,12 +76,17 @@ export default async function NewExamPage({ searchParams }: NewExamPageProps) {
     },
   })
 
+  logPerformanceStep(timer, 'prisma.patient_with_previous_exam', patientStartedAt)
+
   if (!patient) {
+    endPerformanceTimer(timer, 'not_found_or_out_of_clinic')
     redirect('/patients')
   }
 
   const { exams, ...patientData } = patient
   const previousExam = exams[0]
+
+  endPerformanceTimer(timer)
 
   return (
     <div className="space-y-6">
