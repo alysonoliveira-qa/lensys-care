@@ -62,6 +62,7 @@ export default function LoginPageContent({
             ? 'Credenciais inválidas. Verifique seu e-mail e senha.'
             : signInError.message
         )
+        setLoading(false)
       } else {
         window.sessionStorage.setItem(
           LOGIN_REDIRECT_PERFORMANCE_KEY,
@@ -81,9 +82,10 @@ export default function LoginPageContent({
     } catch {
       console.info(`[perf][${loginAttemptId}] client login ${sourcePath}.total (exception): ${(performance.now() - loginStartedAt).toFixed(1)}ms`)
       setError('Ocorreu um erro ao fazer login. Tente novamente.')
-    } finally {
       setLoading(false)
     }
+    // Sucesso: mantém `loading` durante o redirect para /dashboard — o componente
+    // desmonta na navegação, evitando o "piscar" do botão de volta ao estado ocioso.
   }
 
   return (

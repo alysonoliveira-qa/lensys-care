@@ -46,6 +46,10 @@ export function useExamFormSubmission({
         throw new Error(data.message || (isEditing ? 'Falha ao salvar alterações.' : 'Falha ao lançar exame.'))
       }
 
+      // Mantém `loading` ativo durante a navegação: `router.push` não espera a rota
+      // destino renderizar, então resetar aqui faria o botão "piscar" de volta ao
+      // estado ocioso no intervalo, dando sensação de travamento. O componente
+      // desmonta ao trocar de rota, então não há estado preso.
       router.push(`/patients/${patientId}`)
       router.refresh()
     } catch (submissionError: unknown) {
@@ -57,7 +61,6 @@ export function useExamFormSubmission({
             ? 'Erro ao editar exame refrativo.'
             : 'Erro ao registrar exame refrativo.'
       )
-    } finally {
       setLoading(false)
     }
   }

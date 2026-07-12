@@ -81,12 +81,14 @@ export default function PatientForm({
 
       const redirectPatientId = isEditMode ? patientId : data.patient.id
 
+      // Mantém `loading` ativo durante a navegação: `router.push` não espera a rota
+      // destino renderizar. Resetar aqui faria o botão piscar de volta ao estado
+      // ocioso no intervalo. O componente desmonta ao trocar de rota.
       router.push(`/patients/${redirectPatientId}`)
       router.refresh()
     } catch (err: unknown) {
       console.error(err)
       setError(err instanceof Error ? err.message : 'Erro de conexão. Tente novamente.')
-    } finally {
       setLoading(false)
     }
   }
