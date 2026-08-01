@@ -19,15 +19,41 @@ export interface AgeGroupInfo {
   suggestedAddition: number
 }
 
-// Lookup table exactly as specified in the business rules
+// Lookup table de adição por presbiopia com granularidade fina (passos de 2 anos).
+//
+// A classificação clínica (label) segue as faixas do guia de prescrição do
+// optogrid.com / StatPearls (NIH/NCBI):
+//   40–44 Presbiopia leve · 45–54 leve a moderada · 55–59 moderada a avançada · 60+ avançada
+//
+// A adição sugerida progride ~+0,25 D a cada 2 anos entre 40 e 50, desacelerando
+// para ~+0,25 D a cada 5–8 anos após os 50 (StatPearls), cobrindo toda a escala
+// clínica de +0,75 a +3,50 D. O valor é apenas um ponto de partida orientativo —
+// a determinação final é individualizada (ARP/ARN, distância de leitura, grau base).
 export const AGE_GROUP_TABLE: AgeGroupInfo[] = [
-  { label: 'Infantil / Adolescente',      minAge: 0,  maxAge: 17,  suggestedAddition: 0.0  },
-  { label: 'Adulto Jovem',                minAge: 18, maxAge: 39,  suggestedAddition: 0.0  },
-  { label: 'Adulto (Presbiopia Ini.)',     minAge: 40, maxAge: 44,  suggestedAddition: 0.75 },
-  { label: 'Adulto (Presbiopia Mod.)',     minAge: 45, maxAge: 49,  suggestedAddition: 1.25 },
-  { label: 'Adulto (Presbiopia Mod.)',     minAge: 50, maxAge: 54,  suggestedAddition: 1.75 },
-  { label: 'Adulto (Presbiopia Avç.)',     minAge: 55, maxAge: 59,  suggestedAddition: 2.25 },
-  { label: 'Idoso',                        minAge: 60, maxAge: 999, suggestedAddition: 2.75 },
+  { label: 'Infantil / Adolescente',    minAge: 0,  maxAge: 17,  suggestedAddition: 0.0  },
+  { label: 'Adulto Jovem',              minAge: 18, maxAge: 39,  suggestedAddition: 0.0  },
+
+  // Presbiopia inicial (leve) — progressão +0,25 D a cada 2 anos
+  { label: 'Adulto (Presbiopia Ini.)',  minAge: 40, maxAge: 41,  suggestedAddition: 0.75 },
+  { label: 'Adulto (Presbiopia Ini.)',  minAge: 42, maxAge: 43,  suggestedAddition: 1.0  },
+  { label: 'Adulto (Presbiopia Ini.)',  minAge: 44, maxAge: 44,  suggestedAddition: 1.25 },
+
+  // Presbiopia moderada — mantém a cadência de 2 anos até os 50
+  { label: 'Adulto (Presbiopia Mod.)',  minAge: 45, maxAge: 45,  suggestedAddition: 1.25 },
+  { label: 'Adulto (Presbiopia Mod.)',  minAge: 46, maxAge: 47,  suggestedAddition: 1.5  },
+  { label: 'Adulto (Presbiopia Mod.)',  minAge: 48, maxAge: 49,  suggestedAddition: 1.75 },
+  { label: 'Adulto (Presbiopia Mod.)',  minAge: 50, maxAge: 52,  suggestedAddition: 2.0  },
+  { label: 'Adulto (Presbiopia Mod.)',  minAge: 53, maxAge: 54,  suggestedAddition: 2.25 },
+
+  // Presbiopia avançada — progressão desacelera após os 50
+  { label: 'Adulto (Presbiopia Avç.)',  minAge: 55, maxAge: 55,  suggestedAddition: 2.25 },
+  { label: 'Adulto (Presbiopia Avç.)',  minAge: 56, maxAge: 59,  suggestedAddition: 2.5  },
+
+  // Idoso — plateau clínico até +3,50 D
+  { label: 'Idoso',                     minAge: 60, maxAge: 64,  suggestedAddition: 2.75 },
+  { label: 'Idoso',                     minAge: 65, maxAge: 70,  suggestedAddition: 3.0  },
+  { label: 'Idoso',                     minAge: 71, maxAge: 76,  suggestedAddition: 3.25 },
+  { label: 'Idoso',                     minAge: 77, maxAge: 999, suggestedAddition: 3.5  },
 ]
 
 /**
