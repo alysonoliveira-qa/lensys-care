@@ -24,8 +24,10 @@ Entregar uma **Agenda** funcional que permita à secretária, no dia a dia:
 3. Criar uma nova consulta para um paciente existente.
 4. Marcar a consulta como **Compareceu** ou **Cancelada**.
 5. Já deixar a primeira consulta agendada no momento do cadastro do paciente.
-6. Registrar o **indicante ("correta")** que trouxe o paciente, para a clínica
-   gratificar a indicação (R$10 por consulta comparecida) — pago no fim do dia.
+6. Registrar o **indicante ("correta")** que trouxe o paciente e acompanhar, por um
+   **contador simples de indicações pendentes**, quem a clínica precisa gratificar
+   (R$10 por consulta comparecida) — com botão **Pagar** (mostra PIX) e **Marcar pago**,
+   sem lidar com valores monetários no sistema ainda.
 
 Valor: substituir a agenda de papel/planilha por um fluxo integrado ao prontuário,
 com o mínimo de atrito para a recepção.
@@ -42,7 +44,8 @@ com o mínimo de atrito para a recepção.
 | Campos da consulta | **Mínimo:** paciente + data/hora + status (sem tipo/observação) |
 | Indicantes ("corretas") | Mini-cadastro (nome + chave PIX + WhatsApp); consulta liga a **um indicante opcional** via dropdown |
 | Pagamento da indicação | **R$10 por consulta, devido quando a consulta é COMPARECEU** (elo fica na consulta) |
-| Relatório de pagamentos | **Fora do MVP** (fase 2); MVP apenas registra o elo indicante↔consulta |
+| Controle de pagamento (MVP) | **Contador simples** de indicações pendentes por indicante + botão **Pagar** (mostra PIX) → **Marcar pago** zera as pendentes. **Sem valores monetários** no sistema ainda |
+| Valores/financeiro | **Fora do MVP** — escrutínio de valores (R$) e conciliação entram junto do **módulo financeiro** futuro |
 | Cadastro de indicantes | **Aba dentro de Pacientes** (`Pacientes | Indicantes`) |
 | Arquitetura | **Server Actions** + module-pattern (`lib/appointments/`, `lib/referrers/`) |
 
@@ -67,6 +70,7 @@ model Appointment {
   patient_id      String            @db.Uuid
   professional_id String?           @db.Uuid           // NULLABLE — reservado p/ futuro, não exposto na UI
   referrer_id     String?           @db.Uuid           // NULLABLE — indicante ("correta"), opcional
+  referral_paid_at DateTime?        @db.Timestamptz    // quando a indicação foi paga ao indicante (NULL = pendente)
   scheduled_at    DateTime          @db.Timestamptz    // data + hora da consulta
   status          AppointmentStatus @default(SCHEDULED)
   created_by      String            @db.Uuid           // Profile que criou
@@ -109,6 +113,9 @@ model Referrer {
   `professional_id` — decisão fina fica para o plano de implementação.
 - `referrer_id` usa `ON DELETE SET NULL`: desligar/limpar um indicante **não** apaga a
   consulta, apenas remove o elo. Em geral prefira `active = false` a apagar.
+- `referral_paid_at` guarda **quando** a indicação foi paga (NULL = pendente). É a marca
+  auditável que o contador usa e que o módulo financeiro futuro reaproveita — **sem
+  armazenar valor em R$** por enquanto (o valor é uma constante da aplicação).
 
 ### Migration `009_add_appointments_and_referrers.sql`
 
@@ -119,8 +126,11 @@ model Referrer {
 - Habilita RLS e cria políticas `SELECT`/`INSERT`/`UPDATE` (e `DELETE` em `referrers`)
   restritas ao `clinic_id` do profile logado — **mesmo padrão** das políticas de
   `patients` (migration 002).
+- Adiciona `appointments.referral_paid_at timestamptz NULL` (marca de pagamento).
 - Índices: `appointments(clinic_id, scheduled_at)`, `appointments(patient_id)`,
-  `appointments(referrer_id)`, `referrers(clinic_id)`.
+  `appointments(referrer_id)`, `referrers(clinic_id)`. Considerar índice parcial para
+  acelerar a contagem de pendentes (ex.: `WHERE status = 'ATTENDED' AND referrer_id IS
+  NOT NULL AND referral_paid_at IS NULL`) — decisão fina no plano.
 
 > O projeto usa SQL direto no Supabase (não `prisma migrate dev`). O schema Prisma é
 > atualizado para refletir as tabelas; a fonte de verdade da migração é o arquivo SQL.
@@ -153,8 +163,12 @@ Segue o padrão obrigatório do `docs/module-pattern.md` (separação por domín
 - **`referrers-data.ts`** — `listReferrers(clinicId, { activeOnly? })`,
   `createReferrer({ clinicId, name, pixKey?, whatsapp? })`,
   `updateReferrer({ clinicId, referrerId, ... })`,
-  `setReferrerActive({ clinicId, referrerId, active })`. **Toda função valida
-  `clinicId`/ownership na borda.**
+  `setReferrerActive({ clinicId, referrerId, active })`,
+  `listReferrersWithPendingCount(clinicId)` → cada indicante com a **contagem de
+  indicações pendentes** (consultas `ATTENDED`, com `referrer_id`, `referral_paid_at IS
+  NULL`), e `markReferralsPaid({ clinicId, referrerId })` → carimba `referral_paid_at =
+  now()` em **todas** as pendentes daquele indicante (zera o contador). **Toda função
+  valida `clinicId`/ownership na borda.**
 - **`referrers-normalizers.ts`** — funções puras: validar/normalizar nome (obrigatório),
   chave PIX e WhatsApp (formatos leves; ambos opcionais).
 - **`referrers-mappers.ts` / `referrers-config.ts`** — se necessário para a lista e o
@@ -176,7 +190,8 @@ seguindo o padrão de `apps/web/app/(dashboard)/planos/actions.ts`. Auth via
 
 **Indicantes — actions do domínio de pacientes/indicantes** (ex.:
 `apps/web/app/(dashboard)/patients/referrers-actions.ts`): `createReferrer`,
-`updateReferrer`, `setReferrerActive`, todas com validação de tenant na borda.
+`updateReferrer`, `setReferrerActive` e `markReferralsPaid` (zera as pendentes do
+indicante), todas com validação de tenant na borda.
 
 ## Página `/agenda` + componentes
 
@@ -222,26 +237,38 @@ agendar; tente pela Agenda"). O detalhe de UX do erro fica para o plano.
 A página de Pacientes (`apps/web/app/(dashboard)/patients/page.tsx`) passa a ter **duas
 abas**: **Pacientes** (lista atual, inalterada) e **Indicantes**.
 
-- **Aba Indicantes** — lista dos indicantes da clínica (nome · chave PIX · WhatsApp ·
-  ativo/inativo) e um **mini-formulário** de cadastro/edição com apenas: **nome**
-  (obrigatório), **chave PIX** e **WhatsApp** (opcionais). Ações: criar, editar,
-  ativar/desativar (sem exclusão dura, para preservar histórico das consultas).
+- **Aba Indicantes** — lista dos indicantes da clínica. Cada linha mostra: **nome** ·
+  **indicações pendentes** (contador) · **[Pagar]** · estado ativo/inativo. Um
+  **mini-formulário** de cadastro/edição com apenas: **nome** (obrigatório), **chave
+  PIX** e **WhatsApp** (opcionais). Ações: criar, editar, ativar/desativar (sem exclusão
+  dura, para preservar histórico das consultas).
+- **Fluxo "Pagar"** (contador simples, sem valores monetários no MVP): quando o
+  indicante tem indicações pendentes (> 0), o botão **[Pagar]** revela a **chave PIX**
+  (para a secretária copiar e pagar) e um botão **[Marcar pago]**. Ao confirmar, chama
+  `markReferralsPaid` → carimba todas as pendentes e o contador zera. Indicante com 0
+  pendentes não mostra ação de pagamento.
 - Componentes visuais recebem dados por props; a página compõe (auth/clínica →
-  `listReferrers` → componentes). Preservar `data-cy` nos campos e botões.
+  `listReferrersWithPendingCount` → componentes). Preservar `data-cy` nos campos e botões.
 - Os três papéis podem gerir indicantes (a `RECEPTIONIST` é quem paga no fim do dia).
 
-## Gratificação da indicação — regra e fase 2
+## Gratificação da indicação — regra e escopo
 
 - **Regra de negócio:** a clínica deve **R$10 por consulta que foi COMPARECEU** e tem um
-  indicante ligado. Consulta cancelada ou apenas agendada **não** gera pagamento.
-- **No MVP:** apenas registrar e exibir o elo indicante↔consulta. O valor por indicação
-  fica como constante configurável (ex.: `REFERRAL_FEE_CENTS = 1000`) — sem tela de
-  totais ainda.
-- **Fase 2 (fora deste MVP):** tela **"Pagamentos do dia"** agrupando as consultas
-  `ATTENDED` de um dia por indicante — nome, chave PIX, WhatsApp, quantidade de
-  indicações e total em R$ — para a secretária quitar via PIX no fim do expediente.
-  O modelo já guarda tudo o que a fase 2 precisa (`referrer_id` + `status` +
-  `scheduled_at`), então **nenhum campo extra** é necessário agora.
+  indicante ligado. Consulta cancelada ou apenas agendada **não** conta. Uma indicação é
+  **pendente** enquanto `status = ATTENDED`, `referrer_id` presente e `referral_paid_at`
+  é NULL.
+- **No MVP — contador simples (sem valores monetários):** a aba Indicantes mostra
+  "indicações pendentes: N" por indicante e o fluxo **Pagar → mostra PIX → Marcar pago**,
+  que zera as pendentes daquele indicante (carimba `referral_paid_at`). O valor de R$10
+  **não** é exibido nem somado pelo sistema neste momento — é conhecimento externo da
+  secretária; no código fica apenas como constante (ex.: `REFERRAL_FEE_CENTS = 1000`)
+  reservada para o futuro.
+- **"Marcar pago" zera todas as pendentes** do indicante (decisão de produto), alinhado
+  ao fluxo "no fim do dia pago tudo que devo".
+- **Depois — módulo financeiro (fora deste MVP):** escrutínio de valores em R$,
+  totais por período, histórico de pagamentos e conciliação entram junto de um módulo
+  financeiro próprio. O modelo já guarda o necessário (`referrer_id`, `status`,
+  `referral_paid_at`, `scheduled_at`) para evoluir **sem migração dolorosa**.
 
 ## Navegação e papéis
 
@@ -272,13 +299,17 @@ abas**: **Pacientes** (lista atual, inalterada) e **Indicantes**.
   - `appointments-mappers` — formatação `HH:mm`, ordenação por horário, nome do indicante.
   - `appointments-config` — ações habilitadas por status.
   - `referrers-normalizers` — validação de nome/PIX/WhatsApp.
+  - contagem de indicações pendentes e efeito de `markReferralsPaid` (lógica de quais
+    consultas contam: `ATTENDED` + `referrer_id` + `referral_paid_at IS NULL`).
   - helper de navegação de datas (ontem/amanhã/hoje).
 - **Cypress (`cypress/e2e`)**:
   - criar consulta pela Agenda (com e sem indicante);
   - marcar "Compareceu"; cancelar;
   - navegar entre datas;
   - agendar durante o cadastro de paciente;
-  - cadastrar um indicante na aba Indicantes e selecioná-lo numa consulta.
+  - cadastrar um indicante na aba Indicantes e selecioná-lo numa consulta;
+  - marcar a consulta como "Compareceu", ver o contador do indicante subir, clicar
+    Pagar → ver o PIX → Marcar pago → contador zera.
   - Preservar `data-cy` em todos os fluxos.
 
 ## Fora de escopo (fase 2+)
@@ -291,8 +322,9 @@ Explicitamente **não** entram neste MVP:
 - Status `CONFIRMADO` e `FALTOU` separados; motivo de cancelamento.
 - Bloqueio de conflito de horário, duração/slots fixos.
 - Recorrência, lista de espera, grade semanal.
-- **Relatório "Pagamentos do dia"** por indicante e integração de PIX — o MVP apenas
-  registra o elo; a totalização/quitação fica para a fase 2.
+- **Valores monetários e módulo financeiro** — o MVP tem só o contador de pendentes +
+  marcar pago; totais em R$, histórico de pagamentos e conciliação vêm com o financeiro.
+- Integração automática de PIX (o MVP apenas **exibe** a chave para pagamento manual).
 
 ## Critérios de aceite (MVP)
 
@@ -305,6 +337,9 @@ Explicitamente **não** entram neste MVP:
    (nome + PIX + WhatsApp).
 7. Ao agendar (na Agenda ou no cadastro), é possível ligar a consulta a um indicante via
    dropdown, e o indicante aparece na linha da consulta na Agenda.
-8. Toda operação valida `clinicId`/ownership; nenhum id (paciente, consulta, indicante)
+8. Ao marcar uma consulta com indicante como **Compareceu**, o contador de indicações
+   pendentes daquele indicante aumenta; **Pagar → Marcar pago** zera o contador e carimba
+   `referral_paid_at` nas consultas quitadas.
+9. Toda operação valida `clinicId`/ownership; nenhum id (paciente, consulta, indicante)
    aceito sem validação de tenant.
-9. Testes unitários (normalizers/mappers/config) e E2E dos fluxos acima passam.
+10. Testes unitários (normalizers/mappers/config/contador) e E2E dos fluxos acima passam.
