@@ -29,59 +29,72 @@ describe('calculateAge', () => {
 })
 
 describe('getAgeGroup & getSuggestedAddition (Lookup Table Rules)', () => {
-  const refDate = new Date('2026-05-22')
+  // Referência em julho + nascimento em 1º de janeiro => idade = refYear - birthYear
+  // (aniversário sempre já ocorreu, evitando erros de borda).
+  const refDate = new Date('2026-07-01')
+  const dobForAge = (age: number) => new Date(`${2026 - age}-01-01`)
 
   // Under 18: Infantil / Adolescente -> ADD 0.00
   it('Infantil / Adolescente (< 18 years)', () => {
-    const dob = new Date('2015-05-22') // exactly 11 years old
+    const dob = dobForAge(11)
     expect(getAgeGroup(dob, refDate)).toBe('Infantil / Adolescente')
     expect(getSuggestedAddition(dob, refDate)).toBe(0.0)
   })
 
   // 18 to 39: Adulto Jovem -> ADD 0.00
   it('Adulto Jovem (18 - 39 years)', () => {
-    const dob = new Date('1996-05-22') // exactly 30 years old
+    const dob = dobForAge(30)
     expect(getAgeGroup(dob, refDate)).toBe('Adulto Jovem')
     expect(getSuggestedAddition(dob, refDate)).toBe(0.0)
   })
 
-  // 40 to 44: Adulto (Presbiopia Ini.) -> ADD +0.75
-  it('Adulto (Presbiopia Ini.) (40 - 44 years)', () => {
-    const dobBoundaryMin = new Date('1986-05-22') // exactly 40 years old
-    expect(getAgeGroup(dobBoundaryMin, refDate)).toBe('Adulto (Presbiopia Ini.)')
-    expect(getSuggestedAddition(dobBoundaryMin, refDate)).toBe(0.75)
-
-    const dobBoundaryMax = new Date('1982-05-23') // exactly 44 years old
-    expect(getAgeGroup(dobBoundaryMax, refDate)).toBe('Adulto (Presbiopia Ini.)')
-    expect(getSuggestedAddition(dobBoundaryMax, refDate)).toBe(0.75)
+  // 40 to 44: Presbiopia inicial — progressão +0,25 D a cada 2 anos
+  it('Presbiopia Ini. progride 0.75 -> 1.00 -> 1.25 (40 - 44 years)', () => {
+    expect(getAgeGroup(dobForAge(40), refDate)).toBe('Adulto (Presbiopia Ini.)')
+    expect(getSuggestedAddition(dobForAge(40), refDate)).toBe(0.75)
+    expect(getSuggestedAddition(dobForAge(41), refDate)).toBe(0.75)
+    expect(getSuggestedAddition(dobForAge(42), refDate)).toBe(1.0)
+    expect(getSuggestedAddition(dobForAge(43), refDate)).toBe(1.0)
+    expect(getSuggestedAddition(dobForAge(44), refDate)).toBe(1.25)
   })
 
-  // 45 to 49: Adulto (Presbiopia Mod.) -> ADD +1.25
-  it('Adulto (Presbiopia Mod. 1) (45 - 49 years)', () => {
-    const dob = new Date('1981-05-22') // exactly 45 years old
-    expect(getAgeGroup(dob, refDate)).toBe('Adulto (Presbiopia Mod.)')
-    expect(getSuggestedAddition(dob, refDate)).toBe(1.25)
+  // 45 to 54: Presbiopia moderada — mantém cadência de 2 anos até os 50
+  it('Presbiopia Mod. progride 1.25 -> 1.50 -> 1.75 -> 2.00 -> 2.25 (45 - 54 years)', () => {
+    expect(getAgeGroup(dobForAge(45), refDate)).toBe('Adulto (Presbiopia Mod.)')
+    expect(getSuggestedAddition(dobForAge(45), refDate)).toBe(1.25)
+    expect(getSuggestedAddition(dobForAge(46), refDate)).toBe(1.5)
+    expect(getSuggestedAddition(dobForAge(48), refDate)).toBe(1.75)
+    expect(getSuggestedAddition(dobForAge(50), refDate)).toBe(2.0)
+    expect(getSuggestedAddition(dobForAge(53), refDate)).toBe(2.25)
+    expect(getAgeGroup(dobForAge(54), refDate)).toBe('Adulto (Presbiopia Mod.)')
   })
 
-  // 50 to 54: Adulto (Presbiopia Mod.) -> ADD +1.75
-  it('Adulto (Presbiopia Mod. 2) (50 - 54 years)', () => {
-    const dob = new Date('1976-05-22') // exactly 50 years old
-    expect(getAgeGroup(dob, refDate)).toBe('Adulto (Presbiopia Mod.)')
-    expect(getSuggestedAddition(dob, refDate)).toBe(1.75)
+  // 55 to 59: Presbiopia avançada — progressão desacelera após os 50
+  it('Presbiopia Avç. 2.25 -> 2.50 (55 - 59 years)', () => {
+    expect(getAgeGroup(dobForAge(55), refDate)).toBe('Adulto (Presbiopia Avç.)')
+    expect(getSuggestedAddition(dobForAge(55), refDate)).toBe(2.25)
+    expect(getSuggestedAddition(dobForAge(56), refDate)).toBe(2.5)
+    expect(getSuggestedAddition(dobForAge(59), refDate)).toBe(2.5)
   })
 
-  // 55 to 59: Adulto (Presbiopia Avç.) -> ADD +2.25
-  it('Adulto (Presbiopia Avç.) (55 - 59 years)', () => {
-    const dob = new Date('1971-05-22') // exactly 55 years old
-    expect(getAgeGroup(dob, refDate)).toBe('Adulto (Presbiopia Avç.)')
-    expect(getSuggestedAddition(dob, refDate)).toBe(2.25)
+  // 60+: Idoso — plateau clínico até +3.50 D
+  it('Idoso progride 2.75 -> 3.00 -> 3.25 -> 3.50 (60+ years)', () => {
+    expect(getAgeGroup(dobForAge(60), refDate)).toBe('Idoso')
+    expect(getSuggestedAddition(dobForAge(60), refDate)).toBe(2.75)
+    expect(getSuggestedAddition(dobForAge(65), refDate)).toBe(3.0)
+    expect(getSuggestedAddition(dobForAge(71), refDate)).toBe(3.25)
+    expect(getSuggestedAddition(dobForAge(80), refDate)).toBe(3.5)
   })
 
-  // 60+: Idoso -> ADD +2.75
-  it('Idoso (60+ years)', () => {
-    const dob = new Date('1966-05-22') // exactly 60 years old
-    expect(getAgeGroup(dob, refDate)).toBe('Idoso')
-    expect(getSuggestedAddition(dob, refDate)).toBe(2.75)
+  // Regressão: todos os passos de 0,25 D entre +0.75 e +3.50 são alcançáveis
+  it('cobre toda a escala de +0.75 a +3.50 em passos de 0.25 D', () => {
+    const reachable = new Set<number>()
+    for (let age = 40; age <= 90; age++) {
+      reachable.add(getSuggestedAddition(dobForAge(age), refDate))
+    }
+    for (const value of [0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5]) {
+      expect(reachable.has(value)).toBe(true)
+    }
   })
 })
 
