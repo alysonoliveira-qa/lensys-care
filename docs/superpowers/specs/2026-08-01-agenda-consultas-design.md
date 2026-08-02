@@ -19,9 +19,11 @@ previsto na stack, mas **não** entra neste MVP.
 
 Entregar uma **Agenda** funcional que permita à secretária, no dia a dia:
 
-1. Ver as consultas de um dia, ordenadas por horário.
+1. Ver as consultas de um dia: as com horário primeiro (por hora) e, em seguida, a
+   **fila** dos sem horário por ordem de marcação.
 2. Navegar entre datas (ontem/hoje/amanhã + seletor de data).
-3. Criar uma nova consulta para um paciente existente.
+3. Criar uma nova consulta para um paciente existente — **com ou sem horário** (sem hora
+   = entra na fila do dia).
 4. Marcar a consulta como **Compareceu** ou **Cancelada**.
 5. Já deixar a primeira consulta agendada no momento do cadastro do paciente.
 6. Registrar o **indicante ("correta")** que trouxe o paciente e acompanhar, por um
@@ -40,8 +42,9 @@ com o mínimo de atrito para a recepção.
 | Profissionais | **Agenda única** da clínica no MVP; `professional_id` guardado (opcional) para evoluir depois |
 | Status da consulta | **Mínimo:** `AGENDADO` → `COMPARECEU` / `CANCELADO` |
 | Lembretes automáticos | **Fora do MVP** (fase 2: Twilio + pgcron) |
-| Visão da agenda | **Dia em lista** + navegação por datas; hora digitada livremente |
-| Campos da consulta | **Mínimo:** paciente + data/hora + status (sem tipo/observação) |
+| Visão da agenda | **Dia em lista única** + navegação por datas: com horário primeiro (por hora), depois a **fila** (sem hora) por ordem de marcação |
+| Hora opcional / fila | **Data obrigatória** (default hoje); **hora opcional** — sem hora, o paciente entra na **fila do dia (FIFO)** por ordem de marcação |
+| Campos da consulta | **Mínimo:** paciente + data (+ hora opcional) + status (sem tipo/observação) |
 | Indicantes ("corretas") | Mini-cadastro (nome + chave PIX + WhatsApp); consulta liga a **um indicante opcional** via dropdown |
 | Pagamento da indicação | **R$10 por consulta, devido quando a consulta é COMPARECEU** (elo fica na consulta) |
 | Controle de pagamento (MVP) | **Contador simples** de indicações pendentes por indicante + botão **Pagar** (mostra PIX) → **Marcar pago** zera as pendentes. **Sem valores monetários** no sistema ainda |
@@ -71,10 +74,11 @@ model Appointment {
   professional_id String?           @db.Uuid           // NULLABLE — reservado p/ futuro, não exposto na UI
   referrer_id     String?           @db.Uuid           // NULLABLE — indicante ("correta"), opcional
   referral_paid_at DateTime?        @db.Timestamptz    // quando a indicação foi paga ao indicante (NULL = pendente)
-  scheduled_at    DateTime          @db.Timestamptz    // data + hora da consulta
+  appointment_date DateTime         @db.Date           // dia da consulta (obrigatório; default hoje na UI)
+  scheduled_time  DateTime?         @db.Time           // hora local (NULL = fila do dia, ordem de marcação)
   status          AppointmentStatus @default(SCHEDULED)
   created_by      String            @db.Uuid           // Profile que criou
-  created_at      DateTime          @default(now()) @db.Timestamptz
+  created_at      DateTime          @default(now()) @db.Timestamptz  // desempate da fila (FIFO)
   updated_at      DateTime          @updatedAt @db.Timestamptz
 
   clinic       Clinic    @relation(fields: [clinic_id], references: [id], onDelete: Cascade)
@@ -82,7 +86,7 @@ model Appointment {
   professional Profile?  @relation(fields: [professional_id], references: [id])
   referrer     Referrer? @relation(fields: [referrer_id], references: [id], onDelete: SetNull)
 
-  @@index([clinic_id, scheduled_at])
+  @@index([clinic_id, appointment_date])
   @@index([patient_id])
   @@index([referrer_id])
   @@map("appointments")
@@ -116,6 +120,12 @@ model Referrer {
 - `referral_paid_at` guarda **quando** a indicação foi paga (NULL = pendente). É a marca
   auditável que o contador usa e que o módulo financeiro futuro reaproveita — **sem
   armazenar valor em R$** por enquanto (o valor é uma constante da aplicação).
+- **Dia vs. hora:** `appointment_date` (DATE) é sempre exigido; `scheduled_time` (TIME
+  local) é opcional. `scheduled_time = NULL` significa **fila do dia**, ordenada por
+  `created_at` (ordem de marcação). Guardar hora como TIME local (parede), assumindo
+  `America/Sao_Paulo`, evita as armadilhas de fuso de um timestamptz combinado.
+- **Ordenação do dia:** `ORDER BY scheduled_time ASC NULLS LAST, created_at ASC` — os
+  com horário primeiro (por hora), depois a fila por ordem de marcação.
 
 ### Migration `009_add_appointments_and_referrers.sql`
 
@@ -126,8 +136,9 @@ model Referrer {
 - Habilita RLS e cria políticas `SELECT`/`INSERT`/`UPDATE` (e `DELETE` em `referrers`)
   restritas ao `clinic_id` do profile logado — **mesmo padrão** das políticas de
   `patients` (migration 002).
-- Adiciona `appointments.referral_paid_at timestamptz NULL` (marca de pagamento).
-- Índices: `appointments(clinic_id, scheduled_at)`, `appointments(patient_id)`,
+- `appointments` tem `appointment_date DATE NOT NULL`, `scheduled_time TIME NULL` e
+  `referral_paid_at timestamptz NULL`.
+- Índices: `appointments(clinic_id, appointment_date)`, `appointments(patient_id)`,
   `appointments(referrer_id)`, `referrers(clinic_id)`. Considerar índice parcial para
   acelerar a contagem de pendentes (ex.: `WHERE status = 'ATTENDED' AND referrer_id IS
   NOT NULL AND referral_paid_at IS NULL`) — decisão fina no plano.
@@ -141,8 +152,10 @@ Segue o padrão obrigatório do `docs/module-pattern.md` (separação por domín
 
 - **`appointments-data.ts`** — acesso a dados via Prisma:
   - `getAppointmentsByDate(clinicId, date)` → consultas do dia (com nome do paciente e
-    do indicante, se houver), ordenadas por `scheduled_at`.
-  - `createAppointment({ clinicId, patientId, scheduledAt, createdBy, referrerId? })`.
+    do indicante, se houver), ordenadas por `scheduled_time ASC NULLS LAST, created_at`
+    (com horário primeiro; depois a fila por ordem de marcação).
+  - `createAppointment({ clinicId, patientId, date, time?, createdBy, referrerId? })` —
+    `time` opcional; sem `time` a consulta entra na fila do dia.
   - `setAppointmentStatus({ clinicId, appointmentId, status })`.
   - **Toda função valida `clinicId`/ownership explicitamente na borda.** O paciente e o
     indicante (quando informado) precisam pertencer à clínica; a consulta precisa ser da
@@ -151,9 +164,10 @@ Segue o padrão obrigatório do `docs/module-pattern.md` (separação por domín
 - **`appointments-mappers.ts`** — linha persistida ↔ shape de UI (hora formatada
   `HH:mm`, nome do paciente, nome do indicante, flags de UI por status).
 - **`appointments-normalizers.ts`** — funções puras, sem side effects:
-  - combinar `date` (`YYYY-MM-DD`) + `time` (`HH:mm`) → `Date`/timestamptz (fuso
-    `America/Sao_Paulo`);
-  - validar campos obrigatórios (paciente, data, hora) e formato de hora.
+  - normalizar `date` (`YYYY-MM-DD`, obrigatório) e `time` (`HH:mm`, **opcional**);
+  - validar campos obrigatórios (paciente, data) e o formato de hora **quando informada**;
+  - calcular a **posição na fila** (índice dos itens sem hora, na ordem de marcação)
+    para exibição.
 - **`appointments-config.ts`** — `APPOINTMENT_STATUS_CONFIG` data-driven: label PT-BR,
   variante de badge/cor e quais ações cada status habilita (ex.: `SCHEDULED` mostra
   "Compareceu" e "Cancelar"; `ATTENDED`/`CANCELED` são terminais e apenas exibidos).
@@ -183,8 +197,8 @@ seguindo o padrão de `apps/web/app/(dashboard)/planos/actions.ts`. Auth via
 **Agenda — `apps/web/app/(dashboard)/agenda/actions.ts`:**
 
 - `createAppointment(prevState, formData)` — valida auth, resolve `clinicId`, confere
-  que `patientId` (e `referrerId`, se enviado) pertencem à clínica, valida `scheduledAt`;
-  cria e revalida a rota.
+  que `patientId` (e `referrerId`, se enviado) pertencem à clínica, exige `date` e aceita
+  `time` opcional (sem hora → fila do dia); cria e revalida a rota.
 - `setAppointmentStatus(prevState, formData)` — valida que a consulta pertence à
   clínica antes de aplicar `ATTENDED`/`CANCELED`; revalida a rota.
 
@@ -201,16 +215,18 @@ Rota nova em `apps/web/app/(dashboard)/agenda/`.
   chama `getAppointmentsByDate`, aplica mappers e compõe os componentes visuais.
   Páginas compõem, não concentram lógica.
 - **`AgendaDayView.tsx`** (client component) — cabeçalho com navegação
-  `< ontem | Hoje | amanhã >` + seletor de data (`input[type=date]`); lista de consultas
-  do dia ordenada por hora. Cada linha: hora · nome do paciente · **tag do indicante**
-  (quando houver) · badge de status · ações **[Compareceu] [Cancelar]** (chamam
-  `setAppointmentStatus`). Botão **[+ Nova consulta]** abre o diálogo. Estado de dia
-  vazio bem tratado.
+  `< ontem | Hoje | amanhã >` + seletor de data (`input[type=date]`); **lista única** do
+  dia: primeiro as consultas **com horário** (ordenadas por hora), depois a **fila** dos
+  sem horário por ordem de marcação. Cada linha mostra **a hora OU a posição na fila
+  (#1, #2…)** · nome do paciente · **tag do indicante** (quando houver) · badge de
+  status · ações **[Compareceu] [Cancelar]** (chamam `setAppointmentStatus`). Botão
+  **[+ Nova consulta]** abre o diálogo. Estado de dia vazio bem tratado.
 - **`NewAppointmentDialog.tsx`** (client component) — busca de paciente existente
-  (reaproveita a busca ILIKE/pg_trgm já indexada em pacientes — migration 008),
-  campos data + hora, **dropdown opcional de indicante** (lista de indicantes ativos da
-  clínica; opção "— sem indicante —" como default), submit via `createAppointment`. Se o
-  paciente não existir, oferece link para **Cadastrar novo** (`/patients/new`).
+  (reaproveita a busca ILIKE/pg_trgm já indexada em pacientes — migration 008), campo
+  **data** (obrigatório, default o dia em foco) + campo **hora opcional** (vazio = entra
+  na fila), **dropdown opcional de indicante** (indicantes ativos da clínica; "— sem
+  indicante —" como default), submit via `createAppointment`. Se o paciente não existir,
+  oferece link para **Cadastrar novo** (`/patients/new`).
 
 Componentes visuais recebem dados por props; nada de componente gigante.
 
@@ -218,7 +234,8 @@ Componentes visuais recebem dados por props; nada de componente gigante.
 
 No `PatientForm` (`apps/web/components/patients/PatientForm.tsx`), **somente no modo
 `create`**: seção opcional recolhível **"Agendar primeira consulta"** com checkbox +
-campos data + hora + **dropdown opcional de indicante**.
+campo **data** (obrigatório se marcado) + **hora opcional** (vazio = fila do dia) +
+**dropdown opcional de indicante**.
 
 Fluxo ao salvar:
 
@@ -268,7 +285,7 @@ abas**: **Pacientes** (lista atual, inalterada) e **Indicantes**.
 - **Depois — módulo financeiro (fora deste MVP):** escrutínio de valores em R$,
   totais por período, histórico de pagamentos e conciliação entram junto de um módulo
   financeiro próprio. O modelo já guarda o necessário (`referrer_id`, `status`,
-  `referral_paid_at`, `scheduled_at`) para evoluir **sem migração dolorosa**.
+  `referral_paid_at`, `appointment_date`) para evoluir **sem migração dolorosa**.
 
 ## Navegação e papéis
 
@@ -282,11 +299,16 @@ abas**: **Pacientes** (lista atual, inalterada) e **Indicantes**.
 
 ## Decisões de borda
 
-- **Horários sobrepostos permitidos** — sem bloqueio de conflito no MVP.
-- **Consulta cancelada continua visível** no dia (riscada/acinzentada), para registro.
+- **Hora opcional / fila:** sem hora, o paciente entra na **fila do dia** por ordem de
+  marcação (`created_at`). Com hora, aparece no horário. A posição na fila é derivada
+  (não é um campo persistido), então marcar/cancelar reordena naturalmente.
+- **Horários sobrepostos permitidos** — sem bloqueio de conflito no MVP; idem para
+  vários itens na fila no mesmo dia.
+- **Consulta cancelada continua visível** no dia (riscada/acinzentada), para registro,
+  e **sai da numeração da fila** (não ocupa posição).
 - **Datas passadas navegáveis** (histórico); status ainda editável.
-- **Fuso:** `scheduled_at` como `timestamptz`; combinação data+hora assume
-  `America/Sao_Paulo`.
+- **Fuso:** `appointment_date` como `DATE` e `scheduled_time` como `TIME` local (parede),
+  assumindo `America/Sao_Paulo` — sem conversão de fuso no MVP.
 - **Exclusão de paciente** → cascata remove as consultas dele.
 - **Indicante opcional:** consulta sem indicante é normal (dropdown default "— sem
   indicante —"). Desativar um indicante o remove do dropdown, mas mantém o elo nas
@@ -295,15 +317,19 @@ abas**: **Pacientes** (lista atual, inalterada) e **Indicantes**.
 ## Testes
 
 - **Vitest (`apps/web/__tests__`)**:
-  - `appointments-normalizers` — combinar data+hora, validações, formato de hora.
-  - `appointments-mappers` — formatação `HH:mm`, ordenação por horário, nome do indicante.
+  - `appointments-normalizers` — data obrigatória + hora opcional, validação de formato,
+    cálculo de posição na fila.
+  - `appointments-mappers` — formatação `HH:mm` **ou** rótulo de fila (#N), ordenação
+    (com hora primeiro, depois fila por marcação), nome do indicante.
   - `appointments-config` — ações habilitadas por status.
   - `referrers-normalizers` — validação de nome/PIX/WhatsApp.
   - contagem de indicações pendentes e efeito de `markReferralsPaid` (lógica de quais
     consultas contam: `ATTENDED` + `referrer_id` + `referral_paid_at IS NULL`).
   - helper de navegação de datas (ontem/amanhã/hoje).
 - **Cypress (`cypress/e2e`)**:
-  - criar consulta pela Agenda (com e sem indicante);
+  - criar consulta pela Agenda **com horário** e **sem horário** (verificar que a sem
+    hora entra na fila com posição e que as com hora vêm antes);
+  - criar consulta com e sem indicante;
   - marcar "Compareceu"; cancelar;
   - navegar entre datas;
   - agendar durante o cadastro de paciente;
@@ -321,7 +347,8 @@ Explicitamente **não** entram neste MVP:
 - Tipo de consulta (Primeira/Retorno/Exame) e observação por consulta.
 - Status `CONFIRMADO` e `FALTOU` separados; motivo de cancelamento.
 - Bloqueio de conflito de horário, duração/slots fixos.
-- Recorrência, lista de espera, grade semanal.
+- Recorrência e grade semanal. (A **fila do dia** por ordem de marcação **está** no MVP;
+  o que fica de fora é reordenar a fila manualmente — a ordem é sempre por marcação.)
 - **Valores monetários e módulo financeiro** — o MVP tem só o contador de pendentes +
   marcar pago; totais em R$, histórico de pagamentos e conciliação vêm com o financeiro.
 - Integração automática de PIX (o MVP apenas **exibe** a chave para pagamento manual).
@@ -329,7 +356,9 @@ Explicitamente **não** entram neste MVP:
 ## Critérios de aceite (MVP)
 
 1. Item "Agenda" aparece no menu e abre a lista do dia atual.
-2. Secretária cria consulta para paciente existente e ela aparece no dia/horário certo.
+2. Secretária cria consulta para paciente existente: **com horário**, aparece na hora
+   certa; **sem horário**, entra na **fila do dia** com posição (#N), depois dos que têm
+   hora e na ordem de marcação.
 3. Navegação de datas funciona (ontem/hoje/amanhã + seletor).
 4. Marcar "Compareceu" e "Cancelar" persiste e reflete na tela.
 5. Cadastro de paciente com "Agendar primeira consulta" cria paciente + consulta.
