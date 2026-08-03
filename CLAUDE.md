@@ -43,7 +43,7 @@ pnpm lint
 pnpm type-check
 pnpm test              # vitest run
 pnpm format            # prettier --write
-pnpm db:generate       # prisma generate (usar pnpm --filter db prisma generate)
+pnpm db:generate       # prisma generate
 pnpm db:migrate        # prisma migrate dev
 pnpm db:migrate:deploy
 pnpm db:studio
@@ -56,13 +56,15 @@ App web direto:
 pnpm --filter web dev          # porta 3000
 pnpm --filter web dev:manual   # porta 3001 (uso manual no navegador)
 pnpm --filter web test
+pnpm --filter web type-check
 ```
 
 Cypress: `pnpm cypress open`. Use `CYPRESS_BASE_URL` para apontar para
 preview/produção. Convenção: manual no navegador usa `3001`, Cypress usa `3000`.
 
-> **Nota:** O script `db:generate` na raiz tem um bug conhecido — usar
-> `pnpm --filter db prisma generate` diretamente.
+> **Nota:** Os scripts `db:*` da raiz delegam via `pnpm --filter db run <script>`.
+> Chamar `pnpm --filter db prisma generate` falha ("None of the selected packages
+> has a 'prisma' script") — `prisma` é um binário, não um script do pacote `db`.
 
 ## Modelo de dados (Prisma)
 
@@ -72,8 +74,13 @@ Multi-tenant com **Clinic** como tenant raiz:
   `StripeCustomer`, `Payment`, `Invite`
 - `Patient` → `Exam` (refração OD/OE: sph/cyl/axis/va, adição, DP, notas) → `Alert`
   (recall via EMAIL/WHATSAPP/SMS)
+- `Clinic` → `Appointment` (agenda: `appointment_date` DATE obrigatória, `scheduled_time`
+  TIME opcional = fila do dia por `created_at`) e `Referrer` (indicante: nome + PIX +
+  WhatsApp). `Appointment.referrer_id` + `referral_paid_at` sustentam o contador de
+  indicações pendentes.
 - Enums: `Role` (OWNER/OPTOMETRIST/RECEPTIONIST), `InviteStatus` (PENDING/ACCEPTED/EXPIRED/REVOKED),
-  `Plan` (ESSENTIAL/CONECTA), `SubscriptionStatus`, `PaymentStatus`, `AlertStatus`, `AlertChannel`
+  `Plan` (ESSENTIAL/CONECTA), `SubscriptionStatus`, `PaymentStatus`, `AlertStatus`, `AlertChannel`,
+  `AppointmentStatus` (SCHEDULED/ATTENDED/CANCELED)
 
 ### Campos importantes adicionados em 10/06/2026
 
@@ -93,9 +100,16 @@ Multi-tenant com **Clinic** como tenant raiz:
 | `006_add_multi_member_support.sql` | owner_id, updated_at, InviteStatus, tabela invites + RLS |
 | `007_fix_invites_pending_unique.sql` | Fix constraint: índice parcial WHERE status='PENDING' |
 | `008_add_patient_search_trgm.sql` | pg_trgm + índices GIN para busca ILIKE em pacientes |
+| `009_add_appointments_and_referrers.sql` | Agenda: enum `appointment_status`, tabelas `appointments` e `referrers` + RLS + índices |
 
 > **Importante:** O projeto usa SQL direto no Supabase, NÃO `prisma migrate dev`
 > (histórico de migrations está em `supabase/migrations/`).
+>
+> **Como aplicar:** use o MCP do Supabase (`apply_migration`) — não é passo manual no
+> SQL editor. O arquivo em `supabase/migrations/` continua sendo a fonte de verdade.
+>
+> **Divergência conhecida:** o histórico de migrations do Supabase só registra 001–004
+> e a 009; as 005–008 foram aplicadas por SQL editor sem registrar versão.
 
 ## Fluxo de convite de membros
 
@@ -106,12 +120,34 @@ Multi-tenant com **Clinic** como tenant raiz:
 5. `POST /api/invites/accept` cria Profile + marca invite ACCEPTED
 6. Convidado faz login → aparece na seção "Equipe" do OWNER
 
+## Agenda de consultas + Indicantes
+
+- **`/agenda`** — lista do dia: consultas com horário primeiro (por hora), depois a
+  **fila** dos sem horário (`scheduled_time IS NULL`) por ordem de marcação. A posição
+  `#N` é **derivada na leitura** (não persistida); cancelada continua visível e sai da
+  numeração. Navegação ontem/hoje/amanhã + seletor de data via `?date=`.
+- **Domínio:** `lib/appointments/` (`-data`, `-mappers`, `-normalizers`, `-config`,
+  `agenda-navigation`) e `lib/referrers/`.
+- **Fuso:** `appointment_date` (DATE) e `scheduled_time` (TIME) são hora de parede. O
+  Prisma os devolve como instantes UTC — formatar **sempre com getters UTC**
+  (`formatAppointmentTime`), senão o dia/hora desloca em UTC-3.
+- **Indicantes ("corretas")** — aba em `/patients?tab=indicantes`: cadastro (nome + PIX +
+  WhatsApp), contador de indicações pendentes (`ATTENDED` + `referrer_id` +
+  `referral_paid_at IS NULL`) e fluxo Pagar → mostra PIX → Marcar pago
+  (`markReferralsPaid` em transação, com recontagem). Sem valores em R$ no MVP —
+  `REFERRAL_FEE_CENTS` fica reservado para o módulo financeiro.
+- **Papéis:** ⚠️ diferente dos exames, `RECEPTIONIST` **pode** criar consultas e mudar
+  status. A proteção é validação de tenant na borda, não guard de papel.
+
 ## Padrão de código (obrigatório — ver `docs/module-pattern.md`)
 
 - **Páginas compõem, não concentram lógica.** `page.tsx` resolve auth/contexto, chama
   data access, usa mappers/normalizers e compõe componentes.
-- **Server Actions** seguem o padrão de `apps/web/app/(dashboard)/planos/actions.ts`:
-  `'use server'`, state tipado (`{ status, message }`), validação, auth via `createClient()`.
+- **Server Actions** seguem o padrão de `apps/web/app/(dashboard)/account/actions.ts`
+  (e `apps/web/app/dashboard/planos/actions.ts`): `'use server'`, state tipado
+  (`{ status, message }`), validação, auth via `getAuthenticatedProfile()`
+  (`apps/web/lib/auth/authenticated-profile.ts`) — o `clinic_id` vem da sessão, nunca
+  do formulário. Um arquivo `'use server'` só pode exportar funções async.
 - **Separação por domínio:** `lib/{domain}/{domain}-data.ts` (acesso a dados),
   `-mappers.ts` (persistido ↔ UI/payload), `-normalizers.ts` (puros, sem side effects),
   `-config.ts` (labels, opções, badges data-driven).

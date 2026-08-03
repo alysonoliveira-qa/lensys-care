@@ -53,3 +53,4 @@ coverage/
 .agents/
 .mcp.json
 skills-lock.json
+.claude/skills/

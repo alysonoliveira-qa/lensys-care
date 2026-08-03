@@ -1,5 +1,6 @@
 import {
   Bell,
+  CalendarDays,
   CreditCard,
   LayoutDashboard,
   Settings2,
@@ -8,7 +9,7 @@ import {
 } from 'lucide-react'
 
 export interface SidebarNavItem {
-  id: 'dashboard' | 'patients' | 'alerts' | 'account' | 'plans'
+  id: 'dashboard' | 'agenda' | 'patients' | 'alerts' | 'account' | 'plans'
   label: string
   href: string
   icon: LucideIcon
@@ -24,6 +25,14 @@ export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
     icon: LayoutDashboard,
     dataCy: 'sidebar-dashboard-link',
     description: 'Visão geral da operação clínica',
+  },
+  {
+    id: 'agenda',
+    label: 'Agenda',
+    href: '/agenda',
+    icon: CalendarDays,
+    dataCy: 'sidebar-agenda-link',
+    description: 'Consultas do dia e fila de atendimento',
   },
   {
     id: 'patients',

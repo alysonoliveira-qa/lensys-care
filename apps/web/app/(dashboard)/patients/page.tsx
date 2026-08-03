@@ -14,7 +14,12 @@ import {
   getPatientOrderBy,
   parsePatientSort,
 } from '@/lib/patients/patient-list-sorting'
+import { parsePatientsTab } from '@/lib/patients/patients-tabs'
+import { listReferrersWithPendingCount } from '@/lib/referrers/referrers-data'
+import { mapReferrersToRows } from '@/lib/referrers/referrers-mappers'
 import PatientsListFilters from '@/components/patients/PatientsListFilters'
+import PatientsTabs from '@/components/patients/PatientsTabs'
+import ReferrersTab from '@/components/referrers/ReferrersTab'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -35,6 +40,7 @@ interface PatientsPageProps {
     search?: string
     page?: string
     sort?: string
+    tab?: string
   }
 }
 
@@ -77,6 +83,7 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
   }
 
   const clinicId = shellData.profile.clinic_id
+  const activeTab = parsePatientsTab(searchParams?.tab)
   const search = searchParams?.search || ''
   const page = Number(searchParams?.page) || 1
   const sort = parsePatientSort(searchParams?.sort)
@@ -121,6 +128,12 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
   logPerformanceStep(timer, 'prisma.list_and_count_parallel', patientQueriesStartedAt)
 
   const totalPages = Math.ceil(totalCount / limit)
+
+  // Indicantes só são buscados quando a aba está aberta.
+  const referrerRows =
+    activeTab === 'indicantes'
+      ? mapReferrersToRows(await listReferrersWithPendingCount(clinicId))
+      : []
 
   endPerformanceTimer(timer)
 
@@ -183,6 +196,12 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
         </div>
       </section>
 
+      <PatientsTabs activeTab={activeTab} />
+
+      {activeTab === 'indicantes' ? (
+        <ReferrersTab rows={referrerRows} />
+      ) : (
+        <>
       <Card className="rounded-2xl border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
         <CardContent className="p-5">
           <PatientsListFilters initialSearch={search} initialSort={sort} />
@@ -318,6 +337,8 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
           </div>
         </div>
       ) : null}
+        </>
+      )}
     </div>
   )
 }

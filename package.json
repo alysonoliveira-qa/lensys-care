@@ -16,11 +16,11 @@
     "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore",
-    "db:generate": "pnpm --filter db prisma generate",
-    "db:migrate": "pnpm --filter db prisma migrate dev",
-    "db:migrate:deploy": "pnpm --filter db prisma migrate deploy",
-    "db:seed": "pnpm --filter db tsx seed.ts",
-    "db:studio": "pnpm --filter db prisma studio",
+    "db:generate": "pnpm --filter db run generate",
+    "db:migrate": "pnpm --filter db run migrate",
+    "db:migrate:deploy": "pnpm --filter db run migrate:deploy",
+    "db:seed": "pnpm --filter db run seed",
+    "db:studio": "pnpm --filter db run studio",
     "prepare": "husky"
   },
   "devDependencies": {
