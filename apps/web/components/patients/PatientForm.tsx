@@ -3,13 +3,16 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Loader2, Sparkles, UserPen, UserPlus } from 'lucide-react'
+import { ArrowLeft, CalendarPlus, Loader2, Sparkles, UserPen, UserPlus } from 'lucide-react'
+import { createAppointment } from '@/app/(dashboard)/agenda/actions'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useAgeGroup } from '@/hooks/useAgeGroup'
+import { todayAppointmentDate } from '@/lib/appointments/appointments-normalizers'
 import { buildPatientPayload, type PatientFormValues } from '@/lib/patients/patient-form-mapper'
+import type { ReferrerOption } from '@/lib/referrers/referrers-mappers'
 
 const TODAY = new Date().toISOString().split('T')[0]
 const FUTURE_DOB_MESSAGE = 'A data de nascimento não pode ser futura.'
@@ -18,12 +21,15 @@ interface PatientFormProps {
   mode: 'create' | 'edit'
   initialValues?: Partial<PatientFormValues>
   patientId?: string
+  /** Indicantes ativos — só usados na seção "Agendar primeira consulta" (modo create). */
+  referrerOptions?: ReferrerOption[]
 }
 
 export default function PatientForm({
   mode,
   initialValues,
   patientId,
+  referrerOptions = [],
 }: PatientFormProps) {
   const router = useRouter()
   const isEditMode = mode === 'edit'
@@ -35,6 +41,17 @@ export default function PatientForm({
   const [notes, setNotes] = useState(initialValues?.notes ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // "Agendar primeira consulta" — só no cadastro.
+  const [shouldSchedule, setShouldSchedule] = useState(false)
+  const [appointmentDate, setAppointmentDate] = useState(todayAppointmentDate())
+  const [appointmentTime, setAppointmentTime] = useState('')
+  const [appointmentReferrerId, setAppointmentReferrerId] = useState('')
+  /** Paciente criado cujo agendamento falhou: não desfazemos o paciente nem reenviamos. */
+  const [scheduleFailure, setScheduleFailure] = useState<{
+    patientId: string
+    message: string
+  } | null>(null)
 
   const { age, ageGroup, suggestedAddition } = useAgeGroup(dob)
 
@@ -53,6 +70,11 @@ export default function PatientForm({
 
     if (isEditMode && !patientId) {
       setError('Paciente não identificado para atualização.')
+      return
+    }
+
+    if (!isEditMode && shouldSchedule && !appointmentDate) {
+      setError('Informe a data da primeira consulta ou desmarque o agendamento.')
       return
     }
 
@@ -80,6 +102,29 @@ export default function PatientForm({
       }
 
       const redirectPatientId = isEditMode ? patientId : data.patient.id
+
+      // Paciente já existe daqui em diante: uma falha no agendamento NÃO o desfaz.
+      if (!isEditMode && shouldSchedule) {
+        const appointmentForm = new FormData()
+        appointmentForm.set('patient_id', data.patient.id)
+        appointmentForm.set('appointment_date', appointmentDate)
+        appointmentForm.set('scheduled_time', appointmentTime)
+        appointmentForm.set('referrer_id', appointmentReferrerId)
+
+        const appointmentResult = await createAppointment(
+          { status: 'idle', message: '' },
+          appointmentForm
+        )
+
+        if (appointmentResult.status === 'error') {
+          setScheduleFailure({
+            patientId: data.patient.id,
+            message: appointmentResult.message,
+          })
+          setLoading(false)
+          return
+        }
+      }
 
       // Mantém `loading` ativo durante a navegação: `router.push` não espera a rota
       // destino renderizar. Resetar aqui faria o botão piscar de volta ao estado
@@ -235,6 +280,99 @@ export default function PatientForm({
               </div>
             </div>
 
+            {!isEditMode ? (
+              <div className="space-y-3 rounded-xl border border-indigo-500/15 bg-indigo-500/5 p-4">
+                <label className="flex cursor-pointer items-center gap-2.5 text-sm font-bold text-slate-700 dark:text-slate-200">
+                  <input
+                    type="checkbox"
+                    checked={shouldSchedule}
+                    onChange={(event) => setShouldSchedule(event.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    disabled={loading}
+                    data-cy="schedule-first-appointment-checkbox"
+                  />
+                  <CalendarPlus className="h-4 w-4 text-indigo-500" />
+                  Agendar primeira consulta
+                </label>
+
+                {shouldSchedule ? (
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Data *
+                      </label>
+                      <Input
+                        type="date"
+                        value={appointmentDate}
+                        onChange={(event) => setAppointmentDate(event.target.value)}
+                        className="h-10 border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950/20"
+                        disabled={loading}
+                        data-cy="first-appointment-date-input"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Hora (opcional)
+                      </label>
+                      <Input
+                        type="time"
+                        value={appointmentTime}
+                        onChange={(event) => setAppointmentTime(event.target.value)}
+                        className="h-10 border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950/20"
+                        disabled={loading}
+                        data-cy="first-appointment-time-input"
+                      />
+                      <p className="text-[11px] text-slate-400">Vazio = fila do dia.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Indicante (opcional)
+                      </label>
+                      <select
+                        value={appointmentReferrerId}
+                        onChange={(event) => setAppointmentReferrerId(event.target.value)}
+                        className="h-10 w-full rounded-md border border-input bg-white px-3 text-sm dark:border-slate-800 dark:bg-slate-950/20"
+                        disabled={loading}
+                        data-cy="first-appointment-referrer-select"
+                      >
+                        {referrerOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {scheduleFailure ? (
+              <div
+                className="space-y-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs font-semibold text-amber-700 dark:text-amber-300"
+                data-cy="first-appointment-warning"
+              >
+                <p>
+                  Paciente cadastrado com sucesso, mas não foi possível agendar a consulta:{' '}
+                  {scheduleFailure.message} Você pode agendar depois pela Agenda — o cadastro
+                  não foi perdido.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Link href={`/patients/${scheduleFailure.patientId}`}>
+                    <Button type="button" className="h-9 bg-indigo-600 px-4 font-bold hover:bg-indigo-500">
+                      Ir para a ficha do paciente
+                    </Button>
+                  </Link>
+                  <Link href="/agenda">
+                    <Button type="button" variant="outline" className="h-9 px-4 font-bold">
+                      Abrir a Agenda
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ) : (
             <div className="flex justify-end gap-3 border-t border-slate-100 pt-6 dark:border-slate-800">
               <Link href={isEditMode && patientId ? `/patients/${patientId}` : '/patients'}>
                 <Button
@@ -264,6 +402,7 @@ export default function PatientForm({
                 )}
               </Button>
             </div>
+            )}
           </form>
         </CardContent>
       </Card>
