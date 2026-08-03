@@ -11,12 +11,18 @@ acesso → actions → UI. Segue `docs/module-pattern.md` e a regra inegociável
 
 Convenções do projeto:
 - Migrations são **SQL direto no Supabase** (`supabase/migrations/`), não `prisma migrate dev`.
-- Prisma Client: `pnpm --filter db prisma generate` (o `db:generate` da raiz tem bug conhecido).
+  Aplicar via **MCP do Supabase** (`apply_migration`), não pelo SQL editor à mão.
+- Prisma Client: `pnpm db:generate` (= `pnpm --filter db run generate`).
 - Testes unitários: `pnpm --filter web test`. Type-check: `pnpm --filter web type-check`.
 
 ---
 
-## Fase 0 — Schema Prisma + Migration SQL
+## Fase 0 — Schema Prisma + Migration SQL ✅ CONCLUÍDA (02/08/2026)
+
+Migration `009` aplicada no Supabase via MCP (`apply_migration`, versão
+`add_appointments_and_referrers`); Prisma Client regenerado; `type-check` verde;
+advisors de segurança sem achados novos.
+
 
 **Objetivo:** criar as tabelas `referrers` e `appointments` (com enum, RLS e índices) e
 refletir no schema Prisma.
@@ -42,8 +48,8 @@ refletir no schema Prisma.
    `appointments(referrer_id)`, `referrers(clinic_id)`, e o índice parcial de pendentes
    `appointments (clinic_id, referrer_id) WHERE status='ATTENDED' AND referrer_id IS NOT NULL AND referral_paid_at IS NULL`.
 4. Refletir tudo no `schema.prisma` (usar exatamente os tipos do spec).
-5. Aplicar a migration no Supabase (via SQL editor / CLI — passo manual do usuário).
-6. `pnpm --filter db prisma generate`.
+5. Aplicar a migration no Supabase via MCP (`mcp__supabase__apply_migration`).
+6. `pnpm db:generate`.
 
 **Verificação:**
 - `pnpm --filter db prisma validate` sem erros.
@@ -51,7 +57,13 @@ refletir no schema Prisma.
 
 ---
 
-## Fase 1 — Domínio `lib/appointments/` (puro + acesso)
+## Fase 1 — Domínio `lib/appointments/` (puro + acesso) ✅ CONCLUÍDA (02/08/2026)
+
+Entregue com um teste a mais que o previsto: `appointments-data-ownership.test.ts`
+(prisma mockado) cobrindo a validação de tenant na borda. Helpers de fuso/navegação de
+datas (`todayAppointmentDate`, `shiftAppointmentDate`) já ficaram nos normalizers para a
+Fase 4.
+
 
 **Objetivo:** lógica de consultas isolada e testada.
 
@@ -84,7 +96,12 @@ refletir no schema Prisma.
 
 ---
 
-## Fase 2 — Domínio `lib/referrers/`
+## Fase 2 — Domínio `lib/referrers/` ✅ CONCLUÍDA (02/08/2026)
+
+`referrers-mappers.ts` (opcional no plano) entrou: a Fase 5 precisa das linhas com
+contador e o dropdown da Fase 4 precisa das opções. Ownership coberto por
+`referrers-data-ownership.test.ts`.
+
 
 **Objetivo:** cadastro de indicantes + contador de pendentes + marcar pago.
 
@@ -110,7 +127,18 @@ refletir no schema Prisma.
 
 ---
 
-## Fase 3 — Server Actions
+## Fase 3 — Server Actions ✅ CONCLUÍDA (02/08/2026)
+
+Ajustes em relação ao previsto:
+- O arquivo de referência é `apps/web/app/dashboard/planos/actions.ts` (não
+  `(dashboard)/planos/`) e `apps/web/app/(dashboard)/account/actions.ts`.
+- Auth extraída para `apps/web/lib/auth/authenticated-profile.ts`, usada pelos dois
+  arquivos de actions.
+- `apps/web/vitest.config.ts` criado: sem o alias `@`, um import não mockado quebrava
+  o teste (o suite antigo só passava porque mockava todos os `@/`).
+- Testes de action (`agenda-actions.test.ts`, `referrers-actions.test.ts`) provam que
+  `clinic_id`/`created_by` vêm da sessão mesmo quando o formulário tenta injetá-los.
+
 
 **Objetivo:** mutações via `'use server'`, estado tipado, auth + tenant na borda.
 
@@ -130,7 +158,20 @@ refletir no schema Prisma.
 
 ---
 
-## Fase 4 — Página `/agenda` + componentes + navegação
+## Fase 4 — Página `/agenda` + componentes + navegação ✅ CONCLUÍDA (02/08/2026)
+
+Extras em relação ao plano:
+- `lib/appointments/agenda-navigation.ts` (+ teste): `resolveAgendaDate` (query inválida
+  cai para hoje), hrefs de ontem/hoje/amanhã e rótulo PT-BR formatado em UTC.
+- `lib/patients/patient-search.ts` + server action `searchPatients` — não existia
+  endpoint de busca de pacientes; a busca do diálogo passa pela action (tenant da sessão).
+- Componentes: `AgendaDayView`, `AgendaAppointmentRow`, `NewAppointmentDialog`.
+
+⚠️ **Verificação manual pendente:** sem credenciais E2E locais só deu para confirmar que
+`/agenda` responde 307 → `/login` (rota registrada, middleware protegendo). Criar
+consulta com/sem hora, Compareceu, Cancelar e navegação de datas ainda precisam de um
+teste logado (Fase 7 / manual).
+
 
 **Objetivo:** a tela principal da secretária.
 
@@ -156,7 +197,12 @@ Compareceu, Cancelar, navegar datas.
 
 ---
 
-## Fase 5 — Aba Indicantes em Pacientes (cadastro + contador + Pagar)
+## Fase 5 — Aba Indicantes em Pacientes ✅ CONCLUÍDA (02/08/2026)
+
+Abas via URL (`/patients?tab=indicantes`, config em `lib/patients/patients-tabs.ts`, com
+teste) para sobreviver ao refresh das server actions. A lista de pacientes ficou intacta
+na primeira aba; os indicantes só são consultados quando a aba está aberta.
+
 
 **Objetivo:** mini-cadastro de indicantes e o fluxo de pagamento simples.
 
@@ -180,7 +226,12 @@ consulta como Compareceu), Pagar → PIX → Marcar pago → contador zera.
 
 ---
 
-## Fase 6 — Integração no cadastro de paciente
+## Fase 6 — Integração no cadastro de paciente ✅ CONCLUÍDA (02/08/2026)
+
+Se a consulta falhar depois do paciente criado, o formulário **não** redireciona e **não**
+permite reenviar: mostra aviso âmbar com o motivo + botões "Ir para a ficha" e "Abrir a
+Agenda", evitando cadastro duplicado.
+
 
 **Objetivo:** "já cadastro e deixo agendado".
 
@@ -200,7 +251,13 @@ consulta como Compareceu), Pagar → PIX → Marcar pago → contador zera.
 
 ---
 
-## Fase 7 — E2E, documentação e fechamento
+## Fase 7 — E2E, documentação e fechamento ⚠️ PARCIAL (02/08/2026)
+
+`cypress/e2e/clinical/agenda.cy.ts` escrito (5 cenários: hora vs fila, Compareceu,
+navegação de datas, agendar no cadastro, indicante → contador → Pagar → Marcar pago) e
+`CLAUDE.md` atualizado. **Não executado:** não há `cypress.env.json` nem `E2E_*` nesta
+máquina, então o spec nunca rodou — precisa de credenciais de teste.
+
 
 **Arquivos:**
 - `cypress/e2e/clinical/agenda.cy.ts` (ou similar) — novo.
