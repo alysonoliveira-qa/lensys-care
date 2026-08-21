@@ -1,30 +1,31 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // lib/stripe/webhooks.ts
-// Stripe webhook signature verification helper.
+// Verificação de assinatura dos webhooks do Stripe.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { stripe } from './client'
+import { getStripe } from './client'
 import type Stripe from 'stripe'
 
 /**
- * Verifies the Stripe webhook signature and returns the parsed event.
- * Must receive the raw request body (not parsed JSON).
+ * Verifica a assinatura do webhook e devolve o evento já parseado.
+ * Precisa receber o corpo bruto da requisição (não o JSON parseado).
  *
- * @throws Error if signature is invalid or STRIPE_WEBHOOK_SECRET is missing
+ * @throws Error se a assinatura for inválida ou STRIPE_WEBHOOK_SECRET faltar
  */
 export async function constructWebhookEvent(
   rawBody: string | Buffer,
   signature: string
 ): Promise<Stripe.Event> {
   const secret = process.env.STRIPE_WEBHOOK_SECRET
+
   if (!secret) {
     throw new Error('STRIPE_WEBHOOK_SECRET environment variable is not set.')
   }
 
-  return stripe.webhooks.constructEvent(rawBody, signature, secret)
+  return getStripe().webhooks.constructEvent(rawBody, signature, secret)
 }
 
-// ─── Supported Stripe event types ────────────────────────────────────────────
+// ─── Eventos suportados ──────────────────────────────────────────────────────
 
 export type HandledStripeEvent =
   | 'checkout.session.completed'
@@ -41,9 +42,6 @@ export const HANDLED_EVENTS: HandledStripeEvent[] = [
   'invoice.payment_failed',
 ]
 
-/**
- * Checks if a Stripe event type is one we handle.
- */
 export function isHandledEvent(type: string): type is HandledStripeEvent {
   return HANDLED_EVENTS.includes(type as HandledStripeEvent)
 }

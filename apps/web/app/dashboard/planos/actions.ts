@@ -3,8 +3,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
-import { stripe } from '@/lib/stripe/client'
-import { STRIPE_PRICES, TRIAL_PERIOD_DAYS } from '@/lib/stripe/products'
+import { getStripe } from '@/lib/stripe/client'
+import { getPriceIdForPlan, TRIAL_PERIOD_DAYS } from '@/lib/stripe/products'
 
 export type AvailablePlan = 'ESSENTIAL' | 'CONECTA'
 
@@ -45,48 +45,48 @@ export async function activatePlan(
     return { status: 'error', message: 'Somente o proprietário da clínica pode alterar o plano.' }
   }
 
-  // Verifica se já tem assinatura ativa no Stripe
-  const subscription = await prisma.subscription.findUnique({
-    where: { clinic_id: profile.clinic_id },
-  })
+  const [subscription, stripeCustomer, clinic] = await Promise.all([
+    prisma.subscription.findUnique({ where: { clinic_id: profile.clinic_id } }),
+    prisma.stripeCustomer.findUnique({ where: { clinic_id: profile.clinic_id } }),
+    prisma.clinic.findUnique({ where: { id: profile.clinic_id } }),
+  ])
 
-  const hasActiveStripeSubscription =
-    subscription?.stripe_subscription_id &&
-    (subscription.status === 'ACTIVE' || subscription.status === 'TRIALING')
-
-  // Se já tem assinatura ativa no Stripe, redireciona para o portal
-  if (hasActiveStripeSubscription) {
-    const stripeCustomer = await prisma.stripeCustomer.findUnique({
-      where: { clinic_id: profile.clinic_id },
-    })
-    if (stripeCustomer) {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-      const portalSession = await stripe.billingPortal.sessions.create({
-        customer: stripeCustomer.stripe_customer_id,
-        return_url: `${appUrl}/subscription`,
-      })
-      redirect(portalSession.url)
-    }
-  }
-
-  // Sem assinatura Stripe ativa — inicia checkout
-  const priceKey = requestedPlan === 'ESSENTIAL' ? 'essencial_monthly' : 'conecta_monthly'
-  const priceId = STRIPE_PRICES[priceKey]
-
-  const clinic = await prisma.clinic.findUnique({ where: { id: profile.clinic_id } })
   if (!clinic) {
     return { status: 'error', message: 'Clínica não encontrada.' }
   }
 
-  // Busca ou cria customer no Stripe
-  const stripeCustomer = await prisma.stripeCustomer.findUnique({
-    where: { clinic_id: profile.clinic_id },
-  })
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
+  // Assinatura ativa já registrada: vai para o portal, não para um checkout novo.
+  const hasActiveStripeSubscription =
+    Boolean(subscription?.stripe_subscription_id) &&
+    (subscription?.status === 'ACTIVE' || subscription?.status === 'TRIALING')
+
+  if (hasActiveStripeSubscription && stripeCustomer) {
+    redirect(await createPortalUrl(stripeCustomer.stripe_customer_id, appUrl))
+  }
+
+  // Rede de segurança contra cobrança dupla: o banco pode não ter a assinatura
+  // registrada (webhook perdido). Antes de abrir um checkout novo, pergunta ao
+  // Stripe se esse customer já tem assinatura viva.
+  if (stripeCustomer) {
+    const existingSubscriptionId = await findLiveSubscriptionId(stripeCustomer.stripe_customer_id)
+
+    if (existingSubscriptionId) {
+      console.warn(
+        `[stripe] clínica ${clinic.id} já tem a assinatura ${existingSubscriptionId} no Stripe ` +
+          'sem registro local. Enviando ao portal em vez de abrir novo checkout.'
+      )
+      redirect(await createPortalUrl(stripeCustomer.stripe_customer_id, appUrl))
+    }
+  }
+
+  const priceId = getPriceIdForPlan(requestedPlan)
 
   let stripeCustomerId = stripeCustomer?.stripe_customer_id
 
   if (!stripeCustomerId) {
-    const customer = await stripe.customers.create({
+    const customer = await getStripe().customers.create({
       email: clinic.email,
       name: clinic.name,
       metadata: { clinicId: clinic.id },
@@ -97,9 +97,7 @@ export async function activatePlan(
     })
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     customer: stripeCustomerId,
     line_items: [{ price: priceId, quantity: 1 }],
     mode: 'subscription',
@@ -113,4 +111,35 @@ export async function activatePlan(
   })
 
   redirect(session.url!)
+}
+
+// Helpers internos. Num arquivo 'use server' só as exportações precisam ser
+// funções async — estas ficam privadas ao módulo de propósito.
+
+async function createPortalUrl(customerId: string, appUrl: string): Promise<string> {
+  const portalSession = await getStripe().billingPortal.sessions.create({
+    customer: customerId,
+    return_url: `${appUrl}/subscription`,
+  })
+
+  return portalSession.url
+}
+
+/**
+ * Assinatura ainda viva do customer no Stripe, se houver.
+ * `incomplete` e `canceled` não contam: a primeira é checkout abandonado, a
+ * segunda já acabou — nenhuma das duas impede uma assinatura nova.
+ */
+async function findLiveSubscriptionId(customerId: string): Promise<string | null> {
+  const subscriptions = await getStripe().subscriptions.list({
+    customer: customerId,
+    status: 'all',
+    limit: 20,
+  })
+
+  const live = subscriptions.data.find(
+    (item) => item.status === 'active' || item.status === 'trialing' || item.status === 'past_due'
+  )
+
+  return live?.id ?? null
 }
