@@ -52,7 +52,7 @@ export default function Home() {
 
             <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-300">
               <Sparkles className="h-4 w-4" />
-              Durante a fase de validação, o acesso ao sistema está gratuito.
+              Teste grátis por 7 dias em qualquer plano.
             </div>
 
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
