@@ -11,6 +11,7 @@ import {
   type StripePlanId,
 } from '@/lib/stripe/products'
 import { STRIPE_APP_METADATA } from '@/lib/stripe/stripe-app-metadata'
+import { createBillingPortalUrl } from '@/lib/stripe/billing-portal'
 
 // Alias em vez de uma segunda lista de planos: manter as duas em sincronia à mão
 // é exatamente o tipo de duplicação que deixa um plano novo fora do checkout.
@@ -76,7 +77,7 @@ export async function activatePlan(
     (subscription?.status === 'ACTIVE' || subscription?.status === 'TRIALING')
 
   if (hasActiveStripeSubscription && stripeCustomer) {
-    redirect(await createPortalUrl(stripeCustomer.stripe_customer_id, appUrl))
+    redirect(await createBillingPortalUrl(stripeCustomer.stripe_customer_id, appUrl))
   }
 
   // Rede de segurança contra cobrança dupla: o banco pode não ter a assinatura
@@ -90,7 +91,7 @@ export async function activatePlan(
         `[stripe] clínica ${clinic.id} já tem a assinatura ${existingSubscriptionId} no Stripe ` +
           'sem registro local. Enviando ao portal em vez de abrir novo checkout.'
       )
-      redirect(await createPortalUrl(stripeCustomer.stripe_customer_id, appUrl))
+      redirect(await createBillingPortalUrl(stripeCustomer.stripe_customer_id, appUrl))
     }
   }
 
@@ -131,15 +132,6 @@ export async function activatePlan(
 
 // Helpers internos. Num arquivo 'use server' só as exportações precisam ser
 // funções async — estas ficam privadas ao módulo de propósito.
-
-async function createPortalUrl(customerId: string, appUrl: string): Promise<string> {
-  const portalSession = await getStripe().billingPortal.sessions.create({
-    customer: customerId,
-    return_url: `${appUrl}/subscription`,
-  })
-
-  return portalSession.url
-}
 
 /**
  * Assinatura ainda viva do customer no Stripe, se houver.

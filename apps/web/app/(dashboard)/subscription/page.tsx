@@ -6,6 +6,8 @@ import {
   resolveDisplayPlanId,
 } from '@/lib/plans/plan-display-config'
 import PlanActivationCards from '@/app/dashboard/planos/PlanActivationCards'
+import ManageSubscriptionButton from '@/components/subscription/ManageSubscriptionButton'
+import { prisma } from '@/lib/db'
 
 export const revalidate = 0
 
@@ -17,6 +19,14 @@ export default async function SubscriptionPage() {
   }
   const currentPlan = resolveDisplayPlanId(shellData.subscription?.plan)
   const canManagePlan = shellData.profile.role === 'OWNER'
+
+  // O portal so existe para quem ja tem customer no Stripe. Checar aqui evita
+  // oferecer um botao que responderia "voce ainda nao possui assinatura".
+  const stripeCustomer = await prisma.stripeCustomer.findUnique({
+    where: { clinic_id: shellData.profile.clinic_id },
+    select: { id: true },
+  })
+  const canOpenBillingPortal = canManagePlan && stripeCustomer !== null
 
   return (
     <div className="mx-auto max-w-5xl space-y-7" data-cy="plans-page">
@@ -42,6 +52,8 @@ export default async function SubscriptionPage() {
               Somente o proprietário da clínica pode ativar ou trocar o plano.
             </p>
           ) : null}
+
+          {canOpenBillingPortal ? <ManageSubscriptionButton /> : null}
         </div>
       </section>
 
