@@ -121,10 +121,15 @@ export function getPlanDisplayName(plan: string | null | undefined): string {
 
 export const PUBLIC_PLANS_BADGE_LABEL = 'Lensys Care'
 export const PUBLIC_PLANS_TRIAL_BANNER = 'Teste grátis por 7 dias em qualquer plano'
+// Estas mensagens descrevem a cobrança para quem está prestes a assinar, então
+// precisam corresponder ao que o sistema faz de verdade: trial de 7 dias vindo
+// de TRIAL_PERIOD_DAYS e cancelamento pelo portal do Stripe (/api/stripe/portal).
+// Ao mexer aqui, conferir os dois — dizer "gratuito" numa página que cobra é o
+// tipo de erro que vira contestação de cobrança.
 export const PUBLIC_PLANS_FOOTER_MESSAGES = [
-  'Durante a fase de validação, o acesso ao sistema está gratuito.',
-  'A cobrança dos planos será ativada após a fase de validação.',
+  'Todos os planos começam com 7 dias grátis.',
+  'Você só é cobrado se continuar depois do teste. Cancele quando quiser, direto pelo painel.',
 ] as const
 
 export const DASHBOARD_PLANS_VALIDATION_MESSAGE =
-  'Durante a fase de validação, a ativação dos planos é gratuita. A cobrança será ativada posteriormente.'
+  'Você tem 7 dias grátis para testar. A cobrança começa ao fim do período de teste, e você pode cancelar antes sem pagar nada.'
