@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getStripe } from '@/lib/stripe/client'
+import { createBillingPortalUrl } from '@/lib/stripe/billing-portal'
 import { prisma } from '@/lib/db'
 
 export async function POST() {
@@ -31,13 +31,9 @@ export async function POST() {
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const url = await createBillingPortalUrl(stripeCustomerId, appUrl)
 
-    const session = await getStripe().billingPortal.sessions.create({
-      customer: stripeCustomerId,
-      return_url: `${appUrl}/planos`,
-    })
-
-    return NextResponse.json({ url: session.url })
+    return NextResponse.json({ url })
   } catch (error: unknown) {
     console.error('Stripe portal error:', error)
     return NextResponse.json(
