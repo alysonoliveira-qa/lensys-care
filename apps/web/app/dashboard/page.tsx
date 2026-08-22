@@ -50,7 +50,7 @@ export default async function DashboardPage() {
     fullName: shellData.profile.full_name,
     email: shellData.userEmail,
   })
-  const { isConecta, planLabel } = resolveDashboardPlanStatus({
+  const { hasPremiumPlan, planLabel } = resolveDashboardPlanStatus({
     subscription_plan: shellData.subscription?.plan ?? null,
     subscription_status: shellData.subscription?.status ?? null,
   })
@@ -131,7 +131,7 @@ export default async function DashboardPage() {
             />
           </Suspense>
 
-          <DashboardPlanStatusCard isConecta={isConecta} planLabel={planLabel} />
+          <DashboardPlanStatusCard hasPremiumPlan={hasPremiumPlan} planLabel={planLabel} />
         </div>
       </div>
     </div>

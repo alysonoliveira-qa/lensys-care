@@ -1,7 +1,10 @@
 import { redirect } from 'next/navigation'
 import { ShieldCheck, Sparkles } from 'lucide-react'
 import { getAuthenticatedShellData } from '@/lib/authenticated-shell'
-import { DASHBOARD_PLANS_VALIDATION_MESSAGE } from '@/lib/plans/plan-display-config'
+import {
+  DASHBOARD_PLANS_VALIDATION_MESSAGE,
+  resolveDisplayPlanId,
+} from '@/lib/plans/plan-display-config'
 import PlanActivationCards from '@/app/dashboard/planos/PlanActivationCards'
 
 export const revalidate = 0
@@ -12,7 +15,7 @@ export default async function SubscriptionPage() {
   if (!shellData) {
     redirect('/login')
   }
-  const currentPlan = shellData.subscription?.plan === 'CONECTA' ? 'CONECTA' : 'ESSENTIAL'
+  const currentPlan = resolveDisplayPlanId(shellData.subscription?.plan)
   const canManagePlan = shellData.profile.role === 'OWNER'
 
   return (

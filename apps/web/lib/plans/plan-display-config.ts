@@ -1,4 +1,4 @@
-export type DisplayPlanId = 'ESSENTIAL' | 'CONECTA'
+export type DisplayPlanId = 'ESSENTIAL' | 'CONECTA' | 'PROFESSIONAL'
 
 export interface PlanDisplayConfig {
   id: DisplayPlanId
@@ -49,7 +49,7 @@ export const PLAN_DISPLAY_CONFIG: PlanDisplayConfig[] = [
   {
     id: 'CONECTA',
     name: 'Conecta',
-    monthlyPrice: 'R$ 149,90',
+    monthlyPrice: 'R$ 119,90',
     monthlyPriceSuffix: '/mês',
     trialLabel: 'Teste grátis por 7 dias',
     shortDescription: 'Mais automações para relacionamento e acompanhamento recorrente da clínica.',
@@ -72,7 +72,52 @@ export const PLAN_DISPLAY_CONFIG: PlanDisplayConfig[] = [
     dashboardCardDataCy: 'connect-plan-card',
     dashboardButtonDataCy: 'activate-connect-plan-button',
   },
+  {
+    id: 'PROFESSIONAL',
+    name: 'Professional',
+    monthlyPrice: 'R$ 149,90',
+    monthlyPriceSuffix: '/mês',
+    trialLabel: 'Teste grátis por 7 dias',
+    shortDescription:
+      'Tudo do Conecta, com as rotinas de mensagem automatizadas e o módulo financeiro.',
+    publicDescription:
+      'Para clínicas que querem tirar da mão o trabalho repetitivo de relacionamento e acompanhar o financeiro no mesmo lugar.',
+    dashboardDescription:
+      'Tudo do Conecta, com as rotinas de mensagem automatizadas e o módulo financeiro.',
+    publicFeatures: [
+      'Tudo do plano Conecta',
+      'Automação das rotinas de mensagem (em breve)',
+      'Módulo financeiro (em breve)',
+    ],
+    dashboardFeatures: [
+      'Tudo do Conecta',
+      'Automação das rotinas de mensagem (em breve)',
+      'Módulo financeiro (em breve)',
+    ],
+    featured: false,
+    tierLabel: 'Completo',
+    publicCardDataCy: 'professional-plan-card',
+    dashboardCardDataCy: 'professional-plan-card',
+    dashboardButtonDataCy: 'activate-professional-plan-button',
+  },
 ] as const
+
+const DISPLAY_PLAN_IDS = PLAN_DISPLAY_CONFIG.map((plan) => plan.id)
+
+/**
+ * Reduz o plano vindo do banco a um id conhecido. Plano ausente ou não mapeado
+ * cai no base — mas um plano conhecido **nunca** é rebaixado, que era o efeito
+ * do antigo `plan === 'CONECTA' ? 'CONECTA' : 'ESSENTIAL'`.
+ */
+export function resolveDisplayPlanId(plan: string | null | undefined): DisplayPlanId {
+  return DISPLAY_PLAN_IDS.includes(plan as DisplayPlanId) ? (plan as DisplayPlanId) : 'ESSENTIAL'
+}
+
+/** Nome de exibição do plano ("Essencial", "Conecta", "Professional"). */
+export function getPlanDisplayName(plan: string | null | undefined): string {
+  const id = resolveDisplayPlanId(plan)
+  return PLAN_DISPLAY_CONFIG.find((item) => item.id === id)?.name ?? 'Essencial'
+}
 
 export const PUBLIC_PLANS_BADGE_LABEL = 'Lensys Care'
 export const PUBLIC_PLANS_TRIAL_BANNER = 'Teste grátis por 7 dias em qualquer plano'

@@ -7,6 +7,8 @@ import SidebarProfileSection from '@/components/layout/SidebarProfileSection'
 import SidebarNavigation from '@/components/layout/sidebar/SidebarNavigation'
 import SidebarPlanStatus from '@/components/layout/sidebar/SidebarPlanStatus'
 import useSidebarState from '@/components/layout/sidebar/useSidebarState'
+import { getPlanDisplayName } from '@/lib/plans/plan-display-config'
+import { planIncludesPremiumFeatures } from '@/lib/plans/plan-feature-config'
 import {
   LogOut,
   PanelLeftClose,
@@ -91,7 +93,11 @@ export default function Sidebar({
     }
   }
 
-  const isConecta = subscription?.plan === 'CONECTA' && subscription?.status !== 'CANCELED'
+  const hasPremiumPlan =
+    planIncludesPremiumFeatures(subscription?.plan) && subscription?.status !== 'CANCELED'
+  const planName = hasPremiumPlan
+    ? getPlanDisplayName(subscription?.plan)
+    : getPlanDisplayName('ESSENTIAL')
 
   return (
     <>
@@ -163,7 +169,8 @@ export default function Sidebar({
         {subscription && (
           <SidebarPlanStatus
             isCollapsed={isCollapsed}
-            isConecta={isConecta}
+            hasPremiumPlan={hasPremiumPlan}
+            planName={planName}
             plansHref="/subscription"
             onPlansClick={() => {
               if (isMobile) {

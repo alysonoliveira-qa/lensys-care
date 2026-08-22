@@ -4,9 +4,21 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
 import { getStripe } from '@/lib/stripe/client'
-import { getPriceIdForPlan, TRIAL_PERIOD_DAYS } from '@/lib/stripe/products'
+import {
+  getPriceIdForPlan,
+  STRIPE_PLAN_IDS,
+  TRIAL_PERIOD_DAYS,
+  type StripePlanId,
+} from '@/lib/stripe/products'
 
-export type AvailablePlan = 'ESSENTIAL' | 'CONECTA'
+// Alias em vez de uma segunda lista de planos: manter as duas em sincronia à mão
+// é exatamente o tipo de duplicação que deixa um plano novo fora do checkout.
+export type AvailablePlan = StripePlanId
+
+// Arquivo 'use server': só as exportações precisam ser async — helpers locais não.
+function isAvailablePlan(value: unknown): value is AvailablePlan {
+  return typeof value === 'string' && STRIPE_PLAN_IDS.includes(value as AvailablePlan)
+}
 
 export interface PlanActionState {
   status: 'idle' | 'success' | 'error'
@@ -20,7 +32,7 @@ export async function activatePlan(
 ): Promise<PlanActionState> {
   const requestedPlan = formData.get('plan')
 
-  if (requestedPlan !== 'ESSENTIAL' && requestedPlan !== 'CONECTA') {
+  if (!isAvailablePlan(requestedPlan)) {
     return { status: 'error', message: 'Plano selecionado inválido.' }
   }
 

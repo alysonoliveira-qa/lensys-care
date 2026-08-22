@@ -4,6 +4,7 @@ import { getPlanByPriceId, getPriceIdForPlan } from '../lib/stripe/products'
 
 const ESSENCIAL_ENV = 'STRIPE_ESSENCIAL_MONTHLY_PRICE_ID'
 const CONECTA_ENV = 'STRIPE_CONECTA_MONTHLY_PRICE_ID'
+const PROFESSIONAL_ENV = 'STRIPE_PROFESSIONAL_MONTHLY_PRICE_ID'
 
 let original: Record<string, string | undefined>
 
@@ -11,6 +12,7 @@ beforeEach(() => {
   original = {
     [ESSENCIAL_ENV]: process.env[ESSENCIAL_ENV],
     [CONECTA_ENV]: process.env[CONECTA_ENV],
+    [PROFESSIONAL_ENV]: process.env[PROFESSIONAL_ENV],
   }
 })
 
@@ -25,9 +27,11 @@ describe('getPriceIdForPlan', () => {
   it('devolve o price configurado para cada plano', () => {
     process.env[ESSENCIAL_ENV] = 'price_essencial'
     process.env[CONECTA_ENV] = 'price_conecta'
+    process.env[PROFESSIONAL_ENV] = 'price_professional'
 
     expect(getPriceIdForPlan('ESSENTIAL')).toBe('price_essencial')
     expect(getPriceIdForPlan('CONECTA')).toBe('price_conecta')
+    expect(getPriceIdForPlan('PROFESSIONAL')).toBe('price_professional')
   })
 
   it('lança quando a env var do plano não está configurada', () => {
@@ -42,9 +46,11 @@ describe('getPlanByPriceId', () => {
   it('resolve o plano a partir do price', () => {
     process.env[ESSENCIAL_ENV] = 'price_essencial'
     process.env[CONECTA_ENV] = 'price_conecta'
+    process.env[PROFESSIONAL_ENV] = 'price_professional'
 
     expect(getPlanByPriceId('price_conecta')).toBe('CONECTA')
     expect(getPlanByPriceId('price_essencial')).toBe('ESSENTIAL')
+    expect(getPlanByPriceId('price_professional')).toBe('PROFESSIONAL')
   })
 
   it('devolve null para price desconhecido em vez de adivinhar', () => {

@@ -41,6 +41,7 @@ enum AlertChannel {
 enum Plan {
   ESSENTIAL
   CONECTA
+  PROFESSIONAL
 
   @@map("plan")
 }

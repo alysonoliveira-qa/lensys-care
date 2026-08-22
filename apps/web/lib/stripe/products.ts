@@ -10,13 +10,14 @@
 
 export const TRIAL_PERIOD_DAYS = 7
 
-export type StripePlanId = 'ESSENTIAL' | 'CONECTA'
+export type StripePlanId = 'ESSENTIAL' | 'CONECTA' | 'PROFESSIONAL'
 
-export const STRIPE_PLAN_IDS: StripePlanId[] = ['ESSENTIAL', 'CONECTA']
+export const STRIPE_PLAN_IDS: StripePlanId[] = ['ESSENTIAL', 'CONECTA', 'PROFESSIONAL']
 
 const PRICE_ENV_NAME: Record<StripePlanId, string> = {
   ESSENTIAL: 'STRIPE_ESSENCIAL_MONTHLY_PRICE_ID',
   CONECTA: 'STRIPE_CONECTA_MONTHLY_PRICE_ID',
+  PROFESSIONAL: 'STRIPE_PROFESSIONAL_MONTHLY_PRICE_ID',
 }
 
 function readPriceId(plan: StripePlanId): string | undefined {
@@ -25,6 +26,8 @@ function readPriceId(plan: StripePlanId): string | undefined {
       return process.env.STRIPE_ESSENCIAL_MONTHLY_PRICE_ID
     case 'CONECTA':
       return process.env.STRIPE_CONECTA_MONTHLY_PRICE_ID
+    case 'PROFESSIONAL':
+      return process.env.STRIPE_PROFESSIONAL_MONTHLY_PRICE_ID
   }
 }
 

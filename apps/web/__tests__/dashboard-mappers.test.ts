@@ -12,7 +12,8 @@ describe('dashboard mappers', () => {
       subscription_plan: 'CONECTA',
       subscription_status: 'ACTIVE',
     })).toEqual({
-      isConecta: true,
+      hasPremiumPlan: true,
+      planName: 'Conecta',
       planLabel: 'Plano Conecta ativo',
     })
 
@@ -20,7 +21,32 @@ describe('dashboard mappers', () => {
       subscription_plan: 'CONECTA',
       subscription_status: 'CANCELED',
     })).toEqual({
-      isConecta: false,
+      hasPremiumPlan: false,
+      planName: 'Essencial',
+      planLabel: 'Plano Essencial',
+    })
+  })
+
+  it('mostra o Professional pelo nome, sem rebaixar para Essencial', () => {
+    // Regressao: com `plan === 'CONECTA'`, o plano mais caro aparecia como
+    // Essencial e ainda oferecia upgrade para um plano abaixo do assinado.
+    expect(resolveDashboardPlanStatus({
+      subscription_plan: 'PROFESSIONAL',
+      subscription_status: 'ACTIVE',
+    })).toEqual({
+      hasPremiumPlan: true,
+      planName: 'Professional',
+      planLabel: 'Plano Professional ativo',
+    })
+  })
+
+  it('trata plano desconhecido como base em vez de conceder recursos pagos', () => {
+    expect(resolveDashboardPlanStatus({
+      subscription_plan: 'PLANO_QUE_NAO_EXISTE',
+      subscription_status: 'ACTIVE',
+    })).toEqual({
+      hasPremiumPlan: false,
+      planName: 'Essencial',
       planLabel: 'Plano Essencial',
     })
   })
