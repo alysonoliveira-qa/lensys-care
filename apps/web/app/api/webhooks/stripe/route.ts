@@ -1,284 +1,322 @@
 import { NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe/client'
+import type Stripe from 'stripe'
+import { getStripe } from '@/lib/stripe/client'
 import { constructWebhookEvent } from '@/lib/stripe/webhooks'
 import { prisma } from '@/lib/db'
-import type Stripe from 'stripe'
+import {
+  readId,
+  readInvoiceAppTag,
+  readInvoiceSubscriptionId,
+  readMetadataValue,
+  type StripeInvoiceLike,
+  type StripeSubscriptionLike,
+} from '@/lib/stripe/stripe-normalizers'
+import {
+  classifyAppTag,
+  STRIPE_APP_METADATA_KEY,
+} from '@/lib/stripe/stripe-app-metadata'
+import {
+  downgradeSubscription,
+  findClinicIdByStripeCustomerId,
+  findClinicIdByStripeSubscriptionId,
+  isRecordNotFound,
+  recordPayment,
+  syncSubscriptionFromStripe,
+} from '@/lib/stripe/stripe-sync'
 
-const Plan = {
-  ESSENTIAL: 'ESSENTIAL',
-  CONECTA: 'CONECTA',
-} as const
-
-// Mapeia o price_id do Stripe para o plano interno correspondente.
-const PRICE_TO_PLAN: Record<string, typeof Plan[keyof typeof Plan]> = {
-  [process.env.STRIPE_ESSENCIAL_MONTHLY_PRICE_ID!]: Plan.ESSENTIAL,
-  [process.env.STRIPE_CONECTA_MONTHLY_PRICE_ID!]:   Plan.CONECTA,
-}
-
-const SubscriptionStatus = {
-  ACTIVE: 'ACTIVE',
-  TRIALING: 'TRIALING',
-  CANCELED: 'CANCELED',
-  PAST_DUE: 'PAST_DUE',
-} as const
-
-const PaymentStatus = {
-  SUCCEEDED: 'SUCCEEDED',
-  FAILED: 'FAILED',
-} as const
-
-type CheckoutSessionEvent = {
-  id: string
-  metadata?: {
-    clinicId?: string
-  } | null
-  subscription?: string | null
-}
-
-type StripeSubscriptionRecord = {
-  id: string
-  status: string
-  current_period_end: number
-  cancel_at_period_end: boolean
-  trial_end: number | null
-  metadata?: {
-    clinicId?: string
-  } | null
-  items: {
-    data: Array<{
-      price: {
-        id: string
-      }
-    }>
-  }
-}
-
-type StripeInvoiceRecord = {
-  id: string
-  customer: string | null
-  payment_intent: string | null
-  amount_paid: number
-  amount_due: number
-  currency: string
-  billing_reason: string | null
-}
-
-function mapStripeStatus(stripeStatus: string): typeof SubscriptionStatus[keyof typeof SubscriptionStatus] {
-  switch (stripeStatus) {
-    case 'active':
-      return SubscriptionStatus.ACTIVE
-    case 'trialing':
-      return SubscriptionStatus.TRIALING
-    case 'past_due':
-    case 'unpaid':
-    case 'incomplete':
-      return SubscriptionStatus.PAST_DUE
-    case 'canceled':
-      return SubscriptionStatus.CANCELED
-    default:
-      return SubscriptionStatus.PAST_DUE
-  }
-}
+// Um evento que não temos como aplicar (clínica desconhecida, assinatura já
+// removida) é respondido com 200 de propósito: devolver 500 faz o Stripe
+// reentregar o mesmo evento indefinidamente sem que nada mude. O 500 fica
+// reservado para falha real, onde reentregar de fato ajuda.
 
 export async function POST(request: Request) {
   let payload = ''
+
   try {
     payload = await request.text()
   } catch {
-    return NextResponse.json({ error: 'READ_BODY_FAILED', message: 'Falha ao ler corpo da requisição.' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'READ_BODY_FAILED', message: 'Falha ao ler corpo da requisição.' },
+      { status: 400 }
+    )
   }
 
-  const sig = request.headers.get('stripe-signature')
+  const signature = request.headers.get('stripe-signature')
 
-  if (!sig) {
-    return NextResponse.json({ error: 'MISSING_SIGNATURE', message: 'Assinatura Stripe ausente.' }, { status: 400 })
+  if (!signature) {
+    return NextResponse.json(
+      { error: 'MISSING_SIGNATURE', message: 'Assinatura Stripe ausente.' },
+      { status: 400 }
+    )
   }
 
   let event: Stripe.Event
+
   try {
-    event = await constructWebhookEvent(payload, sig)
+    event = await constructWebhookEvent(payload, signature)
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Falha na verificação da assinatura.'
-    console.error('Webhook signature verification failed:', message)
+    console.error('[stripe] verificação de assinatura falhou:', message)
     return NextResponse.json({ error: 'VERIFICATION_FAILED', message }, { status: 400 })
   }
 
-  console.log(`Stripe Webhook Received event: ${event.type}`)
+  console.log(`[stripe] evento recebido: ${event.type} (${event.id})`)
+
+  // A conta Stripe e compartilhada com outros produtos, e uma conta tem um unico
+  // fluxo de eventos: tudo chega aqui. Descartar cedo o que e de outro app evita
+  // encher o log de "clinica nao identificavel" sobre venda que nunca foi nossa.
+  if (classifyAppTag(readEventAppTag(event)) === 'other-app') {
+    console.log(`[stripe] evento ${event.id} pertence a outro app; ignorando.`)
+    return NextResponse.json({ received: true })
+  }
 
   try {
     switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object as CheckoutSessionEvent
-        const clinicId = session.metadata?.clinicId
-
-        if (!clinicId) {
-          console.error('No clinicId found in session metadata', session.id)
-          break
-        }
-
-        if (session.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(session.subscription as string) as unknown as StripeSubscriptionRecord
-          const trialEnds = subscription.trial_end ? new Date(subscription.trial_end * 1000) : null
-
-          await prisma.subscription.upsert({
-            where: { clinic_id: clinicId },
-            update: {
-              plan: PRICE_TO_PLAN[subscription.items.data[0].price.id] ?? Plan.ESSENTIAL,
-              status: mapStripeStatus(subscription.status),
-              stripe_subscription_id: subscription.id,
-              stripe_price_id: subscription.items.data[0].price.id,
-              current_period_end: new Date(subscription.current_period_end * 1000),
-              trial_ends_at: trialEnds,
-              payment_provider: 'stripe',
-            },
-            create: {
-              clinic_id: clinicId,
-              plan: PRICE_TO_PLAN[subscription.items.data[0].price.id] ?? Plan.ESSENTIAL,
-              status: mapStripeStatus(subscription.status),
-              stripe_subscription_id: subscription.id,
-              stripe_price_id: subscription.items.data[0].price.id,
-              current_period_end: new Date(subscription.current_period_end * 1000),
-              trial_ends_at: trialEnds,
-              payment_provider: 'stripe',
-            },
-          })
-          console.log(`Subscription activated for clinic: ${clinicId}`)
-        }
+      case 'checkout.session.completed':
+        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session)
         break
-      }
 
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object as unknown as StripeSubscriptionRecord
-        const clinicId = subscription.metadata?.clinicId
-
-        const updateData = {
-          status: mapStripeStatus(subscription.status),
-          current_period_end: new Date(subscription.current_period_end * 1000),
-          cancel_at_period_end: subscription.cancel_at_period_end,
-          stripe_price_id: subscription.items.data[0].price.id,
-          trial_ends_at: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
-        }
-
-        if (clinicId) {
-          await prisma.subscription.update({
-            where: { clinic_id: clinicId },
-            data: updateData,
-          })
-          console.log(`Subscription updated for clinic: ${clinicId} via metadata`)
-        } else {
-          await prisma.subscription.update({
-            where: { stripe_subscription_id: subscription.id },
-            data: updateData,
-          })
-          console.log(`Subscription updated for stripe ID: ${subscription.id} via lookup`)
-        }
+      case 'customer.subscription.updated':
+        await handleSubscriptionUpdated(event.data.object as unknown as StripeSubscriptionLike)
         break
-      }
 
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object as unknown as StripeSubscriptionRecord
-        const clinicId = subscription.metadata?.clinicId
-
-        const downgradeData = {
-          plan: Plan.ESSENTIAL,
-          status: SubscriptionStatus.CANCELED,
-          stripe_subscription_id: null,
-          stripe_price_id: null,
-          current_period_end: null,
-          trial_ends_at: null,
-        }
-
-        if (clinicId) {
-          await prisma.subscription.update({
-            where: { clinic_id: clinicId },
-            data: downgradeData,
-          })
-          console.log(`Subscription deleted/downgraded for clinic: ${clinicId}`)
-        } else {
-          await prisma.subscription.update({
-            where: { stripe_subscription_id: subscription.id },
-            data: downgradeData,
-          })
-          console.log(`Subscription deleted/downgraded for stripe ID: ${subscription.id}`)
-        }
+      case 'customer.subscription.deleted':
+        await handleSubscriptionDeleted(event.data.object as unknown as StripeSubscriptionLike)
         break
-      }
 
-      case 'invoice.payment_succeeded': {
-        const invoice = event.data.object as unknown as StripeInvoiceRecord
-
-        if (!invoice.customer) break
-
-        const customer = await prisma.stripeCustomer.findUnique({
-          where: { stripe_customer_id: invoice.customer as string },
-        })
-
-        if (!customer) {
-          console.warn(`Stripe customer mapping not found for customer: ${invoice.customer}`)
-          break
-        }
-
-        await prisma.payment.create({
-          data: {
-            clinic_id: customer.clinic_id,
-            stripe_payment_intent: invoice.payment_intent as string,
-            stripe_invoice_id: invoice.id,
-            amount_cents: invoice.amount_paid,
-            currency: invoice.currency,
-            status: PaymentStatus.SUCCEEDED,
-            description: invoice.billing_reason || 'Mensalidade Lensys Care',
-            paid_at: new Date(),
-          },
-        })
-        console.log(`Payment logged as SUCCEEDED for clinic: ${customer.clinic_id}`)
+      case 'invoice.payment_succeeded':
+        await handleInvoicePaid(event.data.object as unknown as StripeInvoiceLike)
         break
-      }
 
-      case 'invoice.payment_failed': {
-        const invoice = event.data.object as unknown as StripeInvoiceRecord
-
-        if (!invoice.customer) break
-
-        const customer = await prisma.stripeCustomer.findUnique({
-          where: { stripe_customer_id: invoice.customer as string },
-        })
-
-        if (!customer) {
-          console.warn(`Stripe customer mapping not found for customer: ${invoice.customer}`)
-          break
-        }
-
-        await prisma.payment.create({
-          data: {
-            clinic_id: customer.clinic_id,
-            stripe_payment_intent: invoice.payment_intent as string,
-            stripe_invoice_id: invoice.id,
-            amount_cents: invoice.amount_due,
-            currency: invoice.currency,
-            status: PaymentStatus.FAILED,
-            description: invoice.billing_reason || 'Falha no pagamento da mensalidade',
-          },
-        })
-
-        await prisma.subscription.update({
-          where: { clinic_id: customer.clinic_id },
-          data: { status: SubscriptionStatus.PAST_DUE },
-        })
-
-        console.log(`Payment logged as FAILED for clinic: ${customer.clinic_id}`)
+      case 'invoice.payment_failed':
+        await handleInvoiceFailed(event.data.object as unknown as StripeInvoiceLike)
         break
-      }
 
       default:
-        console.log(`Webhook event ignored: ${event.type}`)
+        console.log(`[stripe] evento ignorado: ${event.type}`)
     }
 
     return NextResponse.json({ received: true })
   } catch (error: unknown) {
-    console.error(`Error processing webhook event ${event.type}:`, error)
-    return NextResponse.json({
-      error: 'PROCESSING_FAILED',
-      message: error instanceof Error ? error.message : 'Falha ao processar webhook.',
-    }, { status: 500 })
+    console.error(`[stripe] erro processando ${event.type} (${event.id}):`, error)
+    return NextResponse.json(
+      {
+        error: 'PROCESSING_FAILED',
+        message: error instanceof Error ? error.message : 'Falha ao processar webhook.',
+      },
+      { status: 500 }
+    )
   }
+}
+
+/**
+ * Carimbo de app do evento, lido de onde ele existe em cada tipo de payload.
+ * `null` quando o evento nao carrega metadata alguma — nesse caso `classifyAppTag`
+ * devolve 'unmarked' e o evento segue o fluxo normal, nunca descartado.
+ */
+function readEventAppTag(event: Stripe.Event): string | null {
+  switch (event.type) {
+    case 'checkout.session.completed':
+      return readMetadataValue(
+        event.data.object as unknown as { metadata?: Record<string, string> | null },
+        STRIPE_APP_METADATA_KEY
+      )
+
+    case 'customer.subscription.updated':
+    case 'customer.subscription.deleted':
+      return readMetadataValue(
+        event.data.object as unknown as StripeSubscriptionLike,
+        STRIPE_APP_METADATA_KEY
+      )
+
+    case 'invoice.payment_succeeded':
+    case 'invoice.payment_failed':
+      return readInvoiceAppTag(
+        event.data.object as unknown as StripeInvoiceLike,
+        STRIPE_APP_METADATA_KEY
+      )
+
+    default:
+      return null
+  }
+}
+
+// ─── Handlers ────────────────────────────────────────────────────────────────
+
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promise<void> {
+  const subscriptionId = readId(session.subscription)
+
+  if (!subscriptionId) {
+    console.log(`[stripe] checkout ${session.id} sem assinatura; nada a sincronizar.`)
+    return
+  }
+
+  const customerId = readId(session.customer)
+  const clinicId = session.metadata?.clinicId ?? (await resolveClinicIdFromCustomer(customerId))
+
+  if (!clinicId) {
+    // Este é o ponto onde a assinatura deixava de ser gravada em silêncio.
+    console.error(
+      `[stripe] checkout ${session.id} concluído sem clínica identificável ` +
+        `(metadata.clinicId ausente e customer ${customerId} não mapeado). ` +
+        'A assinatura NÃO foi vinculada — verificar manualmente.'
+    )
+    return
+  }
+
+  const subscription = await retrieveSubscription(subscriptionId)
+  await syncSubscriptionFromStripe(clinicId, subscription)
+
+  console.log(`[stripe] assinatura ${subscriptionId} vinculada à clínica ${clinicId}.`)
+}
+
+async function handleSubscriptionUpdated(subscription: StripeSubscriptionLike): Promise<void> {
+  const clinicId = await resolveClinicIdFromSubscription(subscription)
+
+  if (!clinicId) {
+    console.warn(
+      `[stripe] assinatura ${subscription.id} atualizada, mas nenhuma clínica corresponde. Ignorando.`
+    )
+    return
+  }
+
+  await syncSubscriptionFromStripe(clinicId, subscription)
+  console.log(`[stripe] assinatura da clínica ${clinicId} atualizada.`)
+}
+
+async function handleSubscriptionDeleted(subscription: StripeSubscriptionLike): Promise<void> {
+  const clinicId = await resolveClinicIdFromSubscription(subscription)
+
+  if (!clinicId) {
+    console.warn(
+      `[stripe] assinatura ${subscription.id} removida, mas nenhuma clínica corresponde. Ignorando.`
+    )
+    return
+  }
+
+  try {
+    await downgradeSubscription(clinicId)
+    console.log(`[stripe] clínica ${clinicId} rebaixada para o plano base.`)
+  } catch (error) {
+    if (isRecordNotFound(error)) {
+      console.warn(`[stripe] clínica ${clinicId} não tem assinatura para rebaixar. Ignorando.`)
+      return
+    }
+    throw error
+  }
+}
+
+async function handleInvoicePaid(invoice: StripeInvoiceLike): Promise<void> {
+  const clinicId = await resolveClinicIdFromCustomer(readId(invoice.customer))
+
+  if (!clinicId) {
+    console.warn(`[stripe] invoice ${invoice.id} paga por customer não mapeado. Ignorando.`)
+    return
+  }
+
+  await recordPayment({
+    clinicId,
+    stripeInvoiceId: invoice.id ?? null,
+    stripePaymentIntent: readId(invoice.payment_intent),
+    amountCents: readAmount(invoice, 'amount_paid'),
+    currency: readCurrency(invoice),
+    status: 'SUCCEEDED',
+    description: readDescription(invoice) ?? 'Mensalidade Lensys Care',
+    paidAt: new Date(),
+  })
+
+  // Reconciliação: se o checkout.session.completed se perdeu, é aqui que a
+  // assinatura volta a ficar correta. Sem isso, a clínica paga um plano e
+  // continua com outro, sem nenhum sinal de erro.
+  const subscriptionId = readInvoiceSubscriptionId(invoice)
+
+  if (subscriptionId) {
+    const subscription = await retrieveSubscription(subscriptionId)
+    await syncSubscriptionFromStripe(clinicId, subscription)
+  }
+
+  console.log(`[stripe] pagamento registrado para a clínica ${clinicId}.`)
+}
+
+async function handleInvoiceFailed(invoice: StripeInvoiceLike): Promise<void> {
+  const clinicId = await resolveClinicIdFromCustomer(readId(invoice.customer))
+
+  if (!clinicId) {
+    console.warn('[stripe] falha de pagamento de customer não mapeado. Ignorando.')
+    return
+  }
+
+  await recordPayment({
+    clinicId,
+    stripeInvoiceId: invoice.id ?? null,
+    stripePaymentIntent: readId(invoice.payment_intent),
+    amountCents: readAmount(invoice, 'amount_due'),
+    currency: readCurrency(invoice),
+    status: 'FAILED',
+    description: readDescription(invoice) ?? 'Falha no pagamento da mensalidade',
+    paidAt: null,
+  })
+
+  try {
+    await prisma.subscription.update({
+      where: { clinic_id: clinicId },
+      data: { status: 'PAST_DUE' },
+    })
+  } catch (error) {
+    if (!isRecordNotFound(error)) throw error
+    console.warn(`[stripe] clínica ${clinicId} sem assinatura para marcar PAST_DUE.`)
+  }
+
+  console.log(`[stripe] falha de pagamento registrada para a clínica ${clinicId}.`)
+}
+
+// ─── Resolução de clínica ────────────────────────────────────────────────────
+
+async function resolveClinicIdFromCustomer(customerId: string | null): Promise<string | null> {
+  if (!customerId) return null
+
+  return findClinicIdByStripeCustomerId(customerId)
+}
+
+/** metadata → assinatura já gravada → customer. Do mais confiável ao mais indireto. */
+async function resolveClinicIdFromSubscription(
+  subscription: StripeSubscriptionLike
+): Promise<string | null> {
+  const fromMetadata = (subscription as { metadata?: { clinicId?: string } }).metadata?.clinicId
+
+  if (fromMetadata) return fromMetadata
+
+  const fromSubscriptionId = await findClinicIdByStripeSubscriptionId(subscription.id)
+
+  if (fromSubscriptionId) return fromSubscriptionId
+
+  const customerId = readId((subscription as { customer?: string | { id?: string } }).customer)
+
+  return resolveClinicIdFromCustomer(customerId)
+}
+
+// ─── Leitura de campos ───────────────────────────────────────────────────────
+
+async function retrieveSubscription(subscriptionId: string): Promise<StripeSubscriptionLike> {
+  const subscription = await getStripe().subscriptions.retrieve(subscriptionId)
+
+  return subscription as unknown as StripeSubscriptionLike
+}
+
+function readAmount(invoice: StripeInvoiceLike, field: 'amount_paid' | 'amount_due'): number {
+  const value = (invoice as unknown as Record<string, unknown>)[field]
+
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0
+}
+
+function readCurrency(invoice: StripeInvoiceLike): string {
+  const value = (invoice as unknown as { currency?: unknown }).currency
+
+  return typeof value === 'string' && value ? value : 'brl'
+}
+
+function readDescription(invoice: StripeInvoiceLike): string | null {
+  const value = (invoice as unknown as { billing_reason?: unknown }).billing_reason
+
+  return typeof value === 'string' && value ? value : null
 }

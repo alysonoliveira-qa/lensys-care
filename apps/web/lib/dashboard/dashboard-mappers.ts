@@ -1,3 +1,6 @@
+import { getPlanDisplayName } from '@/lib/plans/plan-display-config'
+import { BASE_PLAN_ID, planIncludesPremiumFeatures } from '@/lib/plans/plan-feature-config'
+
 import { DASHBOARD_CARD_CONFIG } from './dashboard-card-config'
 
 export interface DashboardMetrics {
@@ -20,13 +23,22 @@ export interface DashboardAgeGroupCounts {
 }
 
 export function resolveDashboardPlanStatus(subscription: DashboardSubscriptionSource) {
-  const isConecta =
-    subscription.subscription_plan === 'CONECTA' &&
+  // Lê a lista de recursos do plano em vez de comparar com 'CONECTA': qualquer
+  // plano acima do base entra aqui sem precisar editar esta função de novo.
+  const hasPremiumPlan =
+    planIncludesPremiumFeatures(subscription.subscription_plan) &&
     subscription.subscription_status !== 'CANCELED'
 
+  // Sem direito aos recursos pagos, a clínica é mostrada como base — inclusive
+  // um Conecta cancelado, que na prática só tem o Essencial.
+  const planName = hasPremiumPlan
+    ? getPlanDisplayName(subscription.subscription_plan)
+    : getPlanDisplayName(BASE_PLAN_ID)
+
   return {
-    isConecta,
-    planLabel: isConecta ? 'Plano Conecta ativo' : 'Plano Essencial',
+    hasPremiumPlan,
+    planName,
+    planLabel: hasPremiumPlan ? `Plano ${planName} ativo` : `Plano ${planName}`,
   }
 }
 

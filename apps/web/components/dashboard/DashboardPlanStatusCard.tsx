@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface DashboardPlanStatusCardProps {
-  isConecta: boolean
+  hasPremiumPlan: boolean
   planLabel: string
 }
 
 export default function DashboardPlanStatusCard({
-  isConecta,
+  hasPremiumPlan,
   planLabel,
 }: DashboardPlanStatusCardProps) {
   return (
@@ -31,11 +31,11 @@ export default function DashboardPlanStatusCard({
           {planLabel}
         </div>
         <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-          {isConecta
+          {hasPremiumPlan
             ? 'Sua clínica está com todas as automações de alertas via WhatsApp, SMS e Recall em Massa ativas.'
             : 'Sua clínica está no plano Essencial. Assine o plano Conecta para desbloquear automações via WhatsApp e SMS.'}
         </p>
-        {!isConecta && (
+        {!hasPremiumPlan && (
           <Link href="/subscription" passHref>
             <Button className="h-10 w-full gap-2 rounded-xl bg-indigo-600 text-xs font-bold text-white shadow-lg shadow-indigo-500/15 transition-all duration-200 hover:bg-indigo-500">
               Ativar Plano Conecta

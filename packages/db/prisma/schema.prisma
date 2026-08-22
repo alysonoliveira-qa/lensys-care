@@ -41,6 +41,7 @@ enum AlertChannel {
 enum Plan {
   ESSENTIAL
   CONECTA
+  PROFESSIONAL
 
   @@map("plan")
 }
@@ -244,7 +245,7 @@ model Payment {
   id                    String        @id @default(uuid()) @db.Uuid
   clinic_id             String        @db.Uuid
   stripe_payment_intent String?
-  stripe_invoice_id     String?
+  stripe_invoice_id     String?       @unique
   amount_cents          Int
   currency              String        @default("brl")
   status                PaymentStatus @default(PENDING)

@@ -74,7 +74,7 @@ export default function PlanActivationCards({ currentPlan, canManagePlan }: Plan
         </div>
       ) : null}
 
-      <section className="grid gap-6 lg:grid-cols-2">
+      <section className="grid gap-6 lg:grid-cols-3">
         {PLAN_DISPLAY_CONFIG.map((plan) => {
           const isCurrent = activePlan === plan.id
 

@@ -50,7 +50,7 @@ export default function PlanosPage() {
           </div>
         </section>
 
-        <section className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
+        <section className="mx-auto grid max-w-6xl gap-6 md:grid-cols-2 lg:grid-cols-3">
           {PLAN_DISPLAY_CONFIG.map((plan) => (
             <Card
               key={plan.id}

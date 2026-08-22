@@ -1,6 +1,13 @@
 export type PlanFeature = 'whatsapp' | 'sms' | 'bulk_send'
-export type PlanId = 'ESSENTIAL' | 'CONECTA'
+export type PlanId = 'ESSENTIAL' | 'CONECTA' | 'PROFESSIONAL'
 export type PlanStatus = string
+
+/**
+ * Plano base: o que ele **não** tem é o que define um recurso como premium.
+ * Derivar daqui evita que um plano novo, acima do Conecta, apareça como se não
+ * tivesse os recursos pagos só porque o código comparava com 'CONECTA'.
+ */
+export const BASE_PLAN_ID: PlanId = 'ESSENTIAL'
 
 export interface FeatureUiMeta {
   name: string
@@ -55,12 +62,52 @@ export const PLAN_FEATURE_CONFIG: Record<PlanId, PlanFeatureConfig> = {
     functionalFeatures: ['whatsapp', 'sms', 'bulk_send'],
     uiOnlyLabels: ['Alertas via WhatsApp', 'Alertas via SMS', 'Envio em massa (recall)'],
   },
+  // O Professional ainda não tem recurso funcional exclusivo: o que ele promete
+  // (automação das rotinas do Conecta e o módulo Financeiro) não foi construído.
+  // Herdar os recursos do Conecta é o que impede que assinar o plano mais caro
+  // resulte em menos acesso que o plano do meio.
+  PROFESSIONAL: {
+    functionalFeatures: ['whatsapp', 'sms', 'bulk_send'],
+    uiOnlyLabels: [
+      'Alertas via WhatsApp',
+      'Alertas via SMS',
+      'Envio em massa (recall)',
+      'Automação das rotinas de mensagem (em breve)',
+      'Módulo Financeiro (em breve)',
+    ],
+  },
+}
+
+/**
+ * Config do plano, ou `undefined` se o plano não for conhecido.
+ *
+ * Usa `hasOwnProperty` de propósito: um acesso direto por índice alcançaria
+ * chaves herdadas do Object.prototype ("constructor", "toString"), devolvendo
+ * algo que não é config e quebrando na hora de ler `functionalFeatures`. Aqui
+ * plano desconhecido é sempre `undefined`, e quem chama nega o acesso.
+ */
+function readPlanConfig(plan: PlanId | string | null | undefined): PlanFeatureConfig | undefined {
+  if (typeof plan !== 'string') return undefined
+  if (!Object.prototype.hasOwnProperty.call(PLAN_FEATURE_CONFIG, plan)) return undefined
+
+  return PLAN_FEATURE_CONFIG[plan as PlanId]
 }
 
 export const ENTITLED_SUBSCRIPTION_STATUSES = ['ACTIVE', 'TRIALING'] as const
 
+/** Recurso que o plano base não inclui — ou seja, exige plano pago acima dele. */
 export function isPremiumFeature(feature: PlanFeature) {
-  return PLAN_FEATURE_CONFIG.CONECTA.functionalFeatures.includes(feature)
+  return !PLAN_FEATURE_CONFIG[BASE_PLAN_ID].functionalFeatures.includes(feature)
+}
+
+/**
+ * `true` quando o plano inclui os recursos de relacionamento (WhatsApp, SMS,
+ * envio em massa), independente de qual plano seja. Não considera o status da
+ * assinatura — quem chama combina com a regra de status que fizer sentido ali.
+ */
+export function planIncludesPremiumFeatures(plan: PlanId | string | null | undefined): boolean {
+  const config = readPlanConfig(plan)
+  return config !== undefined && config.functionalFeatures.length > 0
 }
 
 export function isEntitledSubscriptionStatus(status: PlanStatus | null | undefined) {
@@ -78,5 +125,14 @@ export function hasPlanFeatureAccess(
     return true
   }
 
-  return plan === 'CONECTA' && isEntitledSubscriptionStatus(status)
+  // Lê a lista do próprio plano em vez de comparar com um plano fixo: um plano
+  // desconhecido cai fora por não ter config, e um plano acima do Conecta
+  // continua tendo o que paga para ter.
+  const config = readPlanConfig(plan)
+
+  return (
+    config !== undefined &&
+    config.functionalFeatures.includes(feature) &&
+    isEntitledSubscriptionStatus(status)
+  )
 }
