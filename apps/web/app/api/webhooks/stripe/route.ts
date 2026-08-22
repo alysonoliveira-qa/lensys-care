@@ -5,10 +5,16 @@ import { constructWebhookEvent } from '@/lib/stripe/webhooks'
 import { prisma } from '@/lib/db'
 import {
   readId,
+  readInvoiceAppTag,
   readInvoiceSubscriptionId,
+  readMetadataValue,
   type StripeInvoiceLike,
   type StripeSubscriptionLike,
 } from '@/lib/stripe/stripe-normalizers'
+import {
+  classifyAppTag,
+  STRIPE_APP_METADATA_KEY,
+} from '@/lib/stripe/stripe-app-metadata'
 import {
   downgradeSubscription,
   findClinicIdByStripeCustomerId,
@@ -56,6 +62,14 @@ export async function POST(request: Request) {
 
   console.log(`[stripe] evento recebido: ${event.type} (${event.id})`)
 
+  // A conta Stripe e compartilhada com outros produtos, e uma conta tem um unico
+  // fluxo de eventos: tudo chega aqui. Descartar cedo o que e de outro app evita
+  // encher o log de "clinica nao identificavel" sobre venda que nunca foi nossa.
+  if (classifyAppTag(readEventAppTag(event)) === 'other-app') {
+    console.log(`[stripe] evento ${event.id} pertence a outro app; ignorando.`)
+    return NextResponse.json({ received: true })
+  }
+
   try {
     switch (event.type) {
       case 'checkout.session.completed':
@@ -92,6 +106,38 @@ export async function POST(request: Request) {
       },
       { status: 500 }
     )
+  }
+}
+
+/**
+ * Carimbo de app do evento, lido de onde ele existe em cada tipo de payload.
+ * `null` quando o evento nao carrega metadata alguma — nesse caso `classifyAppTag`
+ * devolve 'unmarked' e o evento segue o fluxo normal, nunca descartado.
+ */
+function readEventAppTag(event: Stripe.Event): string | null {
+  switch (event.type) {
+    case 'checkout.session.completed':
+      return readMetadataValue(
+        event.data.object as unknown as { metadata?: Record<string, string> | null },
+        STRIPE_APP_METADATA_KEY
+      )
+
+    case 'customer.subscription.updated':
+    case 'customer.subscription.deleted':
+      return readMetadataValue(
+        event.data.object as unknown as StripeSubscriptionLike,
+        STRIPE_APP_METADATA_KEY
+      )
+
+    case 'invoice.payment_succeeded':
+    case 'invoice.payment_failed':
+      return readInvoiceAppTag(
+        event.data.object as unknown as StripeInvoiceLike,
+        STRIPE_APP_METADATA_KEY
+      )
+
+    default:
+      return null
   }
 }
 

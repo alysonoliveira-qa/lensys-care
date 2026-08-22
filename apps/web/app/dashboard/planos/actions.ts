@@ -10,6 +10,7 @@ import {
   TRIAL_PERIOD_DAYS,
   type StripePlanId,
 } from '@/lib/stripe/products'
+import { STRIPE_APP_METADATA } from '@/lib/stripe/stripe-app-metadata'
 
 // Alias em vez de uma segunda lista de planos: manter as duas em sincronia à mão
 // é exatamente o tipo de duplicação que deixa um plano novo fora do checkout.
@@ -101,7 +102,7 @@ export async function activatePlan(
     const customer = await getStripe().customers.create({
       email: clinic.email,
       name: clinic.name,
-      metadata: { clinicId: clinic.id },
+      metadata: { ...STRIPE_APP_METADATA, clinicId: clinic.id },
     })
     stripeCustomerId = customer.id
     await prisma.stripeCustomer.create({
@@ -115,11 +116,14 @@ export async function activatePlan(
     mode: 'subscription',
     subscription_data: {
       trial_period_days: TRIAL_PERIOD_DAYS,
-      metadata: { clinicId: clinic.id },
+      // Carimbar aqui tambem faz a invoice da assinatura carregar o app em
+      // `parent.subscription_details.metadata`, que e por onde o webhook
+      // reconhece os eventos de fatura.
+      metadata: { ...STRIPE_APP_METADATA, clinicId: clinic.id },
     },
     success_url: `${appUrl}/subscription?success=true`,
     cancel_url: `${appUrl}/subscription?canceled=true`,
-    metadata: { clinicId: clinic.id },
+    metadata: { ...STRIPE_APP_METADATA, clinicId: clinic.id },
   })
 
   redirect(session.url!)

@@ -11,7 +11,11 @@
 
 export type SubscriptionStatusValue = 'ACTIVE' | 'TRIALING' | 'CANCELED' | 'PAST_DUE'
 
-export interface StripeSubscriptionLike {
+export interface StripeMetadataLike {
+  metadata?: Record<string, string> | null
+}
+
+export interface StripeSubscriptionLike extends StripeMetadataLike {
   id: string
   status?: string | null
   cancel_at_period_end?: boolean | null
@@ -25,7 +29,7 @@ export interface StripeSubscriptionLike {
   } | null
 }
 
-export interface StripeInvoiceLike {
+export interface StripeInvoiceLike extends StripeMetadataLike {
   id?: string | null
   customer?: string | { id?: string | null } | null
   payment_intent?: string | { id?: string | null } | null
@@ -33,6 +37,7 @@ export interface StripeInvoiceLike {
   parent?: {
     subscription_details?: {
       subscription?: string | { id?: string | null } | null
+      metadata?: Record<string, string> | null
     } | null
   } | null
   lines?: {
@@ -82,6 +87,30 @@ export function readInvoicePriceId(invoice: StripeInvoiceLike): string | null {
   const priceId = invoice.lines?.data?.[0]?.price?.id
 
   return typeof priceId === 'string' && priceId ? priceId : null
+}
+
+/** Valor de uma chave de metadata, ou null quando ausente/vazia. */
+export function readMetadataValue(
+  source: StripeMetadataLike | null | undefined,
+  key: string
+): string | null {
+  const value = source?.metadata?.[key]
+
+  return typeof value === 'string' && value.length > 0 ? value : null
+}
+
+/**
+ * Carimbo de app de uma invoice.
+ *
+ * A invoice de uma assinatura não herda a metadata dela no campo `metadata`:
+ * esse espelho vive em `parent.subscription_details.metadata`. Ler os dois
+ * evita que todo evento de fatura caia como "sem carimbo".
+ */
+export function readInvoiceAppTag(invoice: StripeInvoiceLike, key: string): string | null {
+  return (
+    readMetadataValue(invoice, key) ??
+    readMetadataValue(invoice.parent?.subscription_details, key)
+  )
 }
 
 /** Traduz o status do Stripe para o enum interno. */
