@@ -21,6 +21,8 @@
     "db:migrate:deploy": "pnpm --filter db run migrate:deploy",
     "db:seed": "pnpm --filter db run seed",
     "db:studio": "pnpm --filter db run studio",
+    "secrets:check": "node scripts/check-secrets.mjs",
+    "secrets:check:all": "node scripts/check-secrets.mjs --all",
     "prepare": "husky"
   },
   "devDependencies": {
