@@ -58,21 +58,21 @@ export const PLAN_FEATURE_CONFIG: Record<PlanId, PlanFeatureConfig> = {
     functionalFeatures: [],
     uiOnlyLabels: ['Alertas por e-mail'],
   },
+  // O Conecta cobre o envio manual: alerta por WhatsApp e SMS. O recall em massa
+  // e automatizado, entao pertence ao Professional — e o que separa os dois.
   CONECTA: {
-    functionalFeatures: ['whatsapp', 'sms', 'bulk_send'],
-    uiOnlyLabels: ['Alertas via WhatsApp', 'Alertas via SMS', 'Envio em massa (recall)'],
+    functionalFeatures: ['whatsapp', 'sms'],
+    uiOnlyLabels: ['Alertas via WhatsApp', 'Alertas via SMS'],
   },
-  // O Professional ainda não tem recurso funcional exclusivo: o que ele promete
-  // (automação das rotinas do Conecta e o módulo Financeiro) não foi construído.
-  // Herdar os recursos do Conecta é o que impede que assinar o plano mais caro
-  // resulte em menos acesso que o plano do meio.
+  // `bulk_send` fica aqui para o gate ja apontar o plano certo quando a tela de
+  // envio em massa existir. Hoje ela nao existe: nenhum ponto do app consulta
+  // esse recurso, por isso o rotulo diz "em breve" em vez de prometer pronto.
   PROFESSIONAL: {
     functionalFeatures: ['whatsapp', 'sms', 'bulk_send'],
     uiOnlyLabels: [
       'Alertas via WhatsApp',
       'Alertas via SMS',
-      'Envio em massa (recall)',
-      'Automação das rotinas de mensagem (em breve)',
+      'Envio em massa e recall automatizado (em breve)',
       'Módulo Financeiro (em breve)',
     ],
   },

@@ -10,13 +10,16 @@ import {
 } from '../lib/plans/plan-feature-config'
 
 describe('plan feature config', () => {
-  it('keeps premium functional features assigned to Conecta only', () => {
-    expect(PLAN_FEATURE_CONFIG.CONECTA.functionalFeatures).toEqual([
+  it('mantem o envio manual no Conecta e o automatizado so no Professional', () => {
+    // Decisao de produto: recall em massa e automatizado, entao e o que separa
+    // Professional de Conecta. O Conecta cobre o envio manual.
+    expect(PLAN_FEATURE_CONFIG.ESSENTIAL.functionalFeatures).toEqual([])
+    expect(PLAN_FEATURE_CONFIG.CONECTA.functionalFeatures).toEqual(['whatsapp', 'sms'])
+    expect(PLAN_FEATURE_CONFIG.PROFESSIONAL.functionalFeatures).toEqual([
       'whatsapp',
       'sms',
       'bulk_send',
     ])
-    expect(PLAN_FEATURE_CONFIG.ESSENTIAL.functionalFeatures).toEqual([])
   })
 
   it('grants premium access only for active or trialing Conecta subscriptions', () => {
@@ -26,17 +29,25 @@ describe('plan feature config', () => {
     expect(hasPlanFeatureAccess('ESSENTIAL', 'ACTIVE', 'whatsapp')).toBe(false)
   })
 
-  it('da ao Professional tudo que o Conecta tem', () => {
-    // Regressao: `plan === 'CONECTA'` fazia o plano MAIS CARO perder WhatsApp,
-    // SMS e envio em massa — quem pagava mais recebia menos.
-    expect(PLAN_FEATURE_CONFIG.PROFESSIONAL.functionalFeatures).toEqual(
-      PLAN_FEATURE_CONFIG.CONECTA.functionalFeatures
-    )
+  it('da ao Professional tudo que o Conecta tem, e mais', () => {
+    // Regressao: `plan === 'CONECTA'` fazia o plano MAIS CARO perder WhatsApp e
+    // SMS — quem pagava mais recebia menos.
+    for (const feature of PLAN_FEATURE_CONFIG.CONECTA.functionalFeatures) {
+      expect(PLAN_FEATURE_CONFIG.PROFESSIONAL.functionalFeatures).toContain(feature)
+    }
 
     expect(hasPlanFeatureAccess('PROFESSIONAL', 'ACTIVE', 'whatsapp')).toBe(true)
     expect(hasPlanFeatureAccess('PROFESSIONAL', 'TRIALING', 'sms')).toBe(true)
     expect(hasPlanFeatureAccess('PROFESSIONAL', 'ACTIVE', 'bulk_send')).toBe(true)
     expect(hasPlanFeatureAccess('PROFESSIONAL', 'CANCELED', 'whatsapp')).toBe(false)
+  })
+
+  it('nega o envio em massa ao Conecta', () => {
+    expect(hasPlanFeatureAccess('CONECTA', 'ACTIVE', 'bulk_send')).toBe(false)
+    expect(hasPlanFeatureAccess('CONECTA', 'TRIALING', 'bulk_send')).toBe(false)
+    // O que ele tem continua valendo.
+    expect(hasPlanFeatureAccess('CONECTA', 'ACTIVE', 'whatsapp')).toBe(true)
+    expect(hasPlanFeatureAccess('CONECTA', 'ACTIVE', 'sms')).toBe(true)
   })
 
   it('nega recursos pagos a plano desconhecido em vez de adivinhar', () => {

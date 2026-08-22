@@ -63,8 +63,8 @@ export const PLAN_DISPLAY_CONFIG: PlanDisplayConfig[] = [
     ],
     dashboardFeatures: [
       'Tudo do Essencial',
-      'Alertas previstos via WhatsApp e SMS',
-      'Recall em massa previsto',
+      'Alertas de retorno via WhatsApp',
+      'Alertas de retorno via SMS',
     ],
     featured: true,
     recommendedLabel: 'Recomendado',
@@ -86,12 +86,12 @@ export const PLAN_DISPLAY_CONFIG: PlanDisplayConfig[] = [
       'Tudo do Conecta, com as rotinas de mensagem automatizadas e o módulo financeiro.',
     publicFeatures: [
       'Tudo do plano Conecta',
-      'Automação das rotinas de mensagem (em breve)',
+      'Envio em massa e recall automatizado (em breve)',
       'Módulo financeiro (em breve)',
     ],
     dashboardFeatures: [
       'Tudo do Conecta',
-      'Automação das rotinas de mensagem (em breve)',
+      'Envio em massa e recall automatizado (em breve)',
       'Módulo financeiro (em breve)',
     ],
     featured: false,
