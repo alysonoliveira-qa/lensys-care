@@ -185,6 +185,13 @@ RESEND_FROM_EMAIL=Lensys Care <noreply@lensyscare.com.br>
 E2E usa `E2E_USER_EMAIL` / `E2E_USER_PASSWORD`. Nunca commitar `.env.local` nem
 `cypress.env.json`.
 
+Um hook de pre-commit (`.husky/pre-commit` → `scripts/check-secrets.mjs`) barra commit
+de credencial: nome de arquivo proibido (`.env*`, `cypress.env.json`, `*.pem`) e padrões
+de chave nas linhas adicionadas (Stripe, Twilio, Resend, Supabase, JWT, URL de banco com
+senha) — inclusive valor concreto em `*_TOKEN`/`*_SECRET` dentro de `.env.example`.
+Falso positivo: `pragma: allowlist secret` na linha. Varredura completa:
+`pnpm secrets:check:all`. O hook só fica ativo depois de um `pnpm install` (husky).
+
 ## Middleware
 
 `apps/web/lib/supabase/middleware.ts` — rotas públicas incluem `/convite` e
