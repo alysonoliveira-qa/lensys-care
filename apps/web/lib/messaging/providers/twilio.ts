@@ -6,13 +6,38 @@
 
 import twilio from 'twilio'
 
+/**
+ * Cliente Twilio, preferindo API Key restrita ao Auth Token.
+ *
+ * O Auth Token e credencial mestra: quem o tem compra numero, gasta o credito e
+ * apaga a conta. Uma API Key restrita ao recurso Messages so consegue enviar
+ * mensagem — que e tudo o que este app faz.
+ *
+ * Os dois formatos de autenticacao da SDK sao diferentes de proposito:
+ * `twilio(apiKeySid, apiKeySecret, { accountSid })` para API Key, e
+ * `twilio(accountSid, authToken)` para o token. O fallback existe para nao
+ * travar quem ainda esta com a configuracao antiga.
+ */
 function getTwilioClient() {
   const accountSid = process.env.TWILIO_ACCOUNT_SID
-  const authToken  = process.env.TWILIO_AUTH_TOKEN
 
-  if (!accountSid || !authToken) {
+  if (!accountSid) {
+    throw new Error('TWILIO_ACCOUNT_SID environment variable is not set.')
+  }
+
+  const apiKeySid = process.env.TWILIO_API_KEY_SID
+  const apiKeySecret = process.env.TWILIO_API_KEY_SECRET
+
+  if (apiKeySid && apiKeySecret) {
+    return twilio(apiKeySid, apiKeySecret, { accountSid })
+  }
+
+  const authToken = process.env.TWILIO_AUTH_TOKEN
+
+  if (!authToken) {
     throw new Error(
-      'Twilio credentials are not configured. Set TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN.'
+      'Credenciais Twilio ausentes. Configure TWILIO_API_KEY_SID + TWILIO_API_KEY_SECRET ' +
+        '(preferido) ou TWILIO_AUTH_TOKEN, junto de TWILIO_ACCOUNT_SID.'
     )
   }
 
