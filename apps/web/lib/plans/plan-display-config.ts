@@ -63,8 +63,8 @@ export const PLAN_DISPLAY_CONFIG: PlanDisplayConfig[] = [
     ],
     dashboardFeatures: [
       'Tudo do Essencial',
-      'Alertas de retorno via WhatsApp',
-      'Alertas de retorno via SMS',
+      'Alertas de retorno via WhatsApp (em breve)',
+      'Alertas de retorno via SMS (em breve)',
     ],
     featured: true,
     recommendedLabel: 'Recomendado',

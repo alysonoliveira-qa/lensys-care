@@ -60,9 +60,15 @@ export const PLAN_FEATURE_CONFIG: Record<PlanId, PlanFeatureConfig> = {
   },
   // O Conecta cobre o envio manual: alerta por WhatsApp e SMS. O recall em massa
   // e automatizado, entao pertence ao Professional — e o que separa os dois.
+  //
+  // Os rotulos dizem "em breve" porque o envio depende de credencial Twilio, e
+  // nao ha conta Twilio criada: sem TWILIO_ACCOUNT_SID o provider lanca erro no
+  // momento do disparo. O gate funcional fica como esta — no dia que a conta
+  // existir, o recurso passa a valer sem mexer em codigo. Ao configurar, tirar
+  // o "(em breve)" daqui e de plan-display-config.
   CONECTA: {
     functionalFeatures: ['whatsapp', 'sms'],
-    uiOnlyLabels: ['Alertas via WhatsApp', 'Alertas via SMS'],
+    uiOnlyLabels: ['Alertas via WhatsApp (em breve)', 'Alertas via SMS (em breve)'],
   },
   // `bulk_send` fica aqui para o gate ja apontar o plano certo quando a tela de
   // envio em massa existir. Hoje ela nao existe: nenhum ponto do app consulta

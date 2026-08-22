@@ -32,7 +32,7 @@ export default function DashboardPlanStatusCard({
         </div>
         <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
           {hasPremiumPlan
-            ? 'Sua clínica está com os alertas de retorno via WhatsApp e SMS ativos.'
+            ? 'Sua clínica tem acesso aos recursos de relacionamento. O envio por WhatsApp e SMS entra em breve.'
             : 'Sua clínica está no plano Essencial. Assine o plano Conecta para desbloquear automações via WhatsApp e SMS.'}
         </p>
         {!hasPremiumPlan && (
