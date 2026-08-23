@@ -149,7 +149,7 @@ export async function POST(
   } catch (error: unknown) {
     console.error('Alert action error:', error)
     return NextResponse.json(
-      { error: 'SERVER_ERROR', message: error instanceof Error ? error.message : 'Falha ao processar ação do alerta.' },
+      { error: 'SERVER_ERROR', message: 'Falha ao processar ação do alerta.' },
       { status: 500 }
     )
   }

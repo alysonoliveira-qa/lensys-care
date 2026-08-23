@@ -101,6 +101,7 @@ Multi-tenant com **Clinic** como tenant raiz:
 | `007_fix_invites_pending_unique.sql` | Fix constraint: índice parcial WHERE status='PENDING' |
 | `008_add_patient_search_trgm.sql` | pg_trgm + índices GIN para busca ILIKE em pacientes |
 | `009_add_appointments_and_referrers.sql` | Agenda: enum `appointment_status`, tabelas `appointments` e `referrers` + RLS + índices |
+| `012_revoke_public_execute_on_rls_auto_enable.sql` | Revoga EXECUTE público da função SECURITY DEFINER `rls_auto_enable()` |
 
 > **Importante:** O projeto usa SQL direto no Supabase, NÃO `prisma migrate dev`
 > (histórico de migrations está em `supabase/migrations/`).
@@ -164,7 +165,16 @@ Multi-tenant com **Clinic** como tenant raiz:
 - Prisma direto não é RLS garantido — valide explicitamente.
 - UI nunca é a única proteção.
 - Preservar `data-cy` em fluxos clínicos críticos.
-- Guards de role implementados: RECEPTIONIST não pode criar/editar exames.
+- Guards de role implementados: RECEPTIONIST não pode criar/editar exames; OPTOMETRIST só
+  edita e exclui exame que ele mesmo realizou (`performed_by`).
+- Cabeçalhos de segurança em `apps/web/next.config.mjs` (`headers()`): HSTS, `X-Frame-Options:
+  DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`. CSP completa ainda não existe —
+  precisa de nonce por causa do script inline do App Router.
+- Rotas de erro devolvem mensagem genérica ao cliente e logam o erro completo no servidor. A
+  exceção é o webhook do Stripe, cuja resposta vai para o painel do Stripe, não para o navegador.
+- `/api/messaging/{sms,whatsapp}` recebem **`patientId`, nunca `to`**: o telefone vem do cadastro,
+  escopado pela clínica da sessão (`lib/messaging/recipient.ts`). Aceitar número do corpo deixava
+  qualquer usuário autenticado gastar o saldo Twilio da clínica com destino arbitrário.
 
 ## Variáveis de ambiente
 

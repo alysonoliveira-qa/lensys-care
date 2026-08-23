@@ -14,8 +14,10 @@ export async function PATCH(
       return NextResponse.json({ error: 'UNAUTHORIZED', message: 'Faca login para continuar.' }, { status: 401 })
     }
 
+    const userId = data.claims.sub
+
     const editorProfile = await prisma.profile.findUnique({
-      where: { id: data.claims.sub },
+      where: { id: userId },
       select: { role: true, clinic_id: true },
     })
 
@@ -34,13 +36,23 @@ export async function PATCH(
     // além da RLS. Prisma bypassa RLS, então a checagem explícita é a garantia primária.
     const ownedExam = await prisma.exam.findFirst({
       where: { id: params.id, patient: { clinic_id: editorProfile.clinic_id } },
-      select: { id: true },
+      select: { id: true, performed_by: true },
     })
 
     if (!ownedExam) {
       return NextResponse.json(
         { error: 'EXAM_NOT_FOUND', message: 'Exame nao encontrado ou sem permissao para editar.' },
         { status: 404 }
+      )
+    }
+
+    // OPTOMETRIST só edita exame que ele mesmo realizou — mesma regra do DELETE.
+    // É prontuário clínico: a refração registrada responde por quem a mediu, e
+    // deixar outro profissional reescrevê-la apaga essa autoria sem deixar rastro.
+    if (editorProfile.role === 'OPTOMETRIST' && ownedExam.performed_by !== userId) {
+      return NextResponse.json(
+        { error: 'FORBIDDEN', message: 'Você só pode editar exames realizados por você.' },
+        { status: 403 }
       )
     }
 
@@ -99,7 +111,7 @@ export async function PATCH(
   } catch (error: unknown) {
     console.error('Exam update error:', error)
     return NextResponse.json(
-      { error: 'SERVER_ERROR', message: error instanceof Error ? error.message : 'Falha ao editar exame.' },
+      { error: 'SERVER_ERROR', message: 'Falha ao editar exame.' },
       { status: 500 }
     )
   }
@@ -179,7 +191,7 @@ export async function DELETE(
   } catch (error: unknown) {
     console.error('Exam deletion error:', error)
     return NextResponse.json(
-      { error: 'SERVER_ERROR', message: error instanceof Error ? error.message : 'Falha ao excluir exame.' },
+      { error: 'SERVER_ERROR', message: 'Falha ao excluir exame.' },
       { status: 500 }
     )
   }

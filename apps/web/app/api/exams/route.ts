@@ -117,7 +117,7 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     console.error('Exam creation error:', error)
     return NextResponse.json(
-      { error: 'SERVER_ERROR', message: error instanceof Error ? error.message : 'Falha ao lançar exame refrativo.' },
+      { error: 'SERVER_ERROR', message: 'Falha ao lançar exame refrativo.' },
       { status: 500 }
     )
   } finally {

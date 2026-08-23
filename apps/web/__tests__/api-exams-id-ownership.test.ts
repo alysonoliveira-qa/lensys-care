@@ -61,7 +61,7 @@ describe('PATCH /api/exams/[id] tenant ownership (L-1)', () => {
     await expect(response.json()).resolves.toMatchObject({ error: 'EXAM_NOT_FOUND' })
     expect(mocks.examFindFirst).toHaveBeenCalledWith({
       where: { id: 'exam-from-clinic-b', patient: { clinic_id: 'clinic-a' } },
-      select: { id: true },
+      select: { id: true, performed_by: true },
     })
     // Nenhuma mutação chegou ao banco.
     expect(mocks.from).not.toHaveBeenCalled()
@@ -76,6 +76,29 @@ describe('PATCH /api/exams/[id] tenant ownership (L-1)', () => {
 
     expect(response.status).toBe(200)
     expect(mocks.from).toHaveBeenCalledWith('exams')
+    expect(builder.update).toHaveBeenCalledOnce()
+  })
+
+  it('blocks OPTOMETRIST from editing an exam performed by someone else', async () => {
+    mocks.profileFindUnique.mockResolvedValue({ role: 'OPTOMETRIST', clinic_id: 'clinic-a' })
+    mocks.examFindFirst.mockResolvedValue({ id: 'exam-from-clinic-b', performed_by: 'another-optometrist' })
+
+    const response = await PATCH(patchRequest(), { params })
+
+    expect(response.status).toBe(403)
+    // A recusa acontece antes de qualquer escrita.
+    expect(mocks.from).not.toHaveBeenCalled()
+  })
+
+  it('allows OPTOMETRIST to edit an exam they performed', async () => {
+    mocks.profileFindUnique.mockResolvedValue({ role: 'OPTOMETRIST', clinic_id: 'clinic-a' })
+    mocks.examFindFirst.mockResolvedValue({ id: 'exam-from-clinic-b', performed_by: 'user-clinic-a' })
+    const builder = makeQueryBuilder({ data: { id: 'exam-from-clinic-b' }, error: null })
+    mocks.from.mockReturnValue(builder)
+
+    const response = await PATCH(patchRequest(), { params })
+
+    expect(response.status).toBe(200)
     expect(builder.update).toHaveBeenCalledOnce()
   })
 

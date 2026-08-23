@@ -37,7 +37,7 @@ export async function POST() {
   } catch (error: unknown) {
     console.error('Stripe portal error:', error)
     return NextResponse.json(
-      { error: 'STRIPE_ERROR', message: error instanceof Error ? error.message : 'Falha ao abrir portal financeiro.' },
+      { error: 'STRIPE_ERROR', message: 'Falha ao abrir portal financeiro.' },
       { status: 500 }
     )
   }
