@@ -194,3 +194,42 @@ A proxima fase deve seguir uma ordem simples:
 medir -> identificar gargalo -> aplicar melhoria pequena -> validar -> commitar.
 
 O ganho mais provavel, no curto prazo, nao e uma reescrita grande. E reduzir a sensacao de travamento com feedback visual melhor, enquanto os gargalos reais vao sendo medidos por rota e por fluxo critico.
+
+---
+
+## 13. Medicao de 22/08/2026 — a causa e geografia
+
+A auditoria mediu, em producao, o que ate entao era suposicao.
+
+| Medida | Valor | Como |
+| --- | --- | --- |
+| Regiao da funcao Vercel | `iad1` (Virginia) | header `X-Vercel-Id: gru1::iad1::...` |
+| Regiao do banco Supabase | `us-west-2` (Oregon) | IPv6 `2600:1f14::/34` casado contra `ip-ranges.amazonaws.com` |
+| TTFB de `/dashboard` -> 307, sem tocar o banco | ~200 ms | curl, 3 amostras |
+| Cold start em rota de API | 1,10 s (quente: 0,32 s) | curl repetido |
+| Volume de dados | 1319 pacientes, 1134 exames | `list_tables` |
+
+Com esse volume nenhuma query e lenta. O custo e a **soma dos round-trips**: cada ida ao banco
+atravessa o continente (~70 ms), e o usuario no Brasil paga ~120 ms so para alcancar iad1.
+
+Isso reordena o diagnostico das secoes anteriores: os gargalos de codigo listados ali ou ja foram
+resolvidos (streaming com Suspense, indice trgm, sidebar recebendo dados por props) ou sao
+pequenos perto da latencia de rede.
+
+### Decisao: co-locar em dois tempos
+
+1. **`pdx1` agora** (`apps/web/vercel.json`) — funcao na mesma regiao do banco. Cada query cai de
+   ~70 ms para ~2 ms. O usuario no Brasil paga ~60 ms a mais para alcancar Oregon, mas paga **uma
+   vez**, nao por query. Uma linha, sem downtime, reversivel.
+2. **`gru1` depois** — quando o banco estiver em `sa-east-1`. Ai as duas pontas ficam no Brasil e
+   o total cai para a casa dos 25 ms.
+
+**Ordem importa:** apontar para `gru1` antes de o banco mudar de regiao **piora** tudo — gru1 ->
+us-west-2 e ~180 ms por query, contra os ~70 ms de hoje.
+
+### Ressalva sobre a medicao
+
+O que da para medir de fora e a rota publica e o redirect do middleware. As paginas autenticadas
+do dashboard — que sao as que acumulam round-trips e onde o ganho e maior — precisam de sessao
+para medir. A regua de verdade e o `@vercel/speed-insights` e os logs `[perf]` com `PERF_LOGS=1`,
+que continuam desligados em producao.
