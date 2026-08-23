@@ -24,11 +24,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // As variáveis de fonte ficam no <html>, não no <body>: o preflight do Tailwind
+  // escreve `font-family: var(--font-geist-sans), ...` na regra do <html>, e
+  // variável CSS herda para baixo, nunca para cima. Definidas só no <body>, a
+  // variável não existia onde era lida — a declaração inteira virava inválida e o
+  // navegador caía na fonte padrão do sistema.
   return (
-    <html lang="pt-BR">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className="antialiased">
         {children}
         {/* Web Vitals reais, do navegador de quem usa. A instrumentação de
             servidor (lib/performance.ts) mede a query; esta mede o que a
