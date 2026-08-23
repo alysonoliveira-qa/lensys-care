@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
 import { requireFeature } from '@/lib/features'
 import { sendSMS } from '@/lib/messaging'
+import { MAX_MESSAGE_LENGTH, resolvePatientRecipient } from '@/lib/messaging/recipient'
 
 export async function POST(request: Request) {
   try {
@@ -36,20 +37,41 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { to, message } = body
+    const { patientId, message } = body
 
-    if (!to || !message) {
-      return NextResponse.json({ error: 'MISSING_FIELDS', message: 'Destinatário e mensagem são obrigatórios.' }, { status: 400 })
+    if (!patientId || !message) {
+      return NextResponse.json(
+        { error: 'MISSING_FIELDS', message: 'Paciente e mensagem são obrigatórios.' },
+        { status: 400 }
+      )
+    }
+
+    if (typeof message !== 'string' || message.length > MAX_MESSAGE_LENGTH) {
+      return NextResponse.json(
+        { error: 'MESSAGE_TOO_LONG', message: `A mensagem deve ter no máximo ${MAX_MESSAGE_LENGTH} caracteres.` },
+        { status: 400 }
+      )
+    }
+
+    // O número vem do cadastro do paciente, escopado pela clínica da sessão —
+    // nunca do corpo da requisição. Ver lib/messaging/recipient.ts.
+    const recipient = await resolvePatientRecipient(clinicId, patientId)
+
+    if (!recipient) {
+      return NextResponse.json(
+        { error: 'RECIPIENT_NOT_FOUND', message: 'Paciente não encontrado ou sem telefone cadastrado.' },
+        { status: 404 }
+      )
     }
 
     // Send the SMS message
-    await sendSMS(to, message)
+    await sendSMS(recipient.phone, message)
 
     return NextResponse.json({ success: true, message: 'Mensagem de SMS disparada com sucesso.' })
   } catch (error: unknown) {
     console.error('Manual SMS message send failed:', error)
     return NextResponse.json(
-      { error: 'SERVER_ERROR', message: error instanceof Error ? error.message : 'Falha ao disparar SMS.' },
+      { error: 'SERVER_ERROR', message: 'Falha ao disparar SMS.' },
       { status: 500 }
     )
   }

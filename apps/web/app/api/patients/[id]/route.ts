@@ -38,7 +38,7 @@ export async function DELETE(
   } catch (error: unknown) {
     console.error('Patient deletion error:', error)
     return NextResponse.json(
-      { error: 'SERVER_ERROR', message: error instanceof Error ? error.message : 'Falha ao excluir paciente.' },
+      { error: 'SERVER_ERROR', message: 'Falha ao excluir paciente.' },
       { status: 500 }
     )
   }

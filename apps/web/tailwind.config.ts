@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss"
+import defaultTheme from "tailwindcss/defaultTheme"
 
 const config: Config = {
   darkMode: ["class"],
@@ -18,6 +19,14 @@ const config: Config = {
       },
     },
     extend: {
+      // As duas variáveis vêm de `next/font/local` em app/layout.tsx. Sem este
+      // mapeamento elas eram declaradas, os @font-face iam para o CSS de
+      // produção e nenhuma regra os usava — o app renderizava na fonte padrão
+      // do sistema.
+      fontFamily: {
+        sans: ["var(--font-geist-sans)", ...defaultTheme.fontFamily.sans],
+        mono: ["var(--font-geist-mono)", ...defaultTheme.fontFamily.mono],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

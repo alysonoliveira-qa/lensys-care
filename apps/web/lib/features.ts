@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
@@ -10,18 +11,6 @@ export interface FeatureCheckResult {
   plan: string
   status: string
   upgradeUrl: string
-}
-
-// Per-request cache (Map lives for the duration of one server request)
-// Avoids N+1 DB queries when hasFeature() is called multiple times in one route
-const featureCache = new Map<string, FeatureCheckResult>()
-
-/**
- * Clears the per-request feature cache.
- * Call this at the start of long-running processes (e.g., webhooks) if needed.
- */
-export function clearFeatureCache(): void {
-  featureCache.clear()
 }
 
 /**
@@ -42,12 +31,15 @@ export async function hasFeature(clinicId: string, feature: Feature): Promise<bo
 
 /**
  * Returns the full feature availability result for a clinic.
- * Results are cached for the duration of the current request.
+ *
+ * A memoização é o `cache()` do React, que dura **uma requisição**. Antes era um
+ * `Map` em escopo de módulo dizendo ser "per-request": em serverless a instância
+ * é reaproveitada entre requisições, então o `Map` sobrevivia e a clínica que
+ * acabara de trocar de plano continuava vendo o plano antigo enquanto aquela
+ * instância estivesse quente — e não havia invalidação, porque `clearFeatureCache`
+ * nunca era chamada em lugar nenhum.
  */
-export async function getFeatureResult(clinicId: string): Promise<FeatureCheckResult> {
-  const cached = featureCache.get(clinicId)
-  if (cached) return cached
-
+export const getFeatureResult = cache(async (clinicId: string): Promise<FeatureCheckResult> => {
   const cookieStore = cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -70,16 +62,13 @@ export async function getFeatureResult(clinicId: string): Promise<FeatureCheckRe
     .eq('clinic_id', clinicId)
     .single()
 
-  const result: FeatureCheckResult = {
+  return {
     available: true,
     plan: subscription?.plan ?? 'ESSENTIAL',
     status: subscription?.status ?? 'ACTIVE',
     upgradeUrl: '/subscription',
   }
-
-  featureCache.set(clinicId, result)
-  return result
-}
+})
 
 /**
  * Server-side feature check that throws a structured 403 error response

@@ -73,7 +73,7 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     console.error('Patient creation error:', error)
     return NextResponse.json(
-      { error: 'SERVER_ERROR', message: error instanceof Error ? error.message : 'Falha ao cadastrar paciente.' },
+      { error: 'SERVER_ERROR', message: 'Falha ao cadastrar paciente.' },
       { status: 500 }
     )
   } finally {
@@ -170,7 +170,7 @@ export async function PATCH(request: Request) {
   } catch (error: unknown) {
     console.error('Patient update error:', error)
     return NextResponse.json(
-      { error: 'SERVER_ERROR', message: error instanceof Error ? error.message : 'Falha ao atualizar paciente.' },
+      { error: 'SERVER_ERROR', message: 'Falha ao atualizar paciente.' },
       { status: 500 }
     )
   } finally {
