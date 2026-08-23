@@ -102,6 +102,7 @@ Multi-tenant com **Clinic** como tenant raiz:
 | `008_add_patient_search_trgm.sql` | pg_trgm + índices GIN para busca ILIKE em pacientes |
 | `009_add_appointments_and_referrers.sql` | Agenda: enum `appointment_status`, tabelas `appointments` e `referrers` + RLS + índices |
 | `012_revoke_public_execute_on_rls_auto_enable.sql` | Revoga EXECUTE público da função SECURITY DEFINER `rls_auto_enable()` |
+| `013_drop_stray_demo_table.sql` | Remove `"Lensys Care Demo"`, tabela de teste criada fora das migrations |
 
 > **Importante:** O projeto usa SQL direto no Supabase, NÃO `prisma migrate dev`
 > (histórico de migrations está em `supabase/migrations/`).
