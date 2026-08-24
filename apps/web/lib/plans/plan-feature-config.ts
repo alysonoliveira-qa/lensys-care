@@ -1,4 +1,4 @@
-export type PlanFeature = 'whatsapp' | 'sms' | 'bulk_send'
+export type PlanFeature = 'auto_alerts' | 'whatsapp' | 'sms' | 'bulk_send'
 export type PlanId = 'ESSENTIAL' | 'CONECTA' | 'PROFESSIONAL'
 export type PlanStatus = string
 
@@ -21,6 +21,16 @@ export interface PlanFeatureConfig {
 }
 
 export const FEATURE_UI_META: Record<PlanFeature, FeatureUiMeta> = {
+  auto_alerts: {
+    name: 'Recall automático',
+    description:
+      'O lembrete de renovação sai sozinho, no dia certo, sem ninguém da clínica precisar lembrar de apertar botão.',
+    benefits: [
+      'Disparo automático 1 ano após o exame',
+      'Roda todo dia em segundo plano',
+      'No Essencial o alerta aparece na lista, mas o envio é manual',
+    ],
+  },
   whatsapp: {
     name: 'Alertas automáticos via WhatsApp',
     description:
@@ -54,30 +64,44 @@ export const FEATURE_UI_META: Record<PlanFeature, FeatureUiMeta> = {
 }
 
 export const PLAN_FEATURE_CONFIG: Record<PlanId, PlanFeatureConfig> = {
+  // O Essencial ve o alerta nascer e fica com o envio na mao: a lista mostra o
+  // retorno vencendo e alguem clica para enviar. Nada sai sozinho — `auto_alerts`
+  // fora daqui e o que garante isso, porque o cron consulta esse gate antes de
+  // qualquer canal.
   ESSENTIAL: {
     functionalFeatures: [],
-    uiOnlyLabels: ['Alertas por e-mail'],
+    uiOnlyLabels: ['Alertas de retorno com envio manual'],
   },
-  // O Conecta cobre o envio manual: alerta por WhatsApp e SMS. O recall em massa
-  // e automatizado, entao pertence ao Professional — e o que separa os dois.
+  // O que o Conecta compra e o automatico: o mesmo alerta que o Essencial envia
+  // na mao passa a sair sozinho pelo cron diario. Hoje isso vale para e-mail, que
+  // e o canal que funciona.
   //
-  // Os rotulos dizem "em breve" porque o envio depende de credencial Twilio, e
-  // nao ha conta Twilio criada: sem TWILIO_ACCOUNT_SID o provider lanca erro no
-  // momento do disparo. O gate funcional fica como esta — no dia que a conta
-  // existir, o recurso passa a valer sem mexer em codigo. Ao configurar, tirar
-  // o "(em breve)" daqui e de plan-display-config.
+  // WhatsApp e SMS dizem "em breve" porque falta credencial de provedor de
+  // mensagem: sem ela o provider lanca erro no momento do disparo. O gate
+  // funcional fica como esta — no dia que a credencial existir, o recurso passa a
+  // valer sem mexer em codigo. Ao configurar, tirar o "(em breve)" daqui, do
+  // PROFESSIONAL abaixo e de plan-display-config.
   CONECTA: {
-    functionalFeatures: ['whatsapp', 'sms'],
-    uiOnlyLabels: ['Alertas via WhatsApp (em breve)', 'Alertas via SMS (em breve)'],
+    functionalFeatures: ['auto_alerts', 'whatsapp', 'sms'],
+    uiOnlyLabels: [
+      'Recall automático por e-mail',
+      'Alertas via WhatsApp (em breve)',
+      'Alertas via SMS (em breve)',
+    ],
   },
   // `bulk_send` fica aqui para o gate ja apontar o plano certo quando a tela de
   // envio em massa existir. Hoje ela nao existe: nenhum ponto do app consulta
   // esse recurso, por isso o rotulo diz "em breve" em vez de prometer pronto.
+  //
+  // WhatsApp e SMS carregam o mesmo "(em breve)" do Conecta: e a mesma
+  // implementacao pendente. Prometer pronto no plano mais caro era a versao
+  // pior do mesmo erro.
   PROFESSIONAL: {
-    functionalFeatures: ['whatsapp', 'sms', 'bulk_send'],
+    functionalFeatures: ['auto_alerts', 'whatsapp', 'sms', 'bulk_send'],
     uiOnlyLabels: [
-      'Alertas via WhatsApp',
-      'Alertas via SMS',
+      'Recall automático por e-mail',
+      'Alertas via WhatsApp (em breve)',
+      'Alertas via SMS (em breve)',
       'Envio em massa e recall automatizado (em breve)',
       'Módulo Financeiro (em breve)',
     ],

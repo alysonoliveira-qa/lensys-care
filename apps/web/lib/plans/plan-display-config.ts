@@ -33,12 +33,12 @@ export const PLAN_DISPLAY_CONFIG: PlanDisplayConfig[] = [
       'Pacientes e histórico clínico',
       'Registro de exames e refração',
       'Evolução clínica centralizada',
-      'Alertas de retorno e renovação',
+      'Alertas de retorno com envio manual',
     ],
     dashboardFeatures: [
       'Pacientes e histórico clínico',
       'Registro de exames e refração',
-      'Alertas de retorno e renovação',
+      'Alertas de retorno com envio manual',
     ],
     featured: false,
     tierLabel: 'Base',
@@ -57,12 +57,13 @@ export const PLAN_DISPLAY_CONFIG: PlanDisplayConfig[] = [
     dashboardDescription: 'Mais automações para relacionamento e acompanhamento recorrente da clínica.',
     publicFeatures: [
       'Tudo do plano Essencial',
-      'Mais apoio à rotina de relacionamento',
+      'Recall automático por e-mail, sem envio manual',
       'Fluxos de retorno e acompanhamento',
       'Maior visão operacional da clínica',
     ],
     dashboardFeatures: [
       'Tudo do Essencial',
+      'Recall automático por e-mail',
       'Alertas de retorno via WhatsApp (em breve)',
       'Alertas de retorno via SMS (em breve)',
     ],
@@ -79,11 +80,11 @@ export const PLAN_DISPLAY_CONFIG: PlanDisplayConfig[] = [
     monthlyPriceSuffix: '/mês',
     trialLabel: 'Teste grátis por 7 dias',
     shortDescription:
-      'Tudo do Conecta, com as rotinas de mensagem automatizadas e o módulo financeiro.',
+      'Tudo do Conecta. As rotinas de mensagem automatizadas e o módulo financeiro chegam em breve.',
     publicDescription:
-      'Para clínicas que querem tirar da mão o trabalho repetitivo de relacionamento e acompanhar o financeiro no mesmo lugar.',
+      'Para clínicas que vão querer tirar da mão o trabalho repetitivo de relacionamento e acompanhar o financeiro no mesmo lugar — recursos em desenvolvimento.',
     dashboardDescription:
-      'Tudo do Conecta, com as rotinas de mensagem automatizadas e o módulo financeiro.',
+      'Tudo do Conecta. As rotinas de mensagem automatizadas e o módulo financeiro chegam em breve.',
     publicFeatures: [
       'Tudo do plano Conecta',
       'Envio em massa e recall automatizado (em breve)',

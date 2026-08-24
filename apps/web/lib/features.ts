@@ -16,8 +16,9 @@ export interface FeatureCheckResult {
 /**
  * Checks whether a clinic has access to a specific feature based on its plan.
  *
- * - ESSENTIAL plan: only email alerts available
- * - CONECTA plan: all features including WhatsApp, SMS, bulk send
+ * - ESSENTIAL plan: no gated feature — o alerta existe, mas o envio é manual
+ * - CONECTA plan: recall automático, WhatsApp e SMS
+ * - PROFESSIONAL plan: o do Conecta mais envio em massa
  * - Missing subscription row: defaults to ESSENTIAL (no gated features)
  *
  * @param clinicId - The clinic UUID to check
