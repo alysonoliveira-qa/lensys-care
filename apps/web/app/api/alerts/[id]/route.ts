@@ -7,6 +7,10 @@ import {
   sendAlertWhatsApp,
   sendAlertSMS
 } from '@/lib/alerts'
+import {
+  toSingleRelation,
+  type AlertPatientRelation
+} from '@/lib/alerts/alert-relations'
 
 type AlertAction = 'dismiss' | 'resend'
 
@@ -30,12 +34,8 @@ interface AlertQueryRecord {
   exam_id: string
   due_date: string
   channel: 'EMAIL' | 'WHATSAPP' | 'SMS'
-  patients: {
-    full_name: string
-    email: string | null
-    phone: string | null
-    clinic_id: string
-  }[]
+  // O embed to-one do PostgREST volta objeto, nao array — ver toSingleRelation.
+  patients: AlertPatientRelation | AlertPatientRelation[] | null
 }
 
 export async function POST(
@@ -117,7 +117,7 @@ export async function POST(
       }
 
       const alertQuery = alert as unknown as AlertQueryRecord
-      const patient = alertQuery.patients[0]
+      const patient = toSingleRelation(alertQuery.patients)
 
       if (!patient) {
         return NextResponse.json({ error: 'PATIENT_NOT_FOUND', message: 'Paciente do alerta não encontrado.' }, { status: 404 })

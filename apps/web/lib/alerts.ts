@@ -8,6 +8,7 @@ import { sendEmail } from '@/lib/email/resend'
 import { renderExamReminderEmail } from '@/lib/email/templates/exam-reminder'
 import { sendWhatsApp, sendSMS } from '@/lib/messaging'
 import { hasFeatureAsService } from '@/lib/features'
+import { toSingleRelation, type AlertPatientRelation } from '@/lib/alerts/alert-relations'
 
 // Service-role client — bypasses RLS for server-side operations
 function getServiceClient() {
@@ -85,12 +86,7 @@ interface AlertWithRelations {
   exam_id: string
   due_date: string
   channel: 'EMAIL' | 'WHATSAPP' | 'SMS'
-  patients: {
-    full_name: string
-    email: string | null
-    phone: string | null
-    clinic_id: string
-  }
+  patients: AlertPatientRelation
 }
 
 interface AlertWithRelationRows {
@@ -99,12 +95,9 @@ interface AlertWithRelationRows {
   exam_id: string
   due_date: string
   channel: 'EMAIL' | 'WHATSAPP' | 'SMS'
-  patients: Array<{
-    full_name: string
-    email: string | null
-    phone: string | null
-    clinic_id: string
-  }>
+  // O embed vem como objeto, não array — ver `toSingleRelation`. O tipo aceita
+  // as duas formas porque a resposta do PostgREST não é garantia de contrato.
+  patients: AlertPatientRelation | AlertPatientRelation[] | null
 }
 
 /**
@@ -260,9 +253,10 @@ export async function dispatchDueAlerts(daysAhead = 7): Promise<DispatchResult> 
 
   for (const alertRow of alerts as unknown as AlertWithRelationRows[]) {
     try {
-      const patient = alertRow.patients[0]
+      const patient = toSingleRelation(alertRow.patients)
       if (!patient) {
         failed++
+        failures.push({ alertId: alertRow.id, reason: 'Alerta sem paciente vinculado.' })
         continue
       }
 
