@@ -46,6 +46,8 @@ async function dispatch(request: Request) {
       // Alertas de clínica sem o recall automático no plano. Continuam PENDING
       // para envio manual — não são falha.
       skipped: result.skipped,
+      // O motivo de cada falha, para o cron ser diagnosticável sem redeploy.
+      failures: result.failures,
     })
   } catch (error: unknown) {
     console.error('Daily alert dispatch route failed:', error)

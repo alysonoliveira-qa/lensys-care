@@ -172,6 +172,13 @@ export async function sendAlertSMS(alert: AlertWithRelations): Promise<void> {
   await sendSMS(patient.phone, message)
 }
 
+interface DispatchResult {
+  sent: number
+  failed: number
+  skipped: number
+  failures: Array<{ alertId: string; reason: string }>
+}
+
 /**
  * Quantos dias para trás o disparo recupera. Com data exata, um dia em que o
  * cron não roda (deploy, falha, atraso da janela do plano Hobby) perde aquela
@@ -194,9 +201,7 @@ const MAX_ALERTS_PER_RUN = 100
  *
  * @param daysAhead - Number of days ahead to look for due alerts (default: 7)
  */
-export async function dispatchDueAlerts(
-  daysAhead = 7
-): Promise<{ sent: number; failed: number; skipped: number }> {
+export async function dispatchDueAlerts(daysAhead = 7): Promise<DispatchResult> {
   const supabase = getServiceClient()
 
   const toDateStr = (date: Date) => date.toISOString().split('T')[0]
@@ -229,11 +234,17 @@ export async function dispatchDueAlerts(
     .limit(MAX_ALERTS_PER_RUN)
 
   if (error) throw new Error(`Failed to fetch alerts: ${error.message}`)
-  if (!alerts || alerts.length === 0) return { sent: 0, failed: 0, skipped: 0 }
+  if (!alerts || alerts.length === 0) return { sent: 0, failed: 0, skipped: 0, failures: [] }
 
   let sent = 0
   let failed = 0
   let skipped = 0
+
+  // O motivo de cada falha volta na resposta da rota, não só no console: o plano
+  // Hobby da Vercel não retém saída de console, e um cron que só diz "falhou 1"
+  // obriga a redeployar com log extra para descobrir o que aconteceu. Quem chama
+  // a rota já provou ter o CRON_SECRET, então não há a quem vazar.
+  const failures: Array<{ alertId: string; reason: string }> = []
 
   // Um lote costuma repetir a mesma clínica várias vezes, e cada consulta de
   // plano abre um cliente Supabase novo. Memoiza pelo tempo da execução.
@@ -287,8 +298,12 @@ export async function dispatchDueAlerts(
     } catch (err) {
       console.error(`Failed to send alert ${alertRow.id}:`, err)
       failed++
+      failures.push({
+        alertId: alertRow.id,
+        reason: err instanceof Error ? err.message : String(err),
+      })
     }
   }
 
-  return { sent, failed, skipped }
+  return { sent, failed, skipped, failures }
 }
