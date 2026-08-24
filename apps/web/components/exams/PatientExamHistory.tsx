@@ -85,7 +85,7 @@ export default function PatientExamHistory({
                     Exame realizado em: {formatClinicalExamDate(exam.exam_date)}
                   </span>
                 </div>
-                <p className="text-xs font-semibold text-slate-400">
+                <p className="text-xs font-semibold text-muted-foreground">
                   Examinado por: {exam.examiner.full_name}
                   {exam.examiner.crm ? ` (${exam.examiner.crm})` : ''}
                 </p>
@@ -185,7 +185,7 @@ export default function PatientExamHistory({
 
             <div className="grid grid-cols-2 gap-4 text-xs font-semibold sm:grid-cols-4">
               <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3 text-center dark:border-slate-800 dark:bg-slate-950/20">
-                <div className="mb-1 text-[9px] uppercase tracking-[0.18em] text-slate-400">
+                <div className="mb-1 text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
                   Adição (ADD)
                 </div>
                 <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
@@ -193,7 +193,7 @@ export default function PatientExamHistory({
                 </span>
               </div>
               <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3 text-center dark:border-slate-800 dark:bg-slate-950/20">
-                <div className="mb-1 text-[9px] uppercase tracking-[0.18em] text-slate-400">
+                <div className="mb-1 text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
                   Dist. Pupilar (DP)
                 </div>
                 <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
@@ -204,7 +204,7 @@ export default function PatientExamHistory({
 
             {exam.prescription_notes ? (
               <div className="space-y-2">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                   Observações da receita
                 </div>
                 <p className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 text-xs font-semibold leading-relaxed text-slate-600 dark:border-slate-800 dark:bg-slate-950/20 dark:text-slate-400">
