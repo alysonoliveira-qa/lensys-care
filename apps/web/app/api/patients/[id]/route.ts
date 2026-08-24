@@ -12,7 +12,7 @@ export async function DELETE(
     const supabase = createClient()
     const { data, error: authError } = await supabase.auth.getClaims()
 
-    if (authError || !data?.claims.sub) {
+    if (authError || !data?.claims?.sub) {
       return NextResponse.json({ error: 'UNAUTHORIZED', message: 'Faça login para continuar.' }, { status: 401 })
     }
 

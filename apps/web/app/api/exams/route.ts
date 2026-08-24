@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     const supabase = createClient()
     const authStartedAt = startPerformanceStep()
     const { data, error } = await supabase.auth.getClaims()
-    const userId = data?.claims.sub
+    const userId = data?.claims?.sub
     logPerformanceStep(timer, 'auth.getClaims', authStartedAt)
 
     if (error || !userId) {
