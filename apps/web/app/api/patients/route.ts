@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
+import { isFutureDateOnly, parseDateOnly } from '@/lib/patients/patient-dob'
 import {
   endPerformanceTimer,
   logPerformanceStep,
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
     const supabase = createClient()
     const authStartedAt = startPerformanceStep()
     const { data, error } = await supabase.auth.getClaims()
-    const userId = data?.claims.sub
+    const userId = data?.claims?.sub
     logPerformanceStep(timer, 'auth.getClaims', authStartedAt)
 
     if (error || !userId) {
@@ -32,16 +33,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'MISSING_FIELDS', message: 'Nome completo e data de nascimento são obrigatórios.' }, { status: 400 })
     }
 
-    const birthDate = new Date(dob)
-    const today = new Date()
-    birthDate.setHours(0, 0, 0, 0)
-    today.setHours(0, 0, 0, 0)
+    const birthDate = parseDateOnly(dob)
 
-    if (Number.isNaN(birthDate.getTime())) {
+    if (!birthDate) {
       return NextResponse.json({ error: 'INVALID_DOB', message: 'Data de nascimento inválida.' }, { status: 400 })
     }
 
-    if (birthDate > today) {
+    if (isFutureDateOnly(birthDate)) {
       return NextResponse.json({ error: 'FUTURE_DOB', message: FUTURE_DOB_MESSAGE }, { status: 400 })
     }
 
@@ -87,7 +85,7 @@ export async function PATCH(request: Request) {
     const supabase = createClient()
     const authStartedAt = startPerformanceStep()
     const { data, error } = await supabase.auth.getClaims()
-    const userId = data?.claims.sub
+    const userId = data?.claims?.sub
     logPerformanceStep(timer, 'auth.getClaims', authStartedAt)
 
     if (error || !userId) {
@@ -106,16 +104,13 @@ export async function PATCH(request: Request) {
       )
     }
 
-    const birthDate = new Date(dob)
-    const today = new Date()
-    birthDate.setHours(0, 0, 0, 0)
-    today.setHours(0, 0, 0, 0)
+    const birthDate = parseDateOnly(dob)
 
-    if (Number.isNaN(birthDate.getTime())) {
+    if (!birthDate) {
       return NextResponse.json({ error: 'INVALID_DOB', message: 'Data de nascimento invalida.' }, { status: 400 })
     }
 
-    if (birthDate > today) {
+    if (isFutureDateOnly(birthDate)) {
       return NextResponse.json({ error: 'FUTURE_DOB', message: FUTURE_DOB_MESSAGE }, { status: 400 })
     }
 

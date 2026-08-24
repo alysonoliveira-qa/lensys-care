@@ -59,11 +59,28 @@ export const AGE_GROUP_TABLE: AgeGroupInfo[] = [
 /**
  * Calculates the exact age in full years at a given reference date.
  * Uses birthday-aware calculation to avoid off-by-one errors around birthdays.
+ *
+ * **Os dois lados são lidos com getters diferentes de propósito.**
+ *
+ * `dob` vem de uma coluna `DATE` do Postgres, que é data de calendário — "12 de
+ * abril", sem hora e sem fuso. O Prisma a entrega como instante em meia-noite
+ * UTC, então só `getUTC*` devolve o dia que a pessoa digitou. Com getters
+ * locais, todo fuso negativo lê o dia anterior: no Brasil, `1981-12-02` virava
+ * dia 1. Isso acontecia de verdade — no servidor da Vercel não, porque ele roda
+ * em UTC, mas `PatientExamHistory` e `useAgeGroup` são componentes de cliente e
+ * rodam no navegador do usuário, em UTC-3. A mesma pessoa tinha uma idade na
+ * página de detalhe e outra no histórico de exames.
+ *
+ * `referenceDate` é o oposto: representa "agora", um instante real, e o "hoje"
+ * que importa é o de quem está olhando a tela. Aí getter local é o certo.
+ *
+ * A idade alimenta `getSuggestedAddition`, que sugere adição para presbiopia —
+ * é dado clínico, não enfeite.
  */
 export function calculateAge(dob: Date, referenceDate: Date = new Date()): number {
-  const birthYear  = dob.getFullYear()
-  const birthMonth = dob.getMonth()
-  const birthDay   = dob.getDate()
+  const birthYear  = dob.getUTCFullYear()
+  const birthMonth = dob.getUTCMonth()
+  const birthDay   = dob.getUTCDate()
 
   const refYear  = referenceDate.getFullYear()
   const refMonth = referenceDate.getMonth()
