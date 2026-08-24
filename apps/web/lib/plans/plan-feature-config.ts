@@ -54,18 +54,22 @@ export const FEATURE_UI_META: Record<PlanFeature, FeatureUiMeta> = {
 }
 
 export const PLAN_FEATURE_CONFIG: Record<PlanId, PlanFeatureConfig> = {
+  // O e-mail e o unico canal que sai sozinho hoje: o alerta nasce com o exame e
+  // o cron diario em /api/alerts/send entrega. Por isso o rotulo pode dizer
+  // "automaticos" sem ressalva — e a unica linha desta config que o produto
+  // cumpre inteira.
   ESSENTIAL: {
     functionalFeatures: [],
-    uiOnlyLabels: ['Alertas por e-mail'],
+    uiOnlyLabels: ['Alertas automáticos por e-mail'],
   },
   // O Conecta cobre o envio manual: alerta por WhatsApp e SMS. O recall em massa
   // e automatizado, entao pertence ao Professional — e o que separa os dois.
   //
-  // Os rotulos dizem "em breve" porque o envio depende de credencial Twilio, e
-  // nao ha conta Twilio criada: sem TWILIO_ACCOUNT_SID o provider lanca erro no
-  // momento do disparo. O gate funcional fica como esta — no dia que a conta
-  // existir, o recurso passa a valer sem mexer em codigo. Ao configurar, tirar
-  // o "(em breve)" daqui e de plan-display-config.
+  // Os rotulos dizem "em breve" porque falta credencial de provedor de mensagem:
+  // sem ela o provider lanca erro no momento do disparo. O gate funcional fica
+  // como esta — no dia que a credencial existir, o recurso passa a valer sem
+  // mexer em codigo. Ao configurar, tirar o "(em breve)" daqui, do PROFESSIONAL
+  // abaixo e de plan-display-config.
   CONECTA: {
     functionalFeatures: ['whatsapp', 'sms'],
     uiOnlyLabels: ['Alertas via WhatsApp (em breve)', 'Alertas via SMS (em breve)'],
@@ -73,11 +77,15 @@ export const PLAN_FEATURE_CONFIG: Record<PlanId, PlanFeatureConfig> = {
   // `bulk_send` fica aqui para o gate ja apontar o plano certo quando a tela de
   // envio em massa existir. Hoje ela nao existe: nenhum ponto do app consulta
   // esse recurso, por isso o rotulo diz "em breve" em vez de prometer pronto.
+  //
+  // WhatsApp e SMS carregam o mesmo "(em breve)" do Conecta: e a mesma
+  // implementacao pendente. Prometer pronto no plano mais caro era a versao
+  // pior do mesmo erro.
   PROFESSIONAL: {
     functionalFeatures: ['whatsapp', 'sms', 'bulk_send'],
     uiOnlyLabels: [
-      'Alertas via WhatsApp',
-      'Alertas via SMS',
+      'Alertas via WhatsApp (em breve)',
+      'Alertas via SMS (em breve)',
       'Envio em massa e recall automatizado (em breve)',
       'Módulo Financeiro (em breve)',
     ],
