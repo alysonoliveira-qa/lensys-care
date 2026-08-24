@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
-import { useRouter } from 'next/navigation'
 import { Check, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -46,29 +45,20 @@ function SubmitButton({
 }
 
 export default function PlanActivationCards({ currentPlan, canManagePlan }: PlanActivationCardsProps) {
-  const router = useRouter()
   const [state, formAction] = useFormState(activatePlan, initialPlanActionState)
 
-  useEffect(() => {
-    if (state.status === 'success') {
-      window.dispatchEvent(new Event('subscription-updated'))
-      router.refresh()
-    }
-  }, [router, state.status, state.plan])
-
-  const activePlan = state.status === 'success' && state.plan ? state.plan : currentPlan
+  // O plano em destaque é sempre o que veio do servidor. A action não confirma
+  // ativação: quem clica sai daqui para o Stripe, e o plano novo só chega de
+  // volta pelo webhook, num carregamento seguinte.
+  const activePlan = currentPlan
 
   return (
     <>
       {state.message ? (
         <div
-          className={`mb-6 rounded-xl border px-4 py-3 text-sm font-medium ${
-            state.status === 'success'
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-              : 'border-red-200 bg-red-50 text-red-700'
-          }`}
-          data-cy={state.status === 'success' ? 'plan-success-message' : undefined}
-          role="status"
+          className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+          data-cy="plan-error-message"
+          role="alert"
         >
           {state.message}
         </div>
