@@ -43,6 +43,9 @@ async function dispatch(request: Request) {
       message: 'Disparo de alertas diários concluído.',
       sent: result.sent,
       failed: result.failed,
+      // Alertas de clínica sem o recall automático no plano. Continuam PENDING
+      // para envio manual — não são falha.
+      skipped: result.skipped,
     })
   } catch (error: unknown) {
     console.error('Daily alert dispatch route failed:', error)

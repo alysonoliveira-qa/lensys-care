@@ -194,7 +194,9 @@ const MAX_ALERTS_PER_RUN = 100
  *
  * @param daysAhead - Number of days ahead to look for due alerts (default: 7)
  */
-export async function dispatchDueAlerts(daysAhead = 7): Promise<{ sent: number; failed: number }> {
+export async function dispatchDueAlerts(
+  daysAhead = 7
+): Promise<{ sent: number; failed: number; skipped: number }> {
   const supabase = getServiceClient()
 
   const toDateStr = (date: Date) => date.toISOString().split('T')[0]
@@ -227,10 +229,23 @@ export async function dispatchDueAlerts(daysAhead = 7): Promise<{ sent: number; 
     .limit(MAX_ALERTS_PER_RUN)
 
   if (error) throw new Error(`Failed to fetch alerts: ${error.message}`)
-  if (!alerts || alerts.length === 0) return { sent: 0, failed: 0 }
+  if (!alerts || alerts.length === 0) return { sent: 0, failed: 0, skipped: 0 }
 
   let sent = 0
   let failed = 0
+  let skipped = 0
+
+  // Um lote costuma repetir a mesma clínica várias vezes, e cada consulta de
+  // plano abre um cliente Supabase novo. Memoiza pelo tempo da execução.
+  const autoAlertsByClinic = new Map<string, boolean>()
+  const clinicHasAutoAlerts = async (clinicId: string) => {
+    const cached = autoAlertsByClinic.get(clinicId)
+    if (cached !== undefined) return cached
+
+    const allowed = await hasFeatureAsService(clinicId, 'auto_alerts')
+    autoAlertsByClinic.set(clinicId, allowed)
+    return allowed
+  }
 
   for (const alertRow of alerts as unknown as AlertWithRelationRows[]) {
     try {
@@ -243,6 +258,15 @@ export async function dispatchDueAlerts(daysAhead = 7): Promise<{ sent: number; 
       const alert: AlertWithRelations = {
         ...alertRow,
         patients: patient,
+      }
+
+      // O disparo sozinho é o que o Conecta compra. No Essencial o alerta
+      // continua PENDING de propósito: ele segue na lista para a clínica enviar
+      // na mão, que é o fluxo do plano. Marcar SENT aqui apagaria o recall do
+      // cliente que não assinou o automático.
+      if (!(await clinicHasAutoAlerts(patient.clinic_id))) {
+        skipped++
+        continue
       }
 
       if (alert.channel === 'EMAIL') {
@@ -266,5 +290,5 @@ export async function dispatchDueAlerts(daysAhead = 7): Promise<{ sent: number; 
     }
   }
 
-  return { sent, failed }
+  return { sent, failed, skipped }
 }

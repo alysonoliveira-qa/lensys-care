@@ -10,16 +10,34 @@ import {
 } from '../lib/plans/plan-feature-config'
 
 describe('plan feature config', () => {
-  it('mantem o envio manual no Conecta e o automatizado so no Professional', () => {
-    // Decisao de produto: recall em massa e automatizado, entao e o que separa
-    // Professional de Conecta. O Conecta cobre o envio manual.
+  it('mantem o envio manual no Essencial e o automatico a partir do Conecta', () => {
+    // Decisao de produto: o Essencial ve o alerta e envia na mao. O que o
+    // Conecta compra e o disparo sozinho. Envio em massa continua separando
+    // Professional de Conecta.
     expect(PLAN_FEATURE_CONFIG.ESSENTIAL.functionalFeatures).toEqual([])
-    expect(PLAN_FEATURE_CONFIG.CONECTA.functionalFeatures).toEqual(['whatsapp', 'sms'])
+    expect(PLAN_FEATURE_CONFIG.CONECTA.functionalFeatures).toEqual([
+      'auto_alerts',
+      'whatsapp',
+      'sms',
+    ])
     expect(PLAN_FEATURE_CONFIG.PROFESSIONAL.functionalFeatures).toEqual([
+      'auto_alerts',
       'whatsapp',
       'sms',
       'bulk_send',
     ])
+  })
+
+  it('nao da recall automatico ao Essencial', () => {
+    // O cron consulta este gate antes de qualquer canal. Se `auto_alerts` vazar
+    // para o plano base, o Essencial passa a receber disparo sozinho de graca e
+    // o Conecta perde a unica coisa que hoje entrega de verdade.
+    expect(hasPlanFeatureAccess('ESSENTIAL', 'ACTIVE', 'auto_alerts')).toBe(false)
+    expect(hasPlanFeatureAccess('CONECTA', 'ACTIVE', 'auto_alerts')).toBe(true)
+    expect(hasPlanFeatureAccess('CONECTA', 'TRIALING', 'auto_alerts')).toBe(true)
+    expect(hasPlanFeatureAccess('CONECTA', 'CANCELED', 'auto_alerts')).toBe(false)
+    expect(hasPlanFeatureAccess('PROFESSIONAL', 'ACTIVE', 'auto_alerts')).toBe(true)
+    expect(isPremiumFeature('auto_alerts')).toBe(true)
   })
 
   it('grants premium access only for active or trialing Conecta subscriptions', () => {
