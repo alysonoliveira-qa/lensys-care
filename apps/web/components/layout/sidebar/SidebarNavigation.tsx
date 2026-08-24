@@ -40,13 +40,13 @@ export default function SidebarNavigation({
               } ${
                 isActive
                   ? 'border-l-4 border-indigo-500 bg-indigo-600/15 font-bold text-white'
-                  : 'hover:bg-slate-800/50 hover:text-slate-200'
+                  : 'hover:bg-sidebar-accent/50 hover:text-slate-200'
               }`}
             >
               {isPending ? (
                 <Loader2 className="h-4.5 w-4.5 animate-spin text-indigo-400" />
               ) : (
-                <Icon className={`h-4.5 w-4.5 flex-shrink-0 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
+                <Icon className={`h-4.5 w-4.5 flex-shrink-0 ${isActive ? 'text-indigo-400' : 'text-sidebar-foreground/70'}`} />
               )}
               {!isCollapsed && <span>{item.label}</span>}
             </span>

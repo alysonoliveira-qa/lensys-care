@@ -4,7 +4,13 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    color-scheme: light;
+
+    /* `--background` é slate-50 e `--card` é branco, e a diferença é proposital:
+       antes os dois eram branco puro, e a hierarquia visual da tela vinha de
+       `bg-white` cravado sobre `bg-slate-50` cravado. Com os dois iguais, o
+       cartão sumiria dentro do fundo e sobraria só a borda para separá-los. */
+    --background: 210 40% 98%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -13,7 +19,12 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    /* indigo-600. O `--primary` que veio do shadcn era slate quase-preto, e a
+       marca do produto (CTA, aba ativa, foco de campo) sempre foi indigo cravado
+       à mão. Trazer o indigo para dentro do token faz o `variant="default"` do
+       Button virar a cor da marca sozinho, e dá ao tema escuro a variante certa
+       de graça — em vez de cada indigo precisar do seu `dark:` escrito à mão. */
+    --primary: 243.4 75.4% 58.6%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -30,23 +41,43 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Acompanha o `--primary`: o anel de foco é a marca aparecendo no teclado. */
+    --ring: 243.4 75.4% 58.6%;
+
+    /* Superfície de marca da sidebar. Estes quatro têm o MESMO valor no bloco
+       `.dark` de propósito — a sidebar é escura nos dois temas, como em Vercel e
+       Linear. O token existe para consolidar ~50 classes cravadas num nome só,
+       não para variar com o tema; o valor igual nos dois blocos é o que declara
+       essa intenção em código, em vez de deixá-la num comentário. */
+    --sidebar: 222.2 47.4% 11.2%;
+    --sidebar-foreground: 215 20.2% 65.1%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
 
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    color-scheme: dark;
+
+    /* slate-950 no fundo e slate-900 no cartão. Reproduz exatamente o par
+       `dark:bg-slate-950` / `dark:bg-slate-900` que já estava escrito à mão pelo
+       app inteiro — as variantes existiam, só nunca disparavam. */
+    --background: 229 84% 5%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 222.2 47.4% 11.2%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    /* Acompanha o `--card`: popover é superfície flutuante, tem que se destacar
+       do fundo pelo mesmo salto de tom que o cartão usa. */
+    --popover: 222.2 47.4% 11.2%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* indigo-500 em vez do 600: sobre fundo escuro o tom mais claro tem o
+       contraste que o 600 perde. O texto por cima continua claro. */
+    --primary: 238.7 83.5% 66.7%;
+    --primary-foreground: 210 40% 98%;
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -57,12 +88,46 @@
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    /* red-400. O valor que veio do shadcn era um vermelho ESCURO, desenhado para
+       `bg-destructive` com texto branco por cima. Mas o uso real no app é
+       `text-destructive` — mensagem de erro de campo —, e vermelho escuro sobre
+       card slate-900 fica vinho quase ilegível. Este é o mesmo tom do
+       `dark:text-red-400` que os formulários já escreviam à mão.
+
+       Dívida conhecida: `components/patients/DeletePatientButton.tsx` é o único
+       `variant="destructive"` do app (fora do piloto). Com fundo red-400, o
+       texto claro por cima fica com contraste baixo — quando aquela tela entrar
+       na migração, ela precisa de `--destructive-foreground` escuro no `.dark`. */
+    --destructive: 0 90.6% 70.8%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 238.7 83.5% 66.7%;
+
+    /* Mesmos valores do `:root` — ver o comentário lá. A sidebar não muda. */
+    --sidebar: 222.2 47.4% 11.2%;
+    --sidebar-foreground: 215 20.2% 65.1%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
+  }
+}
+
+/* O receituário impresso é branco, sempre. A rota /exams/[id]/print fica fora do
+   grupo (dashboard) e herda só o root layout, então a classe `dark` chega até
+   ela. O print.module.css já protege a folha com hex literais, mas o <body>
+   pinta `bg-background` na área em volta do documento — e navegador com
+   "imprimir plano de fundo" ligado leva esse cinza-escuro para o papel.
+   Forçar os tokens de superfície no @media print resolve para qualquer rota,
+   sem precisar de layout dedicado só para chamar forcedTheme. */
+@media print {
+  :root,
+  .dark {
+    color-scheme: light;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
   }
 }
 

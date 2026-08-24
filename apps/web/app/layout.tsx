@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -30,14 +31,24 @@ export default function RootLayout({
   // variável não existia onde era lida — a declaração inteira virava inválida e o
   // navegador caía na fonte padrão do sistema.
   return (
-    <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable}`}>
+    // `suppressHydrationWarning` é exigência do next-themes: ele escreve a classe
+    // do tema no <html> por script, antes do React hidratar, para não haver flash
+    // de tema claro. Isso faz o HTML do cliente divergir do que o servidor
+    // renderizou — divergência intencional, e só neste elemento.
+    <html
+      lang="pt-BR"
+      className={`${geistSans.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
       <body className="antialiased">
-        {children}
-        {/* Web Vitals reais, do navegador de quem usa. A instrumentação de
-            servidor (lib/performance.ts) mede a query; esta mede o que a
-            pessoa sente — e é a régua para comparar antes e depois da mudança
-            de região do banco. */}
-        <SpeedInsights />
+        <ThemeProvider>
+          {children}
+          {/* Web Vitals reais, do navegador de quem usa. A instrumentação de
+              servidor (lib/performance.ts) mede a query; esta mede o que a
+              pessoa sente — e é a régua para comparar antes e depois da mudança
+              de região do banco. */}
+          <SpeedInsights />
+        </ThemeProvider>
       </body>
     </html>
   );

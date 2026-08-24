@@ -28,7 +28,7 @@ export default async function AuthenticatedShellLayout({
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar
         initialAuthEmail={shellData.userEmail}
         initialClinic={{ name: shellData.profile.clinic_name }}
