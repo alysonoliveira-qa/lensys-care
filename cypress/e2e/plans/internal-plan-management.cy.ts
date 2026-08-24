@@ -28,74 +28,42 @@ describe("Internal plan management", () => {
   };
 
   const openPlansPage = () => {
+    // `/dashboard/planos` e rota legada: o page.tsx dela so faz
+    // `redirect('/subscription')`. Visitar por ela cobre o redirect de brinde.
     cy.visit("/dashboard/planos", { timeout: 120000 });
 
+    cy.url({ timeout }).should("include", "/subscription");
     cy.get('[data-cy="plans-page"]', { timeout }).should("be.visible");
-    cy.url({ timeout }).should("include", "/dashboard/planos");
   };
 
-  const assertCurrentPlanCard = (expectedPlanCardCy: string) => {
-    cy.get('[data-cy="current-plan-badge"]', { timeout }).should("be.visible");
-    cy.get(`[data-cy="${expectedPlanCardCy}"] [data-cy="current-plan-badge"]`, { timeout }).should(
-      "be.visible"
-    );
-  };
-
-  const ensureEssentialPlanIsCurrent = () => {
-    cy.get("body", { timeout }).then(($body) => {
-      const connectIsCurrent =
-        $body.find('[data-cy="connect-plan-card"] [data-cy="current-plan-badge"]').length > 0;
-
-      if (connectIsCurrent) {
-        cy.get('[data-cy="activate-essential-plan-button"]', { timeout })
-          .should("be.visible")
-          .click();
-
-        cy.get('[data-cy="plan-success-message"]', { timeout })
-          .should("be.visible")
-          .and("contain.text", "Plano Essencial ativado com sucesso.");
-
-        assertCurrentPlanCard("essential-plan-card");
-      }
-    });
-  };
-
-  const activatePlanAndAssert = (
-    buttonCy: string,
-    expectedMessage: string,
-    expectedPlanCardCy: string
-  ) => {
-    cy.get(`[data-cy="${buttonCy}"]`, { timeout })
-      .should("be.visible")
-      .click();
-
-    cy.get('[data-cy="plan-success-message"]', { timeout })
-      .should("be.visible")
-      .and("contain.text", expectedMessage);
-
-    assertCurrentPlanCard(expectedPlanCardCy);
-  };
-
-  it("should switch the clinic plan from Essencial to Conecta and back", () => {
+  it("shows the plan cards and marks exactly one as current", () => {
     loginAsDemoUser();
     openPlansPage();
 
     cy.get('[data-cy="essential-plan-card"]', { timeout }).should("be.visible");
     cy.get('[data-cy="connect-plan-card"]', { timeout }).should("be.visible");
-    cy.get('[data-cy="current-plan-badge"]', { timeout }).should("be.visible");
+    cy.get('[data-cy="professional-plan-card"]', { timeout }).should("be.visible");
 
-    ensureEssentialPlanIsCurrent();
-
-    activatePlanAndAssert(
-      "activate-connect-plan-button",
-      "Plano Conecta ativado com sucesso.",
-      "connect-plan-card"
-    );
-
-    activatePlanAndAssert(
-      "activate-essential-plan-button",
-      "Plano Essencial ativado com sucesso.",
-      "essential-plan-card"
-    );
+    cy.get('[data-cy="current-plan-badge"]', { timeout })
+      .should("be.visible")
+      .and("have.length", 1);
   });
+
+  // GAP CONHECIDO — a troca de plano em si nao esta coberta aqui.
+  //
+  // `activatePlan` nunca conclui dentro do app: ela redireciona para o Checkout
+  // do Stripe (assinatura nova) ou para o portal de cobranca (assinatura viva).
+  // Cobrir isso de verdade exige `cy.origin` para atravessar para
+  // checkout.stripe.com, um ambiente isolado e uma conta de teste do Stripe —
+  // nada disso pode rodar contra producao.
+  //
+  // A versao anterior deste spec fingia cobrir esse fluxo: esperava um
+  // `[data-cy="plan-success-message"]` com o texto "Plano X ativado com
+  // sucesso.". Esse elemento nunca renderizou, porque a action nao produz estado
+  // de sucesso, e essa frase nao existe em lugar nenhum do app — sobrevivia so
+  // dentro deste arquivo. O teste falhava, e a matriz de cobertura contava com
+  // ele mesmo assim.
+  //
+  // Enquanto o ambiente isolado nao existir, este gap fica declarado aqui e em
+  // docs/testing-coverage-matrix.md, e nao disfarcado de teste verde.
 });

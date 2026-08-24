@@ -22,10 +22,18 @@ function isAvailablePlan(value: unknown): value is AvailablePlan {
   return typeof value === 'string' && STRIPE_PLAN_IDS.includes(value as AvailablePlan)
 }
 
+/**
+ * Não existe estado de sucesso aqui, e isso é proposital.
+ *
+ * `activatePlan` tem três saídas: devolver erro, ou redirecionar para o portal
+ * de cobrança, ou redirecionar para o Checkout. Ativação de plano se conclui no
+ * Stripe, nunca dentro do app — quem paga sai daqui. Como `redirect()` lança,
+ * nada depois dele roda, e um `status: 'success'` seria um estado que a própria
+ * action não consegue produzir.
+ */
 export interface PlanActionState {
-  status: 'idle' | 'success' | 'error'
+  status: 'idle' | 'error'
   message: string
-  plan?: AvailablePlan
 }
 
 export async function activatePlan(
