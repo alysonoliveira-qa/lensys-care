@@ -86,7 +86,7 @@ export default async function PrintExamPage({ params }: PrintExamPageProps) {
   }
 
   return (
-    <main className={`${styles.page} px-4 py-6 sm:px-8`}>
+    <main className={`${styles.page} print-surface px-4 py-6 sm:px-8`}>
       <div className="mx-auto max-w-[190mm]">
         <PrintExamActions patientId={exam.patient.id} className={styles.noPrint} />
 

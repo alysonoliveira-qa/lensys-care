@@ -113,6 +113,35 @@
   }
 }
 
+/* Superfície de documento: clara nos dois temas, NA TELA e no papel.
+
+   A rota /exams/[id]/print herda a classe `dark` como qualquer outra, e o
+   print.module.css força `color: #0f172a` no container. O resultado com o tema
+   escuro era um botão ilegível: a variante `outline` do Button define borda e
+   fundo (`bg-background` = slate-950) mas NÃO define cor de texto — o texto
+   herdava o quase-preto do documento. Preto sobre preto, legível só no hover,
+   que é quando `hover:text-accent-foreground` clareia.
+
+   Redeclarar os tokens aqui funciona porque custom property herda: o ancestral
+   mais próximo vence, mesmo com `.dark` no <html>. Vale para qualquer componente
+   tokenizado que entre nesta página depois, não só para este botão. */
+.print-surface {
+  color-scheme: light;
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --destructive: 0 84.2% 60.2%;
+}
+
 /* O receituário impresso é branco, sempre. A rota /exams/[id]/print fica fora do
    grupo (dashboard) e herda só o root layout, então a classe `dark` chega até
    ela. O print.module.css já protege a folha com hex literais, mas o <body>

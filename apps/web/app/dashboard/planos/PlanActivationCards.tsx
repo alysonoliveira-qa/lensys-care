@@ -71,14 +71,14 @@ export default function PlanActivationCards({ currentPlan, canManagePlan }: Plan
           return (
             <Card
               key={plan.id}
-              className={`flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ${
-                isCurrent ? 'border-indigo-300 ring-2 ring-indigo-100' : 'border-slate-200'
+              className={`flex flex-col overflow-hidden rounded-2xl bg-card shadow-sm ${
+                isCurrent ? 'border-primary ring-2 ring-primary/20' : 'border-border'
               }`}
               data-cy={plan.dashboardCardDataCy}
             >
               <CardHeader className="space-y-4 p-6">
                 <div className="flex items-center justify-between gap-4">
-                  <CardTitle className="text-2xl text-slate-900">{plan.name}</CardTitle>
+                  <CardTitle className="text-2xl text-foreground">{plan.name}</CardTitle>
                   {isCurrent ? (
                     <Badge variant="premium" data-cy="current-plan-badge">
                       Plano atual
@@ -86,18 +86,18 @@ export default function PlanActivationCards({ currentPlan, canManagePlan }: Plan
                   ) : null}
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold tracking-tight text-slate-900">{plan.monthlyPrice}</span>
-                  <span className="text-sm font-medium text-slate-500">{plan.monthlyPriceSuffix}</span>
+                  <span className="text-4xl font-extrabold tracking-tight text-foreground">{plan.monthlyPrice}</span>
+                  <span className="text-sm font-medium text-muted-foreground">{plan.monthlyPriceSuffix}</span>
                 </div>
-                <CardDescription className="text-sm leading-6 text-slate-600">
+                <CardDescription className="text-sm leading-6 text-muted-foreground">
                   {plan.dashboardDescription}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-grow px-6 pb-2">
-                <ul className="space-y-3 border-t border-slate-100 pt-5">
+                <ul className="space-y-3 border-t border-border pt-5">
                   {plan.dashboardFeatures.map((feature) => (
-                    <li key={feature} className="flex gap-2.5 text-sm text-slate-600">
-                      <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-indigo-500" />
+                    <li key={feature} className="flex gap-2.5 text-sm text-muted-foreground">
+                      <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
                       <span>{feature}</span>
                     </li>
                   ))}
