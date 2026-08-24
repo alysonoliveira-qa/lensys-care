@@ -11,6 +11,21 @@ impressão de receituário. Deploy na Vercel (root = `apps/web`).
 **Domínio de produção:** `https://www.lensyscare.com.br`
 **Repositório GitHub:** `alysonoliveira-qa/lensys-care`
 
+## Infraestrutura (regiões)
+
+**As duas pontas ficam em São Paulo, e isso não é detalhe — é o que define a latência
+sentida pelo usuário.**
+
+- **Funções da Vercel:** `gru1` (São Paulo), fixado em `apps/web/vercel.json`.
+- **Banco Supabase:** projeto `nizpcltworkfakyqnfxk`, região `sa-east-1` (São Paulo).
+
+**Regra inegociável:** função e banco andam juntos. Mudar a região de um sem o outro
+piora a performance em vez de melhorar — a medição de 24/08/2026 mostrou que o custo
+dominante é a distância da função até o usuário, e que o banco só é barato enquanto
+estiver ao lado dela. Detalhes e números em `docs/performance-audit.md` seções 13 e 14.
+
+Conferir de onde a resposta saiu: header `x-vercel-id`, que deve mostrar `gru1::gru1`.
+
 ## Stack
 
 - **Monorepo:** pnpm workspace + Turbo
@@ -182,8 +197,8 @@ Multi-tenant com **Clinic** como tenant raiz:
 `.env.local` (não commitar). Variáveis necessárias:
 
 ```env
-DATABASE_URL=
-DIRECT_URL=
+DATABASE_URL=      # transaction pooler, porta 6543 + ?pgbouncer=true&connection_limit=1
+DIRECT_URL=        # conexão direta, porta 5432
 SUPABASE_SERVICE_ROLE_KEY=
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
@@ -192,6 +207,25 @@ NEXT_PUBLIC_APP_URL=https://www.lensyscare.com.br   # localhost:3001 em dev
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=Lensys Care <noreply@lensyscare.com.br>
 ```
+
+### As duas strings de conexão têm papéis diferentes
+
+- **`DATABASE_URL`** — transaction pooler (`aws-0-sa-east-1.pooler.supabase.com:6543`),
+  com `?pgbouncer=true&connection_limit=1`. É o que segura serverless: sem pooler, cada
+  invocação de função abre uma conexão real no Postgres, e o teto chega sem aviso. O
+  `pgbouncer=true` é parâmetro do Prisma (desliga prepared statements) — o `psql` rejeita
+  essa string, e isso é esperado.
+- **`DIRECT_URL`** — conexão direta (`db.<ref>.supabase.co:5432`). É o que o Prisma usa em
+  migration. DDL e advisory lock não sobrevivem ao transaction pooler.
+
+**Para dump/restore use a conexão direta ou o session pooler (5432) — nunca a 6543.** O
+transaction pooler aceita a conexão e quebra no meio de um `--single-transaction`, deixando
+o banco pela metade.
+
+**Armadilha de rede:** a conexão direta do Supabase é IPv6, e container Docker é IPv4 por
+padrão — de dentro de um container ela falha com "Network is unreachable". Nesse caso, use
+o session pooler. O prefixo do host (`aws-0`, `aws-1`) varia por projeto: copie do painel
+*Connect*, não monte à mão.
 
 E2E usa `E2E_USER_EMAIL` / `E2E_USER_PASSWORD`. Nunca commitar `.env.local` nem
 `cypress.env.json`.

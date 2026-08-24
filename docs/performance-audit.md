@@ -218,6 +218,10 @@ pequenos perto da latencia de rede.
 
 ### Decisao: co-locar em dois tempos
 
+> **Status: os dois tempos foram executados.** O `pdx1` entrou no PR #12 (22/08/2026) e o
+> `gru1` + `sa-east-1` no PR #15 (24/08/2026). Os numeros reais estao na secao 14, e eles
+> corrigem uma premissa desta secao — veja la antes de usar as estimativas abaixo.
+
 1. **`pdx1` agora** (`apps/web/vercel.json`) — funcao na mesma regiao do banco. Cada query cai de
    ~70 ms para ~2 ms. O usuario no Brasil paga ~60 ms a mais para alcancar Oregon, mas paga **uma
    vez**, nao por query. Uma linha, sem downtime, reversivel.
@@ -233,3 +237,69 @@ O que da para medir de fora e a rota publica e o redirect do middleware. As pagi
 do dashboard — que sao as que acumulam round-trips e onde o ganho e maior — precisam de sessao
 para medir. A regua de verdade e o `@vercel/speed-insights` e os logs `[perf]` com `PERF_LOGS=1`,
 que continuam desligados em producao.
+
+---
+
+## 14. Migracao concluida em 24/08/2026 — as duas pontas no Brasil
+
+Banco em `sa-east-1` (projeto `nizpcltworkfakyqnfxk`) e funcoes em `gru1`. PR #15.
+
+### O que a medicao do "antes" corrigiu no diagnostico
+
+A secao 13 assumia que o custo estava espalhado entre distancia da funcao e round-trips ao
+banco. A medicao de 23/08, no navegador e com sessao — a que faltava — mostrou outra coisa.
+Comparando `/login` (nenhuma query) com `/patients` (1.339 pacientes), **na mesma regiao**:
+
+| Rota | Banco | TTFB mediana (antes) |
+| --- | --- | --- |
+| `/login` | nenhuma query | 288 ms |
+| `/dashboard` | com query | 313 ms |
+| `/patients` | com query | 321 ms |
+
+O delta era de **20 a 33 ms**. Ou seja: depois do `pdx1`, o banco ja custava quase nada, e os
+~280 ms de piso eram a propria funcao indo e voltando do Brasil ate o Oregon.
+
+Isso reordena a conclusao da secao 13: **mover so o banco nao ganharia nada.** O ganho estava
+em mover a *funcao*, e o banco precisava acompanhar para o delta nao explodir.
+
+### Resultado, medido em producao depois do corte
+
+Mesmo metodo nos dois lados: TTFB mediana de 5 a 7 requisicoes com `cache: no-store`, no
+navegador, no Brasil.
+
+| Rota | Antes (`gru1::pdx1`) | Depois (`gru1::gru1`) | Ganho |
+| --- | --- | --- | --- |
+| `/login` (sem banco) | 288 ms | **116 ms** | -172 ms |
+| `/dashboard` | 313 ms | **155 ms** | -158 ms |
+| `/patients` | 321 ms | **141 ms** | -180 ms |
+| `/` (landing) | 200-660 ms | **81 ms** | — |
+
+Queda de 50 a 60%. A estimativa era "~200 ms a menos por resposta"; ficou em 158-180 ms.
+
+### Armadilha de medicao, para a proxima vez
+
+O `responseStart` da navegacao marca **45-47 ms** nas rotas do dashboard, o que parece
+excelente e nao e velocidade de origem: e o edge de Sao Paulo liberando os headers antes de a
+funcao terminar, por causa do streaming do App Router. **Nao usar esse numero como TTFB.** O
+numero comparavel e o `fetch` com `no-store`, que espera a resposta da funcao.
+
+Vale registrar tambem o erro de metodo da rodada anterior: na do `pdx1`, a rota autenticada so
+foi medida *depois* do merge, e ficamos sem "antes" justamente onde o ganho era real. Desta vez
+a medicao veio primeiro.
+
+### Volume real
+
+`1.339` pacientes, `1.153` exames, `1.152` alertas — contagem exata. Os numeros da secao 13
+(1319/1134) vinham de `pg_stat_user_tables`, que e **estimativa**, nao contagem.
+
+### Conexao
+
+`DATABASE_URL` passou a usar o transaction pooler (6543) e `DIRECT_URL` a conexao direta
+(5432). Antes as duas apontavam para a direta, o que abre uma conexao real do Postgres por
+invocacao de funcao. Detalhes e armadilhas no `CLAUDE.md`, secao de variaveis de ambiente.
+
+### Rollback
+
+O projeto antigo (`offdfwseqiinxcgzmwnv`, `us-west-2`) foi **pausado, nao deletado**. Projeto
+pausado nao ocupa slot da cota gratuita e continua restauravel por 90 dias.
+
