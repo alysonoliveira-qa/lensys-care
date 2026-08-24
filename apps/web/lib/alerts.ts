@@ -173,17 +173,37 @@ export async function sendAlertSMS(alert: AlertWithRelations): Promise<void> {
 }
 
 /**
+ * Quantos dias para trás o disparo recupera. Com data exata, um dia em que o
+ * cron não roda (deploy, falha, atraso da janela do plano Hobby) perde aquela
+ * safra de alertas para sempre. Com a janela, o dia seguinte recolhe o que
+ * ficou; sem ela virar "mande tudo que já venceu", que despejaria um ano de
+ * histórico de uma vez na primeira execução.
+ */
+const CATCHUP_DAYS = 3
+
+/**
+ * Teto por execução. Coincide de propósito com o limite diário do plano
+ * gratuito do Resend: passar disso não entrega e-mail, só queima cota. O que
+ * sobra continua PENDING e entra na execução seguinte.
+ */
+const MAX_ALERTS_PER_RUN = 100
+
+/**
  * Dispatches alerts due within the next N days.
- * Called by the pg_cron job via /api/alerts/send.
+ * Called by the Vercel cron job via /api/alerts/send.
  *
  * @param daysAhead - Number of days ahead to look for due alerts (default: 7)
  */
 export async function dispatchDueAlerts(daysAhead = 7): Promise<{ sent: number; failed: number }> {
   const supabase = getServiceClient()
 
+  const toDateStr = (date: Date) => date.toISOString().split('T')[0]
+
   const targetDate = new Date()
   targetDate.setDate(targetDate.getDate() + daysAhead)
-  const targetDateStr = targetDate.toISOString().split('T')[0]
+
+  const windowStart = new Date(targetDate)
+  windowStart.setDate(windowStart.getDate() - CATCHUP_DAYS)
 
   const { data: alerts, error } = await supabase
     .from('alerts')
@@ -201,7 +221,10 @@ export async function dispatchDueAlerts(daysAhead = 7): Promise<{ sent: number; 
       )
     `)
     .eq('status', 'PENDING')
-    .eq('due_date', targetDateStr)
+    .gte('due_date', toDateStr(windowStart))
+    .lte('due_date', toDateStr(targetDate))
+    .order('due_date', { ascending: true })
+    .limit(MAX_ALERTS_PER_RUN)
 
   if (error) throw new Error(`Failed to fetch alerts: ${error.message}`)
   if (!alerts || alerts.length === 0) return { sent: 0, failed: 0 }

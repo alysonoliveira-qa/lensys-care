@@ -2,6 +2,11 @@ import { timingSafeEqual } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { dispatchDueAlerts } from '@/lib/alerts'
 
+// O disparo percorre os alertas em série, um envio de cada vez. Dez segundos
+// (o padrão) não cobrem um lote de renovações do dia.
+export const maxDuration = 60
+export const dynamic = 'force-dynamic'
+
 /**
  * Compara em tempo constante. Um `!==` de string sai no primeiro byte
  * diferente, e essa diferença de tempo é mensurável — dá para descobrir o
@@ -16,7 +21,7 @@ function secretMatches(provided: string, expected: string): boolean {
   return a.length === b.length && timingSafeEqual(a, b)
 }
 
-export async function POST(request: Request) {
+async function dispatch(request: Request) {
   try {
     // 1. Verify CRON_SECRET bearer token for job security
     const authHeader = request.headers.get('authorization')
@@ -46,4 +51,18 @@ export async function POST(request: Request) {
       { status: 500 }
     )
   }
+}
+
+/**
+ * O cron da Vercel chama a rota com GET — sem este handler o agendamento
+ * responderia 405 e o recall continuaria sem disparar, que foi exatamente o
+ * estado do produto até aqui.
+ */
+export async function GET(request: Request) {
+  return dispatch(request)
+}
+
+/** Disparo manual e qualquer chamador externo (pg_cron, script de operação). */
+export async function POST(request: Request) {
+  return dispatch(request)
 }
