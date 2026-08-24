@@ -112,12 +112,12 @@ export default function Sidebar({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 ${mobileDrawerOpen ? 'translate-x-0' : '-translate-x-full'} w-[min(20rem,86vw)] flex h-screen flex-col border-r border-slate-800 bg-slate-900 text-slate-400 shadow-2xl shadow-slate-950/20 transition-[width,transform] duration-300 select-none md:relative md:left-auto md:z-20 md:translate-x-0 md:shadow-none ${asideWidthClass}`}
+        className={`fixed inset-y-0 left-0 z-40 ${mobileDrawerOpen ? 'translate-x-0' : '-translate-x-full'} w-[min(20rem,86vw)] flex h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl shadow-slate-950/20 transition-[width,transform] duration-300 select-none md:relative md:left-auto md:z-20 md:translate-x-0 md:shadow-none ${asideWidthClass}`}
         data-cy={isMobile ? 'mobile-sidebar-drawer' : undefined}
       >
         <div className="pointer-events-none absolute left-0 top-0 h-24 w-24 rounded-full bg-violet-600/5 blur-xl" />
 
-        <div className={`flex h-16 items-center border-b border-slate-800 ${isCollapsed ? 'justify-center px-2' : 'justify-between gap-3 px-4 lg:px-6'}`}>
+        <div className={`flex h-16 items-center border-b border-sidebar-border ${isCollapsed ? 'justify-center px-2' : 'justify-between gap-3 px-4 lg:px-6'}`}>
           <div className="flex min-w-0 items-center gap-3 overflow-hidden">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/10">
               <Sparkles className="h-4.5 w-4.5 text-white" />
@@ -127,7 +127,7 @@ export default function Sidebar({
                 <span className="text-sm font-extrabold leading-none tracking-tight text-white">
                   Lensys <span className="text-indigo-400">Care</span>
                 </span>
-                <span className="mt-1 truncate text-[10px] font-semibold text-slate-500">
+                <span className="mt-1 truncate text-[10px] font-semibold text-sidebar-foreground/70">
                   {clinic?.name || 'Carregando clínica...'}
                 </span>
               </div>
@@ -138,7 +138,7 @@ export default function Sidebar({
             <button
               type="button"
               onClick={handleToggleCollapse}
-              className="rounded-lg border border-slate-800 bg-slate-950/50 p-2 text-slate-400 transition-colors hover:border-slate-700 hover:bg-slate-800 hover:text-white"
+              className="rounded-lg border border-sidebar-border bg-slate-950/50 p-2 text-sidebar-foreground transition-colors hover:border-slate-700 hover:bg-sidebar-accent hover:text-white"
               aria-label={isCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
               title={isCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
               data-cy="sidebar-collapse-button"
@@ -151,7 +151,7 @@ export default function Sidebar({
             <button
               type="button"
               onClick={() => setMobileDrawerOpen(false)}
-              className="rounded-lg border border-slate-800 bg-slate-950/50 p-2 text-slate-400 transition-colors hover:border-slate-700 hover:bg-slate-800 hover:text-white"
+              className="rounded-lg border border-sidebar-border bg-slate-950/50 p-2 text-sidebar-foreground transition-colors hover:border-slate-700 hover:bg-sidebar-accent hover:text-white"
               aria-label="Fechar menu lateral"
             >
               <X className="h-4 w-4" />
@@ -180,7 +180,7 @@ export default function Sidebar({
           />
         )}
 
-        <div className={`border-t border-slate-800 p-4 ${isCollapsed ? 'flex flex-col items-center gap-3' : 'flex items-center justify-between gap-3'}`}>
+        <div className={`border-t border-sidebar-border p-4 ${isCollapsed ? 'flex flex-col items-center gap-3' : 'flex items-center justify-between gap-3'}`}>
           <SidebarProfileSection
             authEmail={authEmail}
             fullName={profile?.full_name}
@@ -201,7 +201,7 @@ export default function Sidebar({
 
           <button
             onClick={handleLogout}
-            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-800/40 hover:text-red-400"
+            className="rounded-lg p-2 text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/40 hover:text-red-400"
             title="Sair"
             data-cy="logout-button"
           >

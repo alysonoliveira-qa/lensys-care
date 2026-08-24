@@ -103,20 +103,20 @@ export default function PreferredDisplayNameDialog({
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
       <div
-        className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl"
+        className="w-full max-w-md rounded-2xl border border-sidebar-border bg-sidebar p-6 shadow-2xl"
         data-cy="edit-profile-modal"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="text-lg font-bold text-white">Editar perfil</h3>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-sidebar-foreground">
               Atualize como o Lensys Care deve te chamar no dashboard e na sidebar.
             </p>
           </div>
           <button
             type="button"
             onClick={handleClose}
-            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200"
+            className="rounded-lg p-2 text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-slate-200"
             aria-label="Fechar modal"
           >
             <X className="h-4.5 w-4.5" />
@@ -124,7 +124,7 @@ export default function PreferredDisplayNameDialog({
         </div>
 
         <div className="mt-5 space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+          <label className="text-xs font-semibold uppercase tracking-[0.18em] text-sidebar-foreground">
             Como prefere ser chamado?
           </label>
           <Input
@@ -132,12 +132,12 @@ export default function PreferredDisplayNameDialog({
             value={preferredNameInput}
             onChange={(event) => setPreferredNameInput(event.target.value)}
             placeholder="Ex: Dra. Ana ou Ana"
-            className="border-slate-800 bg-slate-950/50 text-white placeholder:text-slate-500 focus:border-violet-500/50 focus:ring-violet-500/20"
+            className="border-sidebar-border bg-slate-950/50 text-white placeholder:text-sidebar-foreground/70 focus:border-violet-500/50 focus:ring-violet-500/20"
             maxLength={60}
             disabled={isSaving}
             data-cy="preferred-name-input"
           />
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-sidebar-foreground/70">
             Se ficar em branco, o sistema usará seu nome completo, e-mail ou usuário.
           </p>
         </div>
@@ -158,7 +158,7 @@ export default function PreferredDisplayNameDialog({
           <Button
             type="button"
             variant="ghost"
-            className="text-slate-300 hover:bg-slate-800 hover:text-white"
+            className="text-slate-300 hover:bg-sidebar-accent hover:text-white"
             onClick={handleClose}
             disabled={isSaving}
           >

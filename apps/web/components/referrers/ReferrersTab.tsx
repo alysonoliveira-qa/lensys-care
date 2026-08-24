@@ -12,15 +12,15 @@ export default function ReferrersTab({ rows }: { rows: ReferrerRow[] }) {
 
   return (
     <div className="space-y-6" data-cy="referrers-tab">
-      <Card className="rounded-2xl border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+      <Card className="rounded-2xl border-border bg-card shadow-sm">
         <CardContent className="space-y-4 p-5">
           <div className="flex items-center gap-2">
-            <UserPlus className="h-4 w-4 text-indigo-500" />
-            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+            <UserPlus className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-bold text-foreground">
               Novo indicante
             </h3>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-muted-foreground">
             Quem leva pacientes à clínica. Só o nome é obrigatório — a chave PIX aparece na
             hora de pagar as indicações.
           </p>
@@ -28,13 +28,13 @@ export default function ReferrersTab({ rows }: { rows: ReferrerRow[] }) {
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden rounded-2xl border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+      <Card className="overflow-hidden rounded-2xl border-border bg-card shadow-sm">
         <CardContent className="p-0">
-          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3 dark:border-slate-800">
-            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+          <div className="flex items-center justify-between border-b border-border px-5 py-3">
+            <h3 className="text-sm font-bold text-foreground">
               Indicantes cadastrados
             </h3>
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-semibold text-muted-foreground">
               {totalPending} indicação(ões) pendente(s) no total
             </span>
           </div>
@@ -44,18 +44,18 @@ export default function ReferrersTab({ rows }: { rows: ReferrerRow[] }) {
               className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-center"
               data-cy="referrers-empty-state"
             >
-              <Users className="h-10 w-10 text-slate-300 dark:text-slate-700" />
+              <Users className="h-10 w-10 text-muted-foreground/40" />
               <div className="space-y-1">
-                <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                <p className="text-sm font-semibold text-muted-foreground">
                   Nenhum indicante cadastrado.
                 </p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   Cadastre acima para poder vincular indicantes às consultas da Agenda.
                 </p>
               </div>
             </div>
           ) : (
-            <ul className="divide-y divide-slate-100 dark:divide-slate-800" data-cy="referrers-list">
+            <ul className="divide-y divide-border" data-cy="referrers-list">
               {rows.map((row) => (
                 <ReferrerRowItem key={row.id} row={row} />
               ))}

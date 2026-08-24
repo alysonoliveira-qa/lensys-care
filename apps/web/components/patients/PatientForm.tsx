@@ -152,7 +152,7 @@ export default function PatientForm({
           {isEditMode ? <UserPen className="h-6 w-6 text-indigo-500" /> : <UserPlus className="h-6 w-6 text-indigo-500" />}
           <span>{isEditMode ? 'Editar Paciente' : 'Cadastrar Novo Paciente'}</span>
         </h2>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">
           {isEditMode
             ? 'Atualize apenas os dados cadastrais básicos do paciente.'
             : 'Preencha os dados cadastrais básicos do paciente para iniciar o prontuário.'}
@@ -174,7 +174,7 @@ export default function PatientForm({
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Nome Completo do Paciente *
                 </label>
                 <Input
@@ -190,7 +190,7 @@ export default function PatientForm({
               </div>
 
               <div className="space-y-2 md:col-span-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Data de Nascimento *
                 </label>
                 <Input
@@ -235,7 +235,7 @@ export default function PatientForm({
               )}
 
               <div className="space-y-2 md:col-span-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Celular / WhatsApp
                 </label>
                 <Input
@@ -250,7 +250,7 @@ export default function PatientForm({
               </div>
 
               <div className="space-y-2 md:col-span-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   E-mail
                 </label>
                 <Input
@@ -265,7 +265,7 @@ export default function PatientForm({
               </div>
 
               <div className="space-y-2 md:col-span-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Observações Clínicas Gerais
                 </label>
                 <textarea
@@ -298,7 +298,7 @@ export default function PatientForm({
                 {shouldSchedule ? (
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                         Data *
                       </label>
                       <Input
@@ -312,7 +312,7 @@ export default function PatientForm({
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                         Hora (opcional)
                       </label>
                       <Input
@@ -323,11 +323,11 @@ export default function PatientForm({
                         disabled={loading}
                         data-cy="first-appointment-time-input"
                       />
-                      <p className="text-[11px] text-slate-400">Vazio = fila do dia.</p>
+                      <p className="text-[11px] text-muted-foreground">Vazio = fila do dia.</p>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                         Indicante (opcional)
                       </label>
                       <select

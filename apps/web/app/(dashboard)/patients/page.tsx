@@ -139,6 +139,11 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
 
   return (
     <div className="space-y-8 select-none">
+      {/* As camadas decorativas do hero ficam em cor crua de proposito: violet e
+          indigo aqui sao identidade de marca, nao hierarquia semantica — tokenizar
+          um gradiente produziria um retangulo cinza. As variantes dark: destas
+          linhas ja existiam escritas e passam a valer sozinhas agora que o tema e
+          real. So o TEXTO do hero foi para token, porque texto segue o sistema. */}
       <section className="relative overflow-hidden rounded-[28px] border border-violet-100 bg-gradient-to-br from-white via-violet-50/70 to-indigo-50/90 p-6 shadow-sm shadow-violet-100/50 dark:border-slate-800 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
         <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-gradient-to-l from-indigo-100/60 to-transparent dark:from-indigo-950/20 lg:block" />
         <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-violet-200/40 blur-3xl dark:bg-violet-900/20" />
@@ -152,11 +157,11 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
             </div>
 
             <div className="space-y-2">
-              <h2 className="flex items-center gap-2 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 sm:text-4xl">
-                <Users className="h-7 w-7 text-indigo-500" />
+              <h2 className="flex items-center gap-2 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+                <Users className="h-7 w-7 text-primary" />
                 <span>Pacientes Cadastrados</span>
               </h2>
-              <p className="max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+              <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
                 Gerencie prontuários refrativos, encontre fichas rapidamente e acompanhe o
                 histórico clínico da {shellData.profile.clinic_name}.
               </p>
@@ -177,15 +182,15 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-[240px]">
             <Link href="/patients/new">
               <Button
-                className="h-11 w-full gap-2 rounded-xl bg-indigo-600 font-semibold shadow-lg shadow-indigo-500/15 hover:bg-indigo-500"
+                className="h-11 w-full gap-2 rounded-xl font-semibold shadow-lg shadow-primary/15"
                 data-cy="new-patient-button"
               >
                 <Plus className="h-4.5 w-4.5" />
                 Cadastrar Paciente
               </Button>
             </Link>
-            <div className="rounded-2xl border border-white/80 bg-white/70 p-3 text-xs text-slate-600 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300">
-              <p className="font-semibold text-slate-900 dark:text-slate-100">Resumo da lista</p>
+            <div className="rounded-2xl border border-border bg-card/70 p-3 text-xs text-muted-foreground shadow-sm backdrop-blur">
+              <p className="font-semibold text-foreground">Resumo da lista</p>
               <p className="mt-1 leading-5">
                 {search
                   ? 'Exibindo resultados filtrados para a busca atual com a ordenação selecionada.'
@@ -202,34 +207,34 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
         <ReferrersTab rows={referrerRows} />
       ) : (
         <>
-      <Card className="rounded-2xl border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+      <Card className="rounded-2xl border-border bg-card shadow-sm">
         <CardContent className="p-5">
           <PatientsListFilters initialSearch={search} initialSort={sort} />
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden rounded-2xl border-slate-200/80 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+      <Card className="overflow-hidden rounded-2xl border-border bg-card shadow-sm">
         <CardContent className="p-5">
           {patients.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-12 text-center dark:border-slate-800 dark:bg-slate-950/30">
-              <Users className="h-10 w-10 text-slate-300 dark:text-slate-700" />
+            <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-muted px-6 py-12 text-center">
+              <Users className="h-10 w-10 text-muted-foreground/40" />
               <div className="space-y-1">
-                <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                <p className="text-sm font-semibold text-muted-foreground">
                   Nenhum paciente cadastrado ou correspondente à busca.
                 </p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   Novos cadastros e resultados encontrados aparecerão aqui automaticamente.
                 </p>
               </div>
             </div>
           ) : (
             <div
-              className="overflow-x-auto rounded-2xl border border-slate-100 dark:border-slate-800"
+              className="overflow-x-auto rounded-2xl border border-border"
               data-cy="patients-list"
             >
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="bg-slate-50/80 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:bg-slate-950/50">
+                  <tr className="bg-muted text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                     <th className="px-6 py-3">Nome Completo</th>
                     <th className="px-6 py-3">Data de nascimento</th>
                     <th className="px-6 py-3">Contato</th>
@@ -237,50 +242,50 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
                     <th className="px-6 py-3 text-right">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                <tbody className="divide-y divide-border">
                   {patients.map((p: PatientListItem) => {
                     const lastExam = p.exams[0]
 
                     return (
                       <tr
                         key={p.id}
-                        className="text-slate-600 transition-colors hover:bg-slate-50/80 dark:text-slate-300 dark:hover:bg-slate-950/30"
+                        className="text-muted-foreground transition-colors hover:bg-muted"
                         data-cy="patient-card"
                       >
-                        <td className="px-6 py-4 font-bold text-slate-800 dark:text-slate-100">
+                        <td className="px-6 py-4 font-bold text-foreground">
                           {p.full_name}
                         </td>
-                        <td className="px-6 py-4 font-medium text-slate-600 dark:text-slate-300">
+                        <td className="px-6 py-4 font-medium text-muted-foreground">
                           <span className="flex items-center gap-1.5">
-                            <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                             {new Date(p.dob).toLocaleDateString('pt-BR')}
                           </span>
                         </td>
                         <td className="px-6 py-4 space-y-1">
                           {p.phone ? (
-                            <span className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                            <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                               <Phone className="h-3 w-3" />
                               {p.phone}
                             </span>
                           ) : null}
                           {p.email ? (
-                            <span className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                            <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                               <Mail className="h-3 w-3" />
                               {p.email}
                             </span>
                           ) : null}
                           {!p.phone && !p.email ? (
-                            <span className="text-xs font-medium text-slate-400">-</span>
+                            <span className="text-xs font-medium text-muted-foreground">-</span>
                           ) : null}
                         </td>
                         <td className="px-6 py-4">
                           {lastExam ? (
-                            <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                              <FileText className="h-3.5 w-3.5 text-indigo-400" />
+                            <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                              <FileText className="h-3.5 w-3.5 text-primary" />
                               {new Date(lastExam.exam_date).toLocaleDateString('pt-BR')}
                             </span>
                           ) : (
-                            <span className="text-xs font-semibold italic text-slate-400">
+                            <span className="text-xs font-semibold italic text-muted-foreground">
                               Sem registros
                             </span>
                           )}
@@ -290,7 +295,7 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-8 rounded-lg border-slate-200 text-[11px] font-bold dark:border-slate-800"
+                              className="h-8 rounded-lg border-border text-[11px] font-bold"
                             >
                               Ver Ficha
                             </Button>
@@ -308,7 +313,7 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
 
       {totalPages > 1 ? (
         <div className="flex items-center justify-between pt-2">
-          <span className="text-xs font-semibold text-slate-400">
+          <span className="text-xs font-semibold text-muted-foreground">
             Página {page} de {totalPages} ({totalCount} pacientes no total)
           </span>
           <div className="flex gap-2">
@@ -316,7 +321,7 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 rounded-lg border-slate-200 font-bold dark:border-slate-800"
+                className="h-8 rounded-lg border-border font-bold"
                 disabled={page <= 1}
               >
                 <ChevronLeft className="mr-1 h-4 w-4" />
@@ -327,7 +332,7 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 rounded-lg border-slate-200 font-bold dark:border-slate-800"
+                className="h-8 rounded-lg border-border font-bold"
                 disabled={page >= totalPages}
               >
                 Próximo

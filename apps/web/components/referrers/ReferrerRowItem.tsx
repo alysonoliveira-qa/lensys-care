@@ -60,7 +60,7 @@ export default function ReferrerRowItem({ row }: { row: ReferrerRow }) {
     <li className="space-y-3 px-5 py-4" data-cy="referrer-row" data-referrer-active={row.active}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 space-y-1">
-          <p className="flex items-center gap-2 truncate text-sm font-bold text-slate-800 dark:text-slate-100">
+          <p className="flex items-center gap-2 truncate text-sm font-bold text-foreground">
             <span data-cy="referrer-name">{row.name}</span>
             {row.active ? null : (
               <Badge variant="outline" data-cy="referrer-inactive-badge">
@@ -68,7 +68,7 @@ export default function ReferrerRowItem({ row }: { row: ReferrerRow }) {
               </Badge>
             )}
           </p>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <Badge
               variant={row.hasPendingReferrals ? 'warning' : 'secondary'}
               data-cy="referrer-pending-count"
@@ -128,7 +128,7 @@ export default function ReferrerRowItem({ row }: { row: ReferrerRow }) {
                 Chave PIX
               </p>
               <p
-                className="flex items-center gap-2 break-all font-mono text-sm font-semibold text-slate-800 dark:text-slate-100"
+                className="flex items-center gap-2 break-all font-mono text-sm font-semibold text-foreground"
                 data-cy="referrer-pix-key"
               >
                 <Copy className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
@@ -136,7 +136,7 @@ export default function ReferrerRowItem({ row }: { row: ReferrerRow }) {
               </p>
             </div>
           ) : (
-            <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
+            <p className="text-xs font-medium text-muted-foreground">
               Este indicante não tem chave PIX cadastrada. Pague por outro meio e registre
               abaixo.
             </p>
@@ -162,7 +162,7 @@ export default function ReferrerRowItem({ row }: { row: ReferrerRow }) {
         <p
           className={`text-xs font-medium ${
             payState.status === 'error'
-              ? 'text-red-600 dark:text-red-400'
+              ? 'text-destructive'
               : 'text-emerald-700 dark:text-emerald-400'
           }`}
           data-cy="referrer-pay-feedback"
@@ -172,7 +172,7 @@ export default function ReferrerRowItem({ row }: { row: ReferrerRow }) {
       ) : null}
 
       {activeState.status === 'error' ? (
-        <p className="text-xs font-medium text-red-600 dark:text-red-400">
+        <p className="text-xs font-medium text-destructive">
           {activeState.message}
         </p>
       ) : null}

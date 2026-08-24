@@ -9,7 +9,7 @@ import {
 export default function PatientsTabs({ activeTab }: { activeTab: PatientsTab }) {
   return (
     <div
-      className="inline-flex items-center gap-1 rounded-2xl border border-slate-200/80 bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      className="inline-flex items-center gap-1 rounded-2xl border border-border bg-card p-1 shadow-sm"
       data-cy="patients-tabs"
     >
       {PATIENTS_TABS.map((tab) => {
@@ -23,8 +23,8 @@ export default function PatientsTabs({ activeTab }: { activeTab: PatientsTab }) 
             aria-current={isActive ? 'page' : undefined}
             className={`rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
               isActive
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-950/40'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:bg-muted'
             }`}
           >
             {tab.label}
