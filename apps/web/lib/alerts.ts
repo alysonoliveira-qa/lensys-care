@@ -6,9 +6,10 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { sendEmail } from '@/lib/email/resend'
 import { renderExamReminderEmail } from '@/lib/email/templates/exam-reminder'
-import { sendWhatsApp, sendSMS } from '@/lib/messaging'
+import { sendWhatsAppRecall, sendSMS } from '@/lib/messaging'
 import { hasFeatureAsService } from '@/lib/features'
 import { toSingleRelation, type AlertPatientRelation } from '@/lib/alerts/alert-relations'
+import { resolveAlertChannel } from '@/lib/alerts/alert-channel'
 
 // Service-role client — bypasses RLS for server-side operations
 function getServiceClient() {
@@ -140,8 +141,9 @@ export async function sendAlertWhatsApp(alert: AlertWithRelations): Promise<void
     return
   }
 
-  const message = `Olá, ${patient.full_name}! 👁️ Sua consulta de renovação de óculos está se aproximando. Agende já seu exame com nossa equipe!`
-  await sendWhatsApp(patient.phone, message)
+  // A mensageria escolhe provedor E formato: a Cloud API da Meta exige template
+  // aprovado para mensagem iniciada pela clínica, os outros aceitam texto livre.
+  await sendWhatsAppRecall(patient.phone, patient.full_name)
 }
 
 /**
@@ -170,6 +172,8 @@ interface DispatchResult {
   failed: number
   skipped: number
   failures: Array<{ alertId: string; reason: string }>
+  /** Por que cada alerta foi pulado. Pulado nao e falha, mas precisa se explicar. */
+  skips: Array<{ alertId: string; reason: string }>
 }
 
 /**
@@ -227,7 +231,7 @@ export async function dispatchDueAlerts(daysAhead = 7): Promise<DispatchResult> 
     .limit(MAX_ALERTS_PER_RUN)
 
   if (error) throw new Error(`Failed to fetch alerts: ${error.message}`)
-  if (!alerts || alerts.length === 0) return { sent: 0, failed: 0, skipped: 0, failures: [] }
+  if (!alerts || alerts.length === 0) return { sent: 0, failed: 0, skipped: 0, failures: [], skips: [] }
 
   let sent = 0
   let failed = 0
@@ -238,6 +242,7 @@ export async function dispatchDueAlerts(daysAhead = 7): Promise<DispatchResult> 
   // obriga a redeployar com log extra para descobrir o que aconteceu. Quem chama
   // a rota já provou ter o CRON_SECRET, então não há a quem vazar.
   const failures: Array<{ alertId: string; reason: string }> = []
+  const skips: Array<{ alertId: string; reason: string }> = []
 
   // Um lote costuma repetir a mesma clínica várias vezes, e cada consulta de
   // plano abre um cliente Supabase novo. Memoiza pelo tempo da execução.
@@ -248,6 +253,19 @@ export async function dispatchDueAlerts(daysAhead = 7): Promise<DispatchResult> 
 
     const allowed = await hasFeatureAsService(clinicId, 'auto_alerts')
     autoAlertsByClinic.set(clinicId, allowed)
+    return allowed
+  }
+
+  // Mesma memoização para os canais pagos: sem ela, um lote de 100 alertas da
+  // mesma clínica abriria 200 clientes Supabase para responder duas perguntas.
+  const permissoesPorClinica = new Map<string, boolean>()
+  const clinicPermite = async (clinicId: string, canal: 'whatsapp' | 'sms') => {
+    const chave = `${clinicId}:${canal}`
+    const cached = permissoesPorClinica.get(chave)
+    if (cached !== undefined) return cached
+
+    const allowed = await hasFeatureAsService(clinicId, canal)
+    permissoesPorClinica.set(chave, allowed)
     return allowed
   }
 
@@ -271,21 +289,40 @@ export async function dispatchDueAlerts(daysAhead = 7): Promise<DispatchResult> 
       // cliente que não assinou o automático.
       if (!(await clinicHasAutoAlerts(patient.clinic_id))) {
         skipped++
+        skips.push({ alertId: alert.id, reason: 'plano sem recall automático (envio manual)' })
         continue
       }
 
-      if (alert.channel === 'EMAIL') {
-        await sendAlertEmail(alert)
-      } else if (alert.channel === 'WHATSAPP') {
-        await sendAlertWhatsApp(alert)
-      } else if (alert.channel === 'SMS') {
-        await sendAlertSMS(alert)
+      // O canal é decidido AGORA, não na criação do alerta. Entre o exame e o
+      // lembrete passa um ano: nesse intervalo o paciente ganha WhatsApp, a
+      // clínica muda de plano, o e-mail deixa de existir.
+      const { canal, motivo } = resolveAlertChannel(alert.channel, patient, {
+        whatsapp: await clinicPermite(patient.clinic_id, 'whatsapp'),
+        sms: await clinicPermite(patient.clinic_id, 'sms'),
+      })
+
+      if (!canal) {
+        skipped++
+        skips.push({ alertId: alert.id, reason: motivo })
+        continue
       }
 
-      // Mark as SENT
+      const alertNoCanal: AlertWithRelations = { ...alert, channel: canal }
+
+      if (canal === 'EMAIL') {
+        await sendAlertEmail(alertNoCanal)
+      } else if (canal === 'WHATSAPP') {
+        await sendAlertWhatsApp(alertNoCanal)
+      } else {
+        await sendAlertSMS(alertNoCanal)
+      }
+
+      // Grava o canal que de fato saiu, não o que estava previsto: sem isso, a
+      // lista de alertas continuaria dizendo "EMAIL" para um lembrete que foi
+      // por WhatsApp.
       await supabase
         .from('alerts')
-        .update({ status: 'SENT', sent_at: new Date().toISOString() })
+        .update({ status: 'SENT', sent_at: new Date().toISOString(), channel: canal })
         .eq('id', alert.id)
 
       sent++
@@ -299,5 +336,5 @@ export async function dispatchDueAlerts(daysAhead = 7): Promise<DispatchResult> 
     }
   }
 
-  return { sent, failed, skipped, failures }
+  return { sent, failed, skipped, failures, skips }
 }

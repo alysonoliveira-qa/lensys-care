@@ -34,7 +34,11 @@ Conferir de onde a resposta saiu: header `x-vercel-id`, que deve mostrar `gru1::
 - **ORM de domínio:** Prisma (`packages/db`)
 - **Pagamentos:** Stripe (checkout, portal, webhooks)
 - **Email:** Resend (`apps/web/lib/email/`) — domínio `lensyscare.com.br` verificado
-- **Mensageria:** Twilio (SMS/WhatsApp), Z-API (placeholder para plano Conecta)
+- **Mensageria:** WhatsApp pela **Meta Cloud API** (oficial, preferido —
+  `lib/messaging/providers/meta.ts`), com Z-API e Twilio como alternativas. Recall é mensagem
+  iniciada pela clínica, fora da janela de 24h, então sai como **template aprovado** — texto
+  livre volta com erro 131047. O canal do alerta é resolvido **no disparo**, não na criação
+  (`lib/alerts/alert-channel.ts`): entre o exame e o lembrete passa um ano.
 - **Testes:** Vitest (unit, `apps/web/__tests__`) + Cypress (E2E, `cypress/e2e`)
 
 ## Estrutura
