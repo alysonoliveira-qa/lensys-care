@@ -26,7 +26,7 @@ function SubmitButton({ isEditing }: { isEditing: boolean }) {
   return (
     <Button
       type="submit"
-      className="h-10 rounded-xl bg-indigo-600 px-5 font-semibold hover:bg-indigo-500"
+      className="h-10 rounded-xl bg-primary px-5 font-semibold hover:bg-primary/90"
       disabled={pending}
       data-cy="referrer-submit"
     >
@@ -50,9 +50,9 @@ export default function ReferrerForm({ referrer, onDone }: ReferrerFormProps) {
   }, [state.status, onDone])
 
   const labelClassName =
-    'mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400'
+    'mb-1 block text-xs font-semibold uppercase tracking-wider text-muted-foreground'
   const fieldClassName =
-    'h-11 w-full rounded-xl border border-slate-200/80 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm outline-none transition-all focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/15 dark:border-slate-800 dark:bg-slate-950/30 dark:text-slate-200'
+    'h-11 w-full rounded-xl border border-border bg-card px-3 text-sm font-medium text-foreground shadow-sm outline-none transition-all focus:border-primary/30 focus:ring-4 focus:ring-ring/20'
 
   return (
     <form action={formAction} className="space-y-3" data-cy="referrer-form">
@@ -73,7 +73,7 @@ export default function ReferrerForm({ referrer, onDone }: ReferrerFormProps) {
             data-cy="referrer-name-input"
           />
           {state.fieldErrors?.name ? (
-            <p className="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+            <p className="mt-1 text-xs font-medium text-destructive">
               {state.fieldErrors.name}
             </p>
           ) : null}
@@ -93,7 +93,7 @@ export default function ReferrerForm({ referrer, onDone }: ReferrerFormProps) {
             data-cy="referrer-pix-input"
           />
           {state.fieldErrors?.pixKey ? (
-            <p className="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+            <p className="mt-1 text-xs font-medium text-destructive">
               {state.fieldErrors.pixKey}
             </p>
           ) : null}
@@ -113,7 +113,7 @@ export default function ReferrerForm({ referrer, onDone }: ReferrerFormProps) {
             data-cy="referrer-whatsapp-input"
           />
           {state.fieldErrors?.whatsapp ? (
-            <p className="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+            <p className="mt-1 text-xs font-medium text-destructive">
               {state.fieldErrors.whatsapp}
             </p>
           ) : null}
@@ -122,7 +122,7 @@ export default function ReferrerForm({ referrer, onDone }: ReferrerFormProps) {
 
       {state.status === 'error' ? (
         <p
-          className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-300"
+          className="rounded-xl border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive"
           data-cy="referrer-form-error"
         >
           {state.message}

@@ -47,17 +47,17 @@ export default function PatientsListFilters({
   }
 
   const inputClassName =
-    'h-11 w-full rounded-xl border border-slate-200/80 bg-white pl-10 pr-4 text-sm font-medium text-slate-700 shadow-sm shadow-slate-200/40 outline-none transition-all duration-200 placeholder:font-normal placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/15 dark:border-slate-800 dark:bg-slate-950/30 dark:text-slate-200 dark:shadow-none dark:hover:border-slate-700 dark:placeholder:text-slate-500'
+    'h-11 w-full rounded-xl border border-border bg-card pl-10 pr-4 text-sm font-medium text-foreground shadow-sm outline-none transition-all duration-200 placeholder:font-normal placeholder:text-muted-foreground hover:border-border focus:border-primary/30 focus:ring-4 focus:ring-ring/20'
 
   const selectClassName =
-    'h-11 w-full appearance-none rounded-xl border border-slate-200/80 bg-white px-4 pr-10 text-sm font-medium text-slate-700 shadow-sm shadow-slate-200/40 outline-none transition-all duration-200 hover:border-slate-300 focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/15 dark:border-slate-800 dark:bg-slate-950/30 dark:text-slate-200 dark:shadow-none dark:hover:border-slate-700'
+    'h-11 w-full appearance-none rounded-xl border border-border bg-card px-4 pr-10 text-sm font-medium text-foreground shadow-sm outline-none transition-all duration-200 hover:border-border focus:border-primary/30 focus:ring-4 focus:ring-ring/20'
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
       <div className="flex-1">
         <label
           htmlFor="patients-search"
-          className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500"
+          className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted-foreground"
         >
           Busca
         </label>
@@ -72,12 +72,12 @@ export default function PatientsListFilters({
             className={inputClassName}
             data-cy="patients-search-input"
           />
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         </div>
       </div>
 
       <div className="flex flex-col gap-1 md:w-56">
-        <label htmlFor="patients-sort" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <label htmlFor="patients-sort" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Ordenar por
         </label>
         <div className="relative">
@@ -92,14 +92,14 @@ export default function PatientsListFilters({
             <option value="name">Nome A-Z</option>
             <option value="birthdate">Data de nascimento</option>
           </select>
-          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         </div>
       </div>
 
       <Button
         type="submit"
         variant="secondary"
-        className="h-11 rounded-xl border border-slate-200/80 bg-white px-6 font-semibold text-slate-700 shadow-sm shadow-slate-200/40 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950/30 dark:text-slate-200 dark:shadow-none dark:hover:border-slate-700 dark:hover:bg-slate-950"
+        className="h-11 rounded-xl border border-border bg-card px-6 font-semibold text-foreground shadow-sm transition-all duration-200 hover:border-border hover:bg-muted"
       >
         Filtrar
       </Button>
