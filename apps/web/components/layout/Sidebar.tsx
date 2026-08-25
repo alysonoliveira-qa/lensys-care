@@ -114,13 +114,13 @@ export default function Sidebar({
 
         <div className={`flex h-16 items-center border-b border-sidebar-border ${isCollapsed ? 'justify-center px-2' : 'justify-between gap-3 px-4 lg:px-6'}`}>
           <div className="flex min-w-0 items-center gap-3 overflow-hidden">
-            <BrandMark className="h-8 w-8 flex-shrink-0 text-indigo-400" />
+            <BrandMark className="h-10 w-10 flex-shrink-0 text-indigo-400" />
             {!isCollapsed && (
               <div className="flex min-w-0 flex-col">
-                <span className="text-sm font-extrabold leading-none tracking-tight text-white">
+                <span className="text-lg font-extrabold leading-none tracking-tight text-white">
                   Lensys <span className="text-indigo-400">Care</span>
                 </span>
-                <span className="mt-1 truncate text-[10px] font-semibold text-sidebar-foreground/70">
+                <span className="mt-1.5 truncate text-[11px] font-semibold text-sidebar-foreground/70">
                   {clinic?.name || 'Carregando clínica...'}
                 </span>
               </div>
