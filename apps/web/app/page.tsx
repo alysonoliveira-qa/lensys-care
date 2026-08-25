@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Activity, Bell, LayoutDashboard, Sparkles, Users } from 'lucide-react'
 
+import BrandMark from '@/components/brand/BrandMark'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
@@ -33,9 +34,7 @@ export default function Home() {
       <div className="relative z-10 mx-auto flex min-h-[calc(100vh-5rem)] max-w-5xl items-center justify-center">
         <div className="w-full">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/20">
-              <Sparkles className="h-7 w-7 text-white" />
-            </div>
+            <BrandMark className="mx-auto mb-5 h-20 w-20 text-indigo-400" />
 
             <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
               Lensys <span className="text-indigo-400">Care</span>

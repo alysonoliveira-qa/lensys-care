@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 64" width="240" height="64" role="img" aria-label="Lensys Care">
+  <title>Lensys Care</title>
+  <!-- Assinatura horizontal, fundo escuro. O indigo sobe de 600 para 500 no
+       símbolo e para 400 em "Care" — o mesmo ajuste que os tokens do app
+       fazem no `.dark`, porque o 600 perde contraste sobre slate-950. -->
+  <g transform="translate(-18.1436 0)">
+    <path fill="#6366F1" fill-rule="evenodd" d="M32 8A27.713 27.713 0 0 1 32 56A27.713 27.713 0 0 1 32 8ZM32 26.8a5.2 5.2 0 1 0 0 10.4 5.2 5.2 0 1 0 0-10.4Z"/>
+    <path fill="none" stroke="#FFFFFF" stroke-opacity=".55" stroke-width="2.4" stroke-linecap="round" d="M25.07 19.01A24.513 24.513 0 0 0 21.37 30.72"/>
+  </g>
+  <text x="44" y="42" font-family="Geist, 'Geist Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="30" letter-spacing="-0.6">
+    <tspan fill="#F8FAFC" font-weight="600">Lensys</tspan><tspan fill="#818CF8" font-weight="400" dx="7">Care</tspan>
+  </text>
+</svg>

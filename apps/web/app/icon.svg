@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Lensys Care">
+  <title>Lensys Care</title>
+  <!-- Convenção de arquivo do App Router: `app/icon.svg` vira o <link rel="icon">
+       de todas as rotas, sem precisar declarar `metadata.icons`.
+       Sem brilho especular de propósito — a 16px o traço fecha e vira sujeira.
+       O furo do símbolo deixa o indigo do fundo passar; não há miolo branco. -->
+  <rect width="512" height="512" rx="112" fill="#4F46E5"/>
+  <g transform="translate(56 56) scale(6.25)">
+    <path fill="#FFFFFF" fill-rule="evenodd" d="M32 8A27.713 27.713 0 0 1 32 56A27.713 27.713 0 0 1 32 8ZM32 26.8a5.2 5.2 0 1 0 0 10.4 5.2 5.2 0 1 0 0-10.4Z"/>
+  </g>
+</svg>

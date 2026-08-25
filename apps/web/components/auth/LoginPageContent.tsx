@@ -3,8 +3,9 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Eye, EyeOff, Loader2, Sparkles } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react'
 
+import BrandMark from '@/components/brand/BrandMark'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -107,9 +108,7 @@ export default function LoginPageContent({
         )}
 
         <div className="mb-6 flex flex-col items-center">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/20 animate-pulse">
-            <Sparkles className="h-6 w-6 text-white" />
-          </div>
+          <BrandMark className="mb-3 h-14 w-14 text-indigo-400" />
           <h1 className="text-3xl font-extrabold tracking-tight text-white">
             Lensys <span className="text-indigo-400">Care</span>
           </h1>
