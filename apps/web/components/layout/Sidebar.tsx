@@ -7,15 +7,10 @@ import SidebarProfileSection from '@/components/layout/SidebarProfileSection'
 import SidebarNavigation from '@/components/layout/sidebar/SidebarNavigation'
 import SidebarPlanStatus from '@/components/layout/sidebar/SidebarPlanStatus'
 import useSidebarState from '@/components/layout/sidebar/useSidebarState'
+import BrandMark from '@/components/brand/BrandMark'
 import { getPlanDisplayName } from '@/lib/plans/plan-display-config'
 import { planIncludesPremiumFeatures } from '@/lib/plans/plan-feature-config'
-import {
-  LogOut,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Sparkles,
-  X,
-} from 'lucide-react'
+import { ChevronLeft, ChevronRight, LogOut, X } from 'lucide-react'
 
 interface ClinicSummary {
   name: string
@@ -119,9 +114,7 @@ export default function Sidebar({
 
         <div className={`flex h-16 items-center border-b border-sidebar-border ${isCollapsed ? 'justify-center px-2' : 'justify-between gap-3 px-4 lg:px-6'}`}>
           <div className="flex min-w-0 items-center gap-3 overflow-hidden">
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/10">
-              <Sparkles className="h-4.5 w-4.5 text-white" />
-            </div>
+            <BrandMark className="h-8 w-8 flex-shrink-0 text-indigo-400" />
             {!isCollapsed && (
               <div className="flex min-w-0 flex-col">
                 <span className="text-sm font-extrabold leading-none tracking-tight text-white">
@@ -134,19 +127,6 @@ export default function Sidebar({
             )}
           </div>
 
-          {!isMobile && (
-            <button
-              type="button"
-              onClick={handleToggleCollapse}
-              className="rounded-lg border border-sidebar-border bg-slate-950/50 p-2 text-sidebar-foreground transition-colors hover:border-slate-700 hover:bg-sidebar-accent hover:text-white"
-              aria-label={isCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
-              title={isCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
-              data-cy="sidebar-collapse-button"
-            >
-              {isCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-            </button>
-          )}
-
           {isMobile && (
             <button
               type="button"
@@ -158,6 +138,31 @@ export default function Sidebar({
             </button>
           )}
         </div>
+
+        {/* Etiqueta de recolher: metade dentro, metade fora da borda direita.
+            Dentro do cabeçalho ela dividia os ~56px úteis com o quadrado da
+            marca quando o menu estava colapsado (4.5rem menos o px-2), e
+            acabava por cima dele. Na borda, o cabeçalho colapsado fica só com
+            a marca e o alvo de clique deixa de depender da largura do menu.
+            `hidden md:flex` além do `!isMobile`: até o primeiro efeito medir a
+            viewport, `viewportMode` vale 'desktop', e sem a classe a etiqueta
+            piscaria na gaveta do celular. */}
+        {!isMobile && (
+          <button
+            type="button"
+            onClick={handleToggleCollapse}
+            className="absolute -right-3 top-8 z-30 hidden h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground shadow-md shadow-slate-950/40 transition-colors hover:bg-sidebar-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 md:flex"
+            aria-label={isCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+            title={isCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+            data-cy="sidebar-collapse-button"
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronLeft className="h-3.5 w-3.5" />
+            )}
+          </button>
+        )}
 
         <SidebarNavigation
           pathname={pathname}

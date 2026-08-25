@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import BrandMark from '@/components/brand/BrandMark'
 import { prisma } from '@/lib/db'
 import AcceptInviteForm from './AcceptInviteForm'
 
@@ -80,6 +81,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
 
       <div className="z-10 w-full max-w-md" data-cy="invite-page">
         <div className="mb-6 text-center">
+          <BrandMark className="mx-auto mb-3 h-14 w-14 text-indigo-400" />
           <h1 className="text-3xl font-extrabold tracking-tight text-white">
             Lensys <span className="text-indigo-400">Care</span>
           </h1>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Lensys Care">
+  <title>Lensys Care</title>
+  <!-- Versão de uma cor só: herda `currentColor`, então acompanha o texto
+       ao redor. Use em carimbo, gravação, fax, favicon 16px e qualquer
+       lugar onde o brilho especular fecharia. -->
+  <path fill="currentColor" fill-rule="evenodd" d="M32 8A27.713 27.713 0 0 1 32 56A27.713 27.713 0 0 1 32 8ZM32 26.8a5.2 5.2 0 1 0 0 10.4 5.2 5.2 0 1 0 0-10.4Z"/>
+</svg>

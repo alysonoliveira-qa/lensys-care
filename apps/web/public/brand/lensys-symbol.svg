@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Lensys Care">
+  <title>Lensys Care</title>
+  <!-- Lente em corte: dois arcos circulares espelhados (vesica equilátera,
+       r = 2h/√3). O furo central é buraco de verdade (fill-rule evenodd),
+       não círculo branco por cima — assim o símbolo funciona sobre
+       qualquer fundo, inclusive foto. -->
+  <path fill="#4F46E5" fill-rule="evenodd" d="M32 8A27.713 27.713 0 0 1 32 56A27.713 27.713 0 0 1 32 8ZM32 26.8a5.2 5.2 0 1 0 0 10.4 5.2 5.2 0 1 0 0-10.4Z"/>
+  <!-- Brilho especular: arco concêntrico ao gume esquerdo. É o que faz a
+       forma ler como vidro, e não como folha. -->
+  <path fill="none" stroke="#FFFFFF" stroke-opacity=".6" stroke-width="2.4" stroke-linecap="round" d="M25.07 19.01A24.513 24.513 0 0 0 21.37 30.72"/>
+</svg>
