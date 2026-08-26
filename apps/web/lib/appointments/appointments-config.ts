@@ -76,7 +76,11 @@ export function getAppointmentActions(status: AppointmentStatus): AppointmentAct
 }
 
 /**
- * Gratificação por indicação comparecida (R$10). Reservada para o módulo financeiro:
- * o MVP só conta indicações pendentes, sem exibir ou somar valores.
+ * Gratificação por indicação comparecida (R$10).
+ *
+ * Usada por `markReferralsPaid` para calcular a saída lançada no caixa quando a
+ * clínica paga o indicante. Deixou de ser valor reservado em 26/08/2026, com o
+ * módulo Financeiro — a aba de indicantes continua sem exibir R$, de propósito:
+ * o valor aparece no caixa, que é onde se fala de dinheiro.
  */
 export const REFERRAL_FEE_CENTS = 1000

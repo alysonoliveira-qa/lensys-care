@@ -1,12 +1,15 @@
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 import { SIDEBAR_NAV_ITEMS } from '@/lib/navigation/nav-items'
+import { hasPlanFeatureAccess } from '@/lib/plans/plan-feature-config'
 
 interface SidebarNavigationProps {
   pathname: string
   pendingPath: string | null
   isCollapsed: boolean
   onNavigate: (path: string, isActive: boolean) => void
+  plan: string | null
+  status: string | null
 }
 
 export default function SidebarNavigation({
@@ -14,10 +17,18 @@ export default function SidebarNavigation({
   pendingPath,
   isCollapsed,
   onNavigate,
+  plan,
+  status,
 }: SidebarNavigationProps) {
+  // Esconder o que o plano não inclui. A rota valida de novo por conta própria:
+  // isto aqui é arrumação de menu, não controle de acesso.
+  const items = SIDEBAR_NAV_ITEMS.filter(
+    (item) => !item.requiresFeature || hasPlanFeatureAccess(plan, status, item.requiresFeature)
+  )
+
   return (
     <nav className={`flex-1 space-y-1.5 overflow-y-auto py-6 ${isCollapsed ? 'px-2' : 'px-3 lg:px-4'}`}>
-      {SIDEBAR_NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const isDashboardRootItem = item.href === '/dashboard'
         const isActive = isDashboardRootItem
           ? pathname === item.href

@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   referrerUpdateMany: vi.fn(),
   appointmentUpdateMany: vi.fn(),
   appointmentCount: vi.fn(),
+  financialEntryCreate: vi.fn(),
 }))
 
 const tx = {
@@ -15,6 +16,7 @@ const tx = {
     updateMany: mocks.appointmentUpdateMany,
     count: mocks.appointmentCount,
   },
+  financialEntry: { create: mocks.financialEntryCreate },
 }
 
 vi.mock('@/lib/db', () => ({
@@ -51,6 +53,7 @@ describe('referrers data — tenant na borda', () => {
     mocks.referrerUpdateMany.mockResolvedValue({ count: 1 })
     mocks.appointmentUpdateMany.mockResolvedValue({ count: 3 })
     mocks.appointmentCount.mockResolvedValue(0)
+    mocks.financialEntryCreate.mockResolvedValue({ id: 'entry-1' })
   })
 
   it('lists referrers scoped by clinic, ordered by name', async () => {
@@ -147,15 +150,17 @@ describe('referrers data — tenant na borda', () => {
 describe('markReferralsPaid', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.referrerFindFirst.mockResolvedValue({ id: 'referrer-clinic-a' })
+    mocks.referrerFindFirst.mockResolvedValue({ id: 'referrer-clinic-a', name: 'Ótica Vizinha' })
     mocks.appointmentUpdateMany.mockResolvedValue({ count: 3 })
     mocks.appointmentCount.mockResolvedValue(0)
+    mocks.financialEntryCreate.mockResolvedValue({ id: 'entry-1' })
   })
 
   it('stamps every pending referral of the referrer and rechecks the counter', async () => {
     const result = await markReferralsPaid({
       clinicId: 'clinic-a',
       referrerId: 'referrer-clinic-a',
+      paidBy: 'profile-1',
     })
 
     expect(result).toMatchObject({ ok: true, paidCount: 3, pendingCount: 0 })
@@ -173,12 +178,61 @@ describe('markReferralsPaid', () => {
     expect(mocks.appointmentCount.mock.calls[0][0].where).toEqual(updateArgs.where)
   })
 
+  // O pagamento do indicante virou saida de caixa: as duas coisas acontecem na
+  // mesma transacao, ou nenhuma acontece.
+  it('lanca a gratificacao como saida no caixa, na mesma transacao', async () => {
+    await markReferralsPaid({
+      clinicId: 'clinic-a',
+      referrerId: 'referrer-clinic-a',
+      paidBy: 'profile-1',
+      feeCents: 1000,
+    })
+
+    const args = mocks.financialEntryCreate.mock.calls[0][0]
+
+    expect(args.data).toMatchObject({
+      clinic_id: 'clinic-a',
+      type: 'EXPENSE',
+      amount_cents: 3000, // 3 indicacoes x R$ 10,00
+      referrer_id: 'referrer-clinic-a',
+      created_by: 'profile-1',
+      payment_method: 'PIX',
+    })
+    expect(args.data.description).toContain('Ótica Vizinha')
+    expect(args.data.description).toContain('3 indicações')
+  })
+
+  it('usa a gratificacao padrao quando nenhuma e informada', async () => {
+    const result = await markReferralsPaid({
+      clinicId: 'clinic-a',
+      referrerId: 'referrer-clinic-a',
+      paidBy: 'profile-1',
+    })
+
+    expect(result).toMatchObject({ ok: true, totalCents: 3000 })
+  })
+
+  // Linha de R$ 0,00 sujaria o fechamento do dia sem representar dinheiro nenhum.
+  it('nao lanca nada no caixa quando nao havia indicacao pendente', async () => {
+    mocks.appointmentUpdateMany.mockResolvedValue({ count: 0 })
+
+    const result = await markReferralsPaid({
+      clinicId: 'clinic-a',
+      referrerId: 'referrer-clinic-a',
+      paidBy: 'profile-1',
+    })
+
+    expect(result).toMatchObject({ ok: true, paidCount: 0, totalCents: 0 })
+    expect(mocks.financialEntryCreate).not.toHaveBeenCalled()
+  })
+
   it('reports what is still pending when a consultation is attended mid-payment', async () => {
     mocks.appointmentCount.mockResolvedValue(1)
 
     const result = await markReferralsPaid({
       clinicId: 'clinic-a',
       referrerId: 'referrer-clinic-a',
+      paidBy: 'profile-1',
     })
 
     expect(result).toMatchObject({ ok: true, paidCount: 3, pendingCount: 1 })
@@ -190,9 +244,11 @@ describe('markReferralsPaid', () => {
     const result = await markReferralsPaid({
       clinicId: 'clinic-a',
       referrerId: 'referrer-clinic-b',
+      paidBy: 'profile-1',
     })
 
     expect(result).toMatchObject({ ok: false, error: 'REFERRER_NOT_FOUND', status: 404 })
+    expect(mocks.financialEntryCreate).not.toHaveBeenCalled()
     expect(mocks.referrerFindFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'referrer-clinic-b', clinic_id: 'clinic-a' },

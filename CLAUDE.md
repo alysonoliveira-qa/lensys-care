@@ -97,9 +97,14 @@ Multi-tenant com **Clinic** como tenant raiz:
   TIME opcional = fila do dia por `created_at`) e `Referrer` (indicante: nome + PIX +
   WhatsApp). `Appointment.referrer_id` + `referral_paid_at` sustentam o contador de
   indicações pendentes.
+- `Clinic` → `FinancialEntry` (caixa: `type` INCOME/EXPENSE, `amount_cents` inteiro,
+  `entry_date` DATE de parede, `payment_method`). Vínculos opcionais com `Patient`,
+  `Appointment` e `Referrer`, todos `ON DELETE SET NULL` — apagar cadastro não pode
+  apagar histórico de caixa.
 - Enums: `Role` (OWNER/OPTOMETRIST/RECEPTIONIST), `InviteStatus` (PENDING/ACCEPTED/EXPIRED/REVOKED),
   `Plan` (ESSENTIAL/CONECTA), `SubscriptionStatus`, `PaymentStatus`, `AlertStatus`, `AlertChannel`,
-  `AppointmentStatus` (SCHEDULED/ATTENDED/CANCELED)
+  `AppointmentStatus` (SCHEDULED/ATTENDED/CANCELED), `FinancialEntryType` (INCOME/EXPENSE),
+  `PaymentMethod` (CASH/PIX/DEBIT/CREDIT/TRANSFER/OTHER)
 
 ### Campos importantes adicionados em 10/06/2026
 
@@ -123,6 +128,7 @@ Multi-tenant com **Clinic** como tenant raiz:
 | `012_revoke_public_execute_on_rls_auto_enable.sql` | Revoga EXECUTE público da função SECURITY DEFINER `rls_auto_enable()` |
 | `013_drop_stray_demo_table.sql` | Remove `"Lensys Care Demo"`, tabela de teste criada fora das migrations |
 | `014_grant_service_role_on_public_tables.sql` | Restaura os grants do `service_role`, perdidos no restore para `sa-east-1` |
+| `015_add_financial_entries.sql` | Financeiro: enums `financial_entry_type`/`payment_method`, tabela `financial_entries` + RLS + índices |
 
 > **Importante:** O projeto usa SQL direto no Supabase, NÃO `prisma migrate dev`
 > (histórico de migrations está em `supabase/migrations/`).
@@ -156,10 +162,33 @@ Multi-tenant com **Clinic** como tenant raiz:
 - **Indicantes ("corretas")** — aba em `/patients?tab=indicantes`: cadastro (nome + PIX +
   WhatsApp), contador de indicações pendentes (`ATTENDED` + `referrer_id` +
   `referral_paid_at IS NULL`) e fluxo Pagar → mostra PIX → Marcar pago
-  (`markReferralsPaid` em transação, com recontagem). Sem valores em R$ no MVP —
-  `REFERRAL_FEE_CENTS` fica reservado para o módulo financeiro.
+  (`markReferralsPaid` em transação, com recontagem). O pagamento agora **lança a saída no
+  caixa** na mesma transação, usando `REFERRAL_FEE_CENTS` (R$ 10) por indicação — ver
+  a seção Financeiro.
 - **Papéis:** ⚠️ diferente dos exames, `RECEPTIONIST` **pode** criar consultas e mudar
   status. A proteção é validação de tenant na borda, não guard de papel.
+
+## Financeiro (caixa) — plano Professional
+
+- **`/financeiro`** — caixa da clínica: entradas e saídas com forma de pagamento, resumo
+  do período (entradas, saídas, saldo, contagem) e lista de lançamentos. Período por
+  preset (`?preset=hoje|7dias|mes`) ou intervalo explícito (`?from=&to=`).
+- **Domínio:** `lib/financeiro/` (`-data`, `-mappers`, `-normalizers`, `-config`, `-period`).
+- **Dinheiro é `Int` em centavos, sempre.** Nunca float, nunca `NUMERIC` com decimal:
+  caixa que não fecha por um centavo destrói a confiança no módulo. O **sinal vem de
+  `type`**, nunca do número — valor negativo em INCOME seria um segundo jeito de dizer
+  "saída", e é assim que relatório passa a somar errado.
+- **`parseAmountToCents` tem parser próprio de propósito.** `Number('1.234')` é `1.234`,
+  então mil duzentos e trinta e quatro reais viraria um real e vinte e três centavos, em
+  silêncio. A regra é o **último** separador mandar; ponto com três casas é milhar.
+- **Fuso:** `entry_date` é DATE de parede, igual `appointment_date`. Formatar sempre com
+  `formatAppointmentDate` (getters UTC), senão o fechamento cai no dia anterior em UTC-3.
+- **Gate:** recurso `financeiro` em `PLAN_FEATURE_CONFIG`, só do Professional para cima.
+  Validado **na rota e na server action** — esconder o item da sidebar é arrumação de
+  menu, não controle de acesso.
+- **Indicantes:** `markReferralsPaid` cria o lançamento de saída **na mesma transação** em
+  que carimba `referral_paid_at`. Separar as duas abriria a janela em que a indicação está
+  quitada e o dinheiro não saiu de lugar nenhum — e nada voltaria a lembrar disso.
 
 ## Padrão de código (obrigatório — ver `docs/module-pattern.md`)
 

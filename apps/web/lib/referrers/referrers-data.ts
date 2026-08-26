@@ -1,4 +1,10 @@
 import { prisma } from '@/lib/db'
+import { REFERRAL_FEE_CENTS } from '@/lib/appointments/appointments-config'
+import {
+  appointmentDateToUtc,
+  todayAppointmentDate,
+} from '@/lib/appointments/appointments-normalizers'
+import { buildReferralPaymentDescription } from '@/lib/financeiro/financeiro-config'
 
 import {
   validateReferrerInput,
@@ -192,25 +198,49 @@ export async function setReferrerActive({
 export interface MarkReferralsPaidInput {
   clinicId: string
   referrerId: string
+  /**
+   * Quem está pagando. Necessário porque o pagamento agora vira lançamento de
+   * caixa, e lançamento sem autor não se audita.
+   */
+  paidBy: string
+  /** Gratificação por indicação, em centavos. Default: `REFERRAL_FEE_CENTS`. */
+  feeCents?: number
 }
 
 export type MarkReferralsPaidResult =
-  | { ok: true; paidCount: number; pendingCount: number; paidAt: Date }
+  | {
+      ok: true
+      paidCount: number
+      pendingCount: number
+      paidAt: Date
+      /** Total lançado como saída no caixa. Zero quando não havia o que pagar. */
+      totalCents: number
+    }
   | ReferrerNotFoundResult
 
 /**
- * Carimba todas as indicações pendentes do indicante ("no fim do dia pago tudo").
+ * Carimba todas as indicações pendentes do indicante ("no fim do dia pago tudo")
+ * **e registra a saída no caixa**, na mesma transação.
+ *
  * Roda em transação e reconta ao final: se uma consulta virar "Compareceu" no meio do
  * pagamento, ela aparece em `pendingCount` em vez de sumir sem ser paga.
+ *
+ * O lançamento entra junto e não depois de propósito. Marcar pago numa transação
+ * e lançar no caixa em outra abre a janela em que a indicação está quitada e o
+ * dinheiro não saiu de lugar nenhum — e como `referral_paid_at` já está carimbado,
+ * nada no sistema volta a lembrar que faltou lançar. Aqui, ou as duas coisas
+ * acontecem, ou nenhuma.
  */
 export function markReferralsPaid({
   clinicId,
   referrerId,
+  paidBy,
+  feeCents = REFERRAL_FEE_CENTS,
 }: MarkReferralsPaidInput): Promise<MarkReferralsPaidResult> {
   return prisma.$transaction(async (tx) => {
     const referrer = await tx.referrer.findFirst({
       where: { id: referrerId, clinic_id: clinicId },
-      select: { id: true },
+      select: { id: true, name: true },
     })
 
     if (!referrer) {
@@ -226,7 +256,25 @@ export function markReferralsPaid({
     })
 
     const pendingCount = await tx.appointment.count({ where })
+    const totalCents = updated.count * feeCents
 
-    return { ok: true as const, paidCount: updated.count, pendingCount, paidAt }
+    // Sem indicação paga não há saída: um lançamento de R$ 0,00 sujaria o
+    // fechamento do dia com linha que não representa dinheiro nenhum.
+    if (updated.count > 0) {
+      await tx.financialEntry.create({
+        data: {
+          clinic_id: clinicId,
+          type: 'EXPENSE',
+          amount_cents: totalCents,
+          description: buildReferralPaymentDescription(referrer.name, updated.count),
+          payment_method: 'PIX', // o fluxo de pagamento do indicante é PIX (chave no cadastro)
+          entry_date: appointmentDateToUtc(todayAppointmentDate(paidAt)),
+          referrer_id: referrerId,
+          created_by: paidBy,
+        },
+      })
+    }
+
+    return { ok: true as const, paidCount: updated.count, pendingCount, paidAt, totalCents }
   })
 }

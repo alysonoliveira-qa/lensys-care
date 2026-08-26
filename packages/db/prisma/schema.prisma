@@ -81,6 +81,24 @@ enum AppointmentStatus {
   @@map("appointment_status")
 }
 
+enum FinancialEntryType {
+  INCOME
+  EXPENSE
+
+  @@map("financial_entry_type")
+}
+
+enum PaymentMethod {
+  CASH
+  PIX
+  DEBIT
+  CREDIT
+  TRANSFER
+  OTHER
+
+  @@map("payment_method")
+}
+
 // ─── Clinic (Tenant) ─────────────────────────────────────────────────────────
 
 model Clinic {
@@ -95,14 +113,15 @@ model Clinic {
   created_at DateTime @default(now()) @db.Timestamptz
 
   // Relations
-  profiles        Profile[]
-  patients        Patient[]
-  subscription    Subscription?
-  stripe_customer StripeCustomer?
-  payments        Payment[]
-  invites         Invite[]
-  appointments    Appointment[]
-  referrers       Referrer[]
+  profiles          Profile[]
+  patients          Patient[]
+  subscription      Subscription?
+  stripe_customer   StripeCustomer?
+  payments          Payment[]
+  invites           Invite[]
+  appointments      Appointment[]
+  referrers         Referrer[]
+  financial_entries FinancialEntry[]
 
   @@map("clinics")
 }
@@ -141,10 +160,11 @@ model Patient {
   updated_at DateTime @updatedAt @db.Timestamptz
 
   // Relations
-  clinic       Clinic        @relation(fields: [clinic_id], references: [id], onDelete: Cascade)
-  exams        Exam[]
-  alerts       Alert[]
-  appointments Appointment[]
+  clinic            Clinic           @relation(fields: [clinic_id], references: [id], onDelete: Cascade)
+  exams             Exam[]
+  alerts            Alert[]
+  appointments      Appointment[]
+  financial_entries FinancialEntry[]
 
   @@map("patients")
 }
@@ -307,6 +327,8 @@ model Appointment {
   professional Profile?  @relation(fields: [professional_id], references: [id], onDelete: SetNull)
   referrer     Referrer? @relation(fields: [referrer_id], references: [id], onDelete: SetNull)
 
+  financial_entries FinancialEntry[]
+
   @@index([clinic_id, appointment_date])
   @@index([patient_id])
   @@index([referrer_id])
@@ -326,9 +348,49 @@ model Referrer {
   updated_at DateTime @updatedAt @db.Timestamptz
 
   // Relations
-  clinic       Clinic        @relation(fields: [clinic_id], references: [id], onDelete: Cascade)
-  appointments Appointment[]
+  clinic            Clinic           @relation(fields: [clinic_id], references: [id], onDelete: Cascade)
+  appointments      Appointment[]
+  financial_entries FinancialEntry[]
 
   @@index([clinic_id])
   @@map("referrers")
+}
+
+// ─── FinancialEntry (caixa) ──────────────────────────────────────────────────
+
+model FinancialEntry {
+  id        String             @id @default(uuid()) @db.Uuid
+  clinic_id String             @db.Uuid // tenant (RLS)
+  type      FinancialEntryType
+
+  /// Centavos, inteiro. O sinal vem de `type`, nunca do número: valor negativo
+  /// em INCOME seria um segundo jeito de dizer "saída", e é assim que relatório
+  /// passa a somar errado.
+  amount_cents Int
+
+  description    String
+  payment_method PaymentMethod @default(CASH)
+
+  /// Hora de parede, igual a `Appointment.appointment_date`. O Prisma devolve
+  /// DATE como instante UTC — formatar sempre com getters UTC.
+  entry_date DateTime @db.Date
+
+  patient_id     String? @db.Uuid
+  appointment_id String? @db.Uuid
+  referrer_id    String? @db.Uuid
+
+  created_by String   @db.Uuid // Profile.id de quem lançou (sem FK, igual a appointments)
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
+
+  // Relations — todas SetNull: apagar cadastro não pode apagar o histórico do caixa.
+  clinic      Clinic       @relation(fields: [clinic_id], references: [id], onDelete: Cascade)
+  patient     Patient?     @relation(fields: [patient_id], references: [id], onDelete: SetNull)
+  appointment Appointment? @relation(fields: [appointment_id], references: [id], onDelete: SetNull)
+  referrer    Referrer?    @relation(fields: [referrer_id], references: [id], onDelete: SetNull)
+
+  @@index([clinic_id, entry_date])
+  @@index([patient_id])
+  @@index([referrer_id])
+  @@map("financial_entries")
 }

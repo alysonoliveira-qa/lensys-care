@@ -124,6 +124,8 @@ describe('referrers actions', () => {
     expect(mocks.markReferralsPaid).toHaveBeenCalledWith({
       clinicId: 'clinic-a',
       referrerId: 'r1',
+      // Quem paga vem da sessao: o lancamento de caixa precisa de autor.
+      paidBy: 'profile-a',
     })
   })
 
