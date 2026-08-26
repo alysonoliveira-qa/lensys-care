@@ -37,16 +37,32 @@ duas faz alguém comprar chip antes da hora.
 | Passos | 1, 2, 4, 5, 6, 7 | acrescenta o Passo 3 |
 | Serve para | provar a tubulação ponta a ponta | atender a clínica-piloto de verdade |
 
-**Faça a 1A primeiro, e pare ali.** Ela prova que o template foi aprovado, que o provider
-dispara, que o cron entrega e que a mensagem chega — sem gastar nada e sem queimar número. Só
-vá para a 1B quando quiser falar com paciente de verdade.
+**Faça a 1A e pare ali.** Ela prova que o template foi aprovado, que o provider dispara, que o
+cron entrega e que a mensagem chega — sem gastar nada e sem queimar número. A 1B é o caminho
+de exceção, não o passo seguinte natural: veja a nota abaixo antes de sequer considerá-la.
 
-> **Antes de comprar chip para a 1B, resolva esta pergunta:** o App Review da Meta (Parte 2)
-> aceita demonstração gravada com número de teste? Se aceitar, dá para ir da 1A direto para a
-> Parte 2 e **nunca precisar de chip** — no Embedded Signup o Coexistence deixa a clínica usar
-> o número que a recepção já tem. Se não aceitar, a 1B vira pré-requisito da burocracia.
-> Isto está **em aberto** (26/08/2026): é exigência que a Meta revisa, e só o texto atual do
-> App Review responde. Não presuma nenhuma das duas respostas.
+**O que pular a 1B custa:** nenhum paciente real recebe WhatsApp até a Parte 2 ficar de pé. Isso
+é aceitável porque o prazo é folgado — `due_date = exame + 365`, e o primeiro disparo automático
+da base atual é **17/05/2027**.
+
+> **A 1B provavelmente nunca vai acontecer, e isso é bom.** A pergunta que decidia isso era se
+> o App Review da Parte 2 aceita demonstração gravada com número de teste. Conferido no texto
+> oficial em 26/08/2026: **os dois vídeos exigidos saem inteiros da 1A.**
+>
+> - `whatsapp_business_messaging`: *"Record a video showing your app being used to send a
+>   message to a WhatsApp number, and the WhatsApp client (either web or mobile app) receiving
+>   and displaying the sent message."* — é literalmente o Passo 7, com um dos 5 destinatários.
+> - `whatsapp_business_management`: *"Record a video of your app, **or WhatsApp Manager**,
+>   being used to create a message template."* — aceita gravar o próprio painel, que é o Passo 5.
+>
+> Nenhum dos dois exige número registrado. **Ressalva:** a documentação não diz "número de
+> teste é aceito" — ela apenas não exige o contrário, e a revisão é humana. A causa nº 1 de
+> recusa é vídeo confuso, não tipo de número; se recusarem, regrava-se, sem perder chip.
+>
+> Caminho recomendado, então: **1A → Parte 2**, pulando a 1B. No Embedded Signup o Coexistence
+> deixa a clínica usar o número que a recepção já tem, e ninguém compra chip nenhum. A 1B só
+> volta a existir se uma clínica precisar de WhatsApp **antes** da Parte 2 ficar de pé — e aí
+> o número é da clínica (fixo serve), não seu.
 
 ## Antes de começar a 1B: as duas decisões que não dá para desfazer fácil
 
