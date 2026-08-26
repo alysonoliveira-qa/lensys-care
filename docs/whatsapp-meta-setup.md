@@ -97,6 +97,19 @@ empresa disponível" e trava ali — ela não cria um para você.
 > verificado**. A verificação (com CNPJ) é outro passo, depois, e não bloqueia nada nesta
 > escala — ver "O que a ALNA CORE paga uma vez", na Parte 2.
 
+> ⚠️ **Se aparecer "Unable to Create Account — Seu acesso à publicidade foi restringido":**
+> não é o nome nem o e-mail. O Gerenciador de Negócios é ferramenta de anúncios na origem, e a
+> Meta gateia a criação de portfólio atrás do seu acesso à publicidade — restrito ele, nenhum
+> portfólio é criável, com nenhum nome. Aconteceu aqui em 26/08/2026.
+>
+> Veja o motivo em `business.facebook.com/accountquality` e use **Solicitar análise**. Pode
+> pedir documento com foto; o prazo relatado é de **5 a 21 dias úteis**.
+>
+> **Não crie segunda conta do Facebook, e não peça para outra pessoa criar o portfólio.** A
+> Meta vincula portfólios por administrador, dispositivo, IP e meio de pagamento em comum: o
+> novo herda a restrição e ainda registra histórico de evasão. Dois portfólios restritos em vez
+> de um. O caminho é o recurso na conta que já existe.
+
 ## Passo 1 — Criar o app na Meta
 
 > ⚠️ **O app é da ALNA CORE, não da clínica.** A primeira versão deste guia mandava usar a
