@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 
 import { getAuthenticatedProfile } from '@/lib/auth/authenticated-profile'
+import { formatCurrency } from '@/lib/financeiro/financeiro-normalizers'
 import {
   createReferrer as createReferrerForClinic,
   markReferralsPaid as markReferralsPaidForClinic,
@@ -28,13 +29,19 @@ function field(formData: FormData, name: string) {
   return formData.get(name)?.toString() ?? ''
 }
 
-function referralsPaidMessage(paidCount: number, pendingCount: number) {
+function referralsPaidMessage(paidCount: number, pendingCount: number, totalCents = 0) {
   if (paidCount === 0) {
     return 'Não havia indicações pendentes para este indicante.'
   }
 
+  // O total aparece porque a saída foi lançada no caixa: quem paga precisa ver
+  // quanto o sistema registrou, não só que "marcou como pago".
+  const total = totalCents > 0 ? ` ${formatCurrency(totalCents)} lançado no caixa.` : ''
+
   const paid =
-    paidCount === 1 ? '1 indicação marcada como paga.' : `${paidCount} indicações marcadas como pagas.`
+    (paidCount === 1
+      ? '1 indicação marcada como paga.'
+      : `${paidCount} indicações marcadas como pagas.`) + total
 
   if (pendingCount === 0) return paid
 
@@ -155,6 +162,7 @@ export async function markReferralsPaid(
   const result = await markReferralsPaidForClinic({
     clinicId: profile.clinic_id,
     referrerId,
+    paidBy: profile.id,
   })
 
   if (!result.ok) {
@@ -165,6 +173,6 @@ export async function markReferralsPaid(
 
   return {
     status: 'success',
-    message: referralsPaidMessage(result.paidCount, result.pendingCount),
+    message: referralsPaidMessage(result.paidCount, result.pendingCount, result.totalCents),
   }
 }

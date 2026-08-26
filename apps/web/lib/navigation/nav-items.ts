@@ -6,15 +6,26 @@ import {
   Settings2,
   type LucideIcon,
   Users,
+  Wallet,
 } from 'lucide-react'
 
+import type { PlanFeature } from '@/lib/plans/plan-feature-config'
+
 export interface SidebarNavItem {
-  id: 'dashboard' | 'agenda' | 'patients' | 'alerts' | 'account' | 'plans'
+  id: 'dashboard' | 'agenda' | 'patients' | 'alerts' | 'financeiro' | 'account' | 'plans'
   label: string
   href: string
   icon: LucideIcon
   dataCy: string
   description?: string
+  /**
+   * Recurso de plano exigido para o item aparecer. Ausente = todo mundo vê.
+   *
+   * Esconder o link é conveniência, **não** proteção: a rota valida o plano por
+   * conta própria. Um item que some do menu mas responde na URL seria a UI
+   * fazendo de gate, que é exatamente o que não pode.
+   */
+  requiresFeature?: PlanFeature
 }
 
 export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
@@ -49,6 +60,15 @@ export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
     icon: Bell,
     dataCy: 'sidebar-alerts-link',
     description: 'Lembretes e retornos programados',
+  },
+  {
+    id: 'financeiro',
+    label: 'Financeiro',
+    href: '/financeiro',
+    icon: Wallet,
+    dataCy: 'sidebar-financeiro-link',
+    description: 'Caixa da clínica: entradas, saídas e fechamento',
+    requiresFeature: 'financeiro',
   },
   {
     id: 'account',

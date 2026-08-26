@@ -1,4 +1,4 @@
-export type PlanFeature = 'auto_alerts' | 'whatsapp' | 'sms' | 'bulk_send'
+export type PlanFeature = 'auto_alerts' | 'whatsapp' | 'sms' | 'bulk_send' | 'financeiro'
 export type PlanId = 'ESSENTIAL' | 'CONECTA' | 'PROFESSIONAL'
 export type PlanStatus = string
 
@@ -61,6 +61,16 @@ export const FEATURE_UI_META: Record<PlanFeature, FeatureUiMeta> = {
       'Relatório completo de entregas',
     ],
   },
+  financeiro: {
+    name: 'Módulo Financeiro',
+    description:
+      'O caixa da clínica no mesmo lugar do atendimento: o que entrou, o que saiu e quanto sobrou, por dia e por período.',
+    benefits: [
+      'Entradas e saídas com forma de pagamento',
+      'Fechamento do dia e do período',
+      'Pagamento de indicante vira saída automaticamente',
+    ],
+  },
 }
 
 export const PLAN_FEATURE_CONFIG: Record<PlanId, PlanFeatureConfig> = {
@@ -97,13 +107,15 @@ export const PLAN_FEATURE_CONFIG: Record<PlanId, PlanFeatureConfig> = {
   // implementacao pendente. Prometer pronto no plano mais caro era a versao
   // pior do mesmo erro.
   PROFESSIONAL: {
-    functionalFeatures: ['auto_alerts', 'whatsapp', 'sms', 'bulk_send'],
+    functionalFeatures: ['auto_alerts', 'whatsapp', 'sms', 'bulk_send', 'financeiro'],
     uiOnlyLabels: [
       'Recall automático por e-mail',
       'Alertas via WhatsApp (em breve)',
       'Alertas via SMS (em breve)',
       'Envio em massa e recall automatizado (em breve)',
-      'Módulo Financeiro (em breve)',
+      // Sem "(em breve)": o Financeiro existe e responde ao gate. Foi o primeiro
+      // recurso a sair do rótulo de promessa e virar o que o Professional cobra.
+      'Módulo Financeiro',
     ],
   },
 }

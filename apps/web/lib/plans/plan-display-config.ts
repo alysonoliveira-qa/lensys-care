@@ -80,20 +80,21 @@ export const PLAN_DISPLAY_CONFIG: PlanDisplayConfig[] = [
     monthlyPriceSuffix: '/mês',
     trialLabel: 'Teste grátis por 7 dias',
     shortDescription:
-      'Tudo do Conecta. As rotinas de mensagem automatizadas e o módulo financeiro chegam em breve.',
+      'Tudo do Conecta, mais o caixa da clínica. As rotinas de mensagem automatizadas chegam em breve.',
     publicDescription:
-      'Para clínicas que vão querer tirar da mão o trabalho repetitivo de relacionamento e acompanhar o financeiro no mesmo lugar — recursos em desenvolvimento.',
+      'Para clínicas que querem o financeiro no mesmo lugar do atendimento: o que entrou, o que saiu e quanto sobrou, sem planilha paralela.',
     dashboardDescription:
-      'Tudo do Conecta. As rotinas de mensagem automatizadas e o módulo financeiro chegam em breve.',
+      'Tudo do Conecta, mais o caixa da clínica. As rotinas de mensagem automatizadas chegam em breve.',
     publicFeatures: [
       'Tudo do plano Conecta',
+      'Caixa da clínica: entradas, saídas e fechamento do dia',
+      'Pagamento de indicante lançado automaticamente',
       'Envio em massa e recall automatizado (em breve)',
-      'Módulo financeiro (em breve)',
     ],
     dashboardFeatures: [
       'Tudo do Conecta',
+      'Módulo financeiro',
       'Envio em massa e recall automatizado (em breve)',
-      'Módulo financeiro (em breve)',
     ],
     featured: false,
     tierLabel: 'Completo',

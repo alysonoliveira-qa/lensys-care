@@ -169,6 +169,8 @@ export default function Sidebar({
           pendingPath={pendingPath}
           isCollapsed={isCollapsed}
           onNavigate={handleMenuItemClick}
+          plan={subscription?.plan ?? null}
+          status={subscription?.status ?? null}
         />
 
         {subscription && (

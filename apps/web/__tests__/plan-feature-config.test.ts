@@ -25,6 +25,7 @@ describe('plan feature config', () => {
       'whatsapp',
       'sms',
       'bulk_send',
+      'financeiro',
     ])
   })
 
@@ -56,6 +57,12 @@ describe('plan feature config', () => {
 
     expect(hasPlanFeatureAccess('PROFESSIONAL', 'ACTIVE', 'whatsapp')).toBe(true)
     expect(hasPlanFeatureAccess('PROFESSIONAL', 'TRIALING', 'sms')).toBe(true)
+
+    // O Financeiro so existe do Professional para cima: e o que o plano cobra.
+    expect(hasPlanFeatureAccess('PROFESSIONAL', 'ACTIVE', 'financeiro')).toBe(true)
+    expect(hasPlanFeatureAccess('CONECTA', 'ACTIVE', 'financeiro')).toBe(false)
+    expect(hasPlanFeatureAccess('ESSENTIAL', 'ACTIVE', 'financeiro')).toBe(false)
+    expect(hasPlanFeatureAccess('PROFESSIONAL', 'CANCELED', 'financeiro')).toBe(false)
     expect(hasPlanFeatureAccess('PROFESSIONAL', 'ACTIVE', 'bulk_send')).toBe(true)
     expect(hasPlanFeatureAccess('PROFESSIONAL', 'CANCELED', 'whatsapp')).toBe(false)
   })
