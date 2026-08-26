@@ -16,6 +16,8 @@ export type AuthenticatedShellData = {
   subscription: {
     plan: string
     status: string
+    trial_ends_at: Date | null
+    stripe_subscription_id: string | null
   } | null
 }
 
@@ -27,6 +29,8 @@ type ShellDataRow = {
   clinic_name: string
   subscription_plan: string | null
   subscription_status: string | null
+  subscription_trial_ends_at: Date | null
+  subscription_stripe_id: string | null
 }
 
 export const getAuthenticatedShellData = cache(async (): Promise<AuthenticatedShellData | null> => {
@@ -47,7 +51,9 @@ export const getAuthenticatedShellData = cache(async (): Promise<AuthenticatedSh
       p.clinic_id,
       c.name AS clinic_name,
       s.plan::text AS subscription_plan,
-      s.status::text AS subscription_status
+      s.status::text AS subscription_status,
+      s.trial_ends_at AS subscription_trial_ends_at,
+      s.stripe_subscription_id AS subscription_stripe_id
     FROM profiles p
     INNER JOIN clinics c ON c.id = p.clinic_id
     LEFT JOIN subscriptions s ON s.clinic_id = p.clinic_id
@@ -73,6 +79,8 @@ export const getAuthenticatedShellData = cache(async (): Promise<AuthenticatedSh
       ? {
           plan: row.subscription_plan,
           status: row.subscription_status,
+          trial_ends_at: row.subscription_trial_ends_at,
+          stripe_subscription_id: row.subscription_stripe_id,
         }
       : null,
   }
