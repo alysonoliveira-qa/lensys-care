@@ -284,27 +284,63 @@ daí é tudo automático, sem a clínica ver:
 Os passos 1 a 6 da Parte 1 deixam de existir para o cliente. O vídeo de ativação que faz sentido
 gravar passa a ter três minutos, não uma tarde.
 
-## Coexistence: o número da recepção continua sendo o número da recepção
+## Implementar contra a **v4**, e só ela
+
+O Embedded Signup tem versões, e as antigas estão morrendo: **v2 e v3 são desativadas em
+15/10/2026**. A v4 unifica o onboarding de vários produtos de Business Messaging num fluxo só,
+e o onboarding de produto único continua suportado — ou seja, dá para oferecer só a Cloud API
+sem carregar Messenger e Instagram junto.
+
+> **Isso não é prazo para nós.** Não existe integração v2/v3 no Lensys para migrar; nascemos
+> direto na v4. O que a data significa aqui é outra coisa: **ignore tutorial e post de blog
+> anterior a dezembro/2025** — o fluxo que eles descrevem para de funcionar em outubro.
+
+## Coexistence: o número da recepção continua sendo o número da recepção — mas custa código
 
 Desde maio de 2025 a Meta liberou mundialmente o **Coexistence**: o mesmo número funciona no app
 WhatsApp Business no celular da recepção **e** na Cloud API ao mesmo tempo, com o histórico
 preservado e as mensagens caindo na mesma conversa. Para o paciente é um número só.
 
-Isso derruba a advertência mais dolorosa da Parte 1 — mas **só pelo Embedded Signup**, que é o
-único caminho que ativa esse modo. O custo são recursos que clínica não usa: chamada de voz e
-vídeo pelo número, listas de transmissão (as existentes viram somente leitura), mensagens
-temporárias e de visualização única, e sincronia de grupos.
+Isso derruba a advertência mais dolorosa da Parte 1 — mas **só pelo Embedded Signup**, e **não
+sai de graça**. A primeira versão deste guia tratava o Coexistence como um interruptor; ele é
+uma implementação. O que a Meta exige (conferido em 26/08/2026):
+
+- **três webhooks assinados** no painel do app: `history` (conversas passadas),
+  `smb_app_state_sync` (contatos) e `smb_message_echoes` (mensagens enviadas pelo app da
+  recepção). O Lensys **não tem receptor de webhook do WhatsApp hoje** — isso é rota nova,
+  com validação de assinatura, não configuração;
+- o fluxo do popup **customizado** para o caminho de usuário do app WhatsApp Business, com
+  registro de sessão detectando o evento `FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING`;
+- status de **Tech Provider ou Solution Partner** estabelecido;
+- a clínica no app **2.24.17 ou superior**;
+- a sincronização se completa em **24 horas**, ou o cadastro precisa ser refeito.
+
+Limitações depois de ligado: throughput fixo de **20 mensagens por segundo** (irrelevante para
+~12 lembretes por dia), e alguns recursos somem do app da recepção — mensagens temporárias e de
+visualização única, localização ao vivo e listas de transmissão. **Avise a clínica antes**, não
+depois: lista de transmissão é coisa que recepção usa.
+
+> **Sem Coexistence o Embedded Signup continua funcionando** — a clínica só precisa cadastrar
+> um número que ainda não esteja no app WhatsApp. É o caminho mais curto para o primeiro
+> cliente, e o Coexistence entra depois, quando houver clínica que não aceite trocar de número.
 
 ## O que a ALNA CORE paga uma vez
 
-A burocracia não some — ela sai do colo de cada clínica e cai no nosso, uma vez só:
+**Correção de 26/08/2026:** a versão anterior desta seção dizia que a verificação de negócio é
+obrigatória na Parte 2. **Não é.** O que a documentação diz é outra coisa, e mais leve:
 
-- **verificação de negócio** do nosso Business Manager (aqui é obrigatória, diferente da Parte 1);
-- **App Review** pedindo `whatsapp_business_messaging` e `whatsapp_business_management` em acesso
-  avançado, com o vídeo do Passo 7;
-- app dedicado a isso, com ícone e política de privacidade publicada, e 2FA ativo.
+- **App Review é o gate de verdade** — *"You will not be able to onboard business customers
+  until your app has been approved for advanced access for each of the permissions it
+  requires."* Pede `whatsapp_business_messaging` e `whatsapp_business_management` em acesso
+  avançado, com os vídeos que a **1A** já produz.
+- **Verificação de negócio é opcional, e o que ela compra é escala:** sem ela dá para
+  cadastrar até **10 clínicas por semana**; com ela (mais Access Verification), **200**. Com
+  um cliente ativo, 10 por semana é dez vezes o necessário — a verificação vira problema do
+  décimo primeiro cliente, não do primeiro.
+- app dedicado, com ícone, política de privacidade publicada e 2FA ativo.
 
-Conta em dias, não em horas. Roda em paralelo com o piloto e não bloqueia nada dele.
+Isso derruba o CNPJ e a papelada do caminho crítico. O que sobra é App Review — dias, e roda
+em paralelo com o piloto.
 
 ## Quem paga as mensagens
 
@@ -338,11 +374,16 @@ existe para corrigir:
 
 | Fase | O quê | Bloqueia? |
 |---|---|---|
-| 0 | Parte 1 deste guia, na clínica-piloto. Gera o vídeo. | é o que destrava o resto |
-| 1 | Verificação de negócio + App Review. | burocrática, roda em paralelo |
-| 2 | Embedded Signup, credenciais por clínica, template por API. | depende da 1 aprovada |
+| 0 | **1A** — número de teste. Prova a tubulação e grava os dois vídeos. | é o que destrava o resto |
+| 1 | **App Review** com os vídeos da fase 0. | sim — sem ele não se cadastra clínica nenhuma |
+| 2 | **Embedded Signup v4** + credenciais por clínica + template por API. | depende da 1 aprovada |
+| 3 | *(opcional)* Coexistence: webhooks e fluxo customizado. | só quando houver clínica que não troque de número |
+| — | Verificação de negócio. | **não bloqueia** — só sobe o teto de 10 para 200 clínicas/semana |
 
 O Conecta só é vendável fora da Feira no fim da fase 2.
+
+**A 1B não aparece nesta tabela de propósito.** Ela não é etapa do caminho: é exceção, para o
+caso de uma clínica precisar de WhatsApp antes da fase 2 ficar de pé.
 
 ---
 
@@ -358,7 +399,7 @@ O Conecta só é vendável fora da Feira no fim da fase 2.
 | Parou depois de ~250 envios no dia | Limite da faixa sem verificação. Aí sim vale verificar o Business Manager. |
 | Segunda clínica quer WhatsApp | Não tem gambiarra segura na Parte 1. É a Parte 2, ou nada. |
 
-Fontes consultadas em 24/08/2026 e revisadas em 25/08/2026: [Meta for Developers — Cloud API Get
+Fontes consultadas em 24/08/2026, revisadas em 25/08/2026 e **reconferidas em 26/08/2026** (App Review, Embedded Signup v4, requisitos de Coexistence): [Meta for Developers — Cloud API Get
 Started](https://developers.facebook.com/documentation/business-messaging/whatsapp/get-started),
 [Embedded Signup — visão
 geral](https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/overview/),
