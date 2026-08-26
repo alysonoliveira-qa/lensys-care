@@ -22,7 +22,33 @@ Então a ordem é: piloto manual → burocracia → produto. Nessa ordem, sem pu
 
 **Tempo:** uma tarde, se nada travar. **Custo:** centavos por mensagem, sem taxa mensal.
 
-## Antes de começar: as duas decisões que não dá para desfazer fácil
+## Leia isto antes: a Parte 1 tem duas metades, e só a segunda custa um chip
+
+A primeira versão deste guia tratava a Parte 1 como um bloco só, e o aviso do "número
+dedicado" abria a seção como se valesse para tudo. Vale para **metade** dela, e confundir as
+duas faz alguém comprar chip antes da hora.
+
+| | **1A — Número de teste** | **1B — Número real** |
+|---|---|---|
+| De quem é o número | **da Meta**, criada junto com a WABA | **seu** (chip ou fixo) |
+| Custo | zero | um chip, ou uma linha fixa |
+| Alcança quem | até **5 destinatários** cadastrados à mão | qualquer paciente |
+| Some do app WhatsApp? | **não** — não é seu número | **sim**, e não desfaz fácil |
+| Passos | 1, 2, 4, 5, 6, 7 | acrescenta o Passo 3 |
+| Serve para | provar a tubulação ponta a ponta | atender a clínica-piloto de verdade |
+
+**Faça a 1A primeiro, e pare ali.** Ela prova que o template foi aprovado, que o provider
+dispara, que o cron entrega e que a mensagem chega — sem gastar nada e sem queimar número. Só
+vá para a 1B quando quiser falar com paciente de verdade.
+
+> **Antes de comprar chip para a 1B, resolva esta pergunta:** o App Review da Meta (Parte 2)
+> aceita demonstração gravada com número de teste? Se aceitar, dá para ir da 1A direto para a
+> Parte 2 e **nunca precisar de chip** — no Embedded Signup o Coexistence deixa a clínica usar
+> o número que a recepção já tem. Se não aceitar, a 1B vira pré-requisito da burocracia.
+> Isto está **em aberto** (26/08/2026): é exigência que a Meta revisa, e só o texto atual do
+> App Review responde. Não presuma nenhuma das duas respostas.
+
+## Antes de começar a 1B: as duas decisões que não dá para desfazer fácil
 
 **1. O número precisa ser dedicado.** Um número registrado na Cloud API por este fluxo **para
 de funcionar no aplicativo WhatsApp normal**. Não pode ser o celular do dono nem o número que a
@@ -31,8 +57,8 @@ aceita fixo — a verificação vem por chamada de voz).
 
 > Existe um modo em que o mesmo número funciona no app **e** na API ao mesmo tempo
 > (*Coexistence*), e ele resolveria justamente esse incômodo. Mas ele só é ativado pelo fluxo
-> de Embedded Signup, que é a Parte 2 — pelo cadastro manual do painel, não dá. Ou seja: no
-> piloto, número dedicado mesmo.
+> de Embedded Signup, que é a Parte 2 — pelo cadastro manual do painel, não dá. Ou seja: na
+> 1B, número dedicado mesmo.
 
 **2. Você não precisa de verificação de empresa para começar.** A Meta libera o uso sem
 verificar o Business Manager, com limite de **250 destinatários por 24 horas**. O volume real do
@@ -60,7 +86,10 @@ onde ela deixa de ser opcional.
 > **O número de teste da Meta só envia para até 5 destinatários que você cadastrar na
 > mão.** Serve para o primeiro "funcionou", não para produção.
 
-## Passo 3 — Registrar o número real
+## Passo 3 — Registrar o número real (**só na 1B — pule na 1A**)
+
+> Este é o passo que consome o chip. Se você está fazendo a 1A, **pule direto para o Passo 4**:
+> o número de teste do Passo 2 já basta, e o `Phone Number ID` que você vai usar é o dele.
 
 Ainda na aba de configuração da API:
 
@@ -74,11 +103,16 @@ Ainda na aba de configuração da API:
 > **Nome de exibição passa por aprovação da Meta.** Nome que não bate com a marca da empresa é
 > recusado. `Mais Visão` passa; `Recall Automático` não.
 
-## Passo 4 — Token permanente (não pule este)
+## Passo 4 — Token permanente (não pule este **na 1B**)
 
 **O token que aparece na tela de configuração expira em 24 horas.** Se você colar aquele na
 Vercel, o WhatsApp funciona hoje e para amanhã, sem aviso — e o erro vai parecer bug do
 sistema. Produção exige token de **system user**, que não expira.
+
+> **Na 1A, o token temporário serve** — e é o caminho mais rápido. Ele só vira armadilha
+> quando vai para a Vercel, e na 1A nada vai para a Vercel (ver Passo 6). Token temporário
+> expirando no `.env.local` não derruba produção: derruba o seu `localhost`, no dia seguinte,
+> quando você já terminou o teste. Gere o permanente junto com o número real.
 
 1. **Business Manager → Configurações do negócio → Usuários do sistema**.
 2. **Adicionar** → nome (`lensys-envio`) → função **Administrador**.
@@ -125,7 +159,22 @@ template aprovado**. Texto livre ali volta com o erro `131047`.
 Guarde esse texto exato. Na Parte 2 ele deixa de ser digitado no painel e vira payload de uma
 chamada de API que cria o mesmo template na WABA de cada clínica nova.
 
-## Passo 6 — Preencher as variáveis na Vercel
+## Passo 6 — Preencher as variáveis
+
+### Na 1A: `.env.local`, e **não** a Vercel
+
+O número de teste só fala com os 5 destinatários que você cadastrou — ele **não consegue**
+alcançar paciente real nem por acidente. Então não há o que ganhar pondo isso em produção, e
+há o que perder: token temporário na Vercel quebra em 24h sem aviso.
+
+```env
+META_WHATSAPP_PHONE_NUMBER_ID=<o ID do número de TESTE, do passo 2>
+META_WHATSAPP_TOKEN=<o token temporário>
+```
+
+Rode o app local (`pnpm --filter web dev:manual`, porta 3001) e siga para o Passo 7.
+
+### Na 1B: Vercel, ambiente Production
 
 Em **Settings → Environment Variables** do projeto `lensys-care`, ambiente **Production**:
 
@@ -163,9 +212,14 @@ texto do erro da Meta vem ali, sem precisar de novo deploy para descobrir.
 > **Grave a tela deste passo.** O App Review da Parte 2 pede vídeo da integração em uso, e este
 > é o momento em que ela existe pela primeira vez. Gravar agora poupa remontar o cenário depois.
 
-## Passo 8 — Só então, tirar o "(em breve)"
+## Passo 8 — Só então, tirar o "(em breve)" (**1B, nunca na 1A**)
 
-Com mensagem chegando de verdade, remova o `(em breve)` do WhatsApp em
+> **Não faça isso ao terminar a 1A.** Na 1A a mensagem chega **no seu celular**, porque você o
+> cadastrou na lista — nenhum paciente da clínica é alcançável. Tirar o rótulo ali seria
+> prometer no checkout um canal que não entrega, que é exatamente o problema que o commit
+> `b4861e1` existiu para corrigir. O rótulo só cai quando um número real está registrado.
+
+Com mensagem chegando de verdade **para paciente**, remova o `(em breve)` do WhatsApp em
 `lib/plans/plan-feature-config.ts` e `lib/plans/plan-display-config.ts`. É o que finalmente dá
 ao plano Conecta o diferencial funcional que ele cobra.
 
