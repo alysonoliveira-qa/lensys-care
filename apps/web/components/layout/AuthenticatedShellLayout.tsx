@@ -3,10 +3,12 @@ import { redirect } from 'next/navigation'
 
 import Sidebar from '@/components/layout/Sidebar'
 import TopBar from '@/components/layout/TopBar'
+import TrialNotice from '@/components/subscription/TrialNotice'
 import {
   getAuthenticatedShellData,
   getPendingAlertsCountForClinic,
 } from '@/lib/authenticated-shell'
+import { resolveTrialStatus } from '@/lib/plans/trial-status'
 
 async function TopBarWithPendingAlerts({ clinicId }: { clinicId: string }) {
   const pendingAlertsCount = await getPendingAlertsCountForClinic(clinicId)
@@ -27,6 +29,8 @@ export default async function AuthenticatedShellLayout({
     redirect('/login')
   }
 
+  const teste = resolveTrialStatus(shellData.subscription)
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar
@@ -39,13 +43,21 @@ export default async function AuthenticatedShellLayout({
           clinic_id: shellData.profile.clinic_id,
           clinic: { name: shellData.profile.clinic_name },
         }}
-        initialSubscription={shellData.subscription}
+        // Só plano e status: `stripe_subscription_id` não tem por que atravessar
+        // para o payload do cliente, e a sidebar nunca precisou dele.
+        initialSubscription={
+          shellData.subscription
+            ? { plan: shellData.subscription.plan, status: shellData.subscription.status }
+            : null
+        }
       />
 
       <div className="flex-1 flex min-w-0 flex-col overflow-hidden">
         <Suspense fallback={<TopBar initialPendingCount={0} />}>
           <TopBarWithPendingAlerts clinicId={shellData.profile.clinic_id} />
         </Suspense>
+
+        <TrialNotice resolucao={teste} podeAssinar={shellData.profile.role === 'OWNER'} />
 
         <main className={mainClassName}>
           {children}
