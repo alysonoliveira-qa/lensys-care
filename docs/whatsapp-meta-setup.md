@@ -34,7 +34,7 @@ duas faz alguém comprar chip antes da hora.
 | Custo | zero | um chip, ou uma linha fixa |
 | Alcança quem | até **5 destinatários** cadastrados à mão | qualquer paciente |
 | Some do app WhatsApp? | **não** — não é seu número | **sim**, e não desfaz fácil |
-| Passos | 1, 2, 4, 5, 6, 7 | acrescenta o Passo 3 |
+| Passos | 0, 1, 2, 4, 5, 6, 7 | acrescenta o Passo 3 |
 | Serve para | provar a tubulação ponta a ponta | atender a clínica-piloto de verdade |
 
 **Faça a 1A e pare ali.** Ela prova que o template foi aprovado, que o provider dispara, que o
@@ -82,14 +82,36 @@ recall é de **~12 por dia** (1.126 alertas espalhados em três meses de vencime
 vinte vezes o necessário. A verificação só serve para subir de faixa depois — e para a Parte 2,
 onde ela deixa de ser opcional.
 
+## Passo 0 — Criar o portfólio empresarial da **ALNA CORE**
+
+O fluxo de criação de app tem uma etapa "Empresa" que **não deixa seguir sem um portfólio
+empresarial** (o antigo Business Manager). Se você não tiver nenhum, a tela mostra "Nenhuma
+empresa disponível" e trava ali — ela não cria um para você.
+
+1. Abra <https://business.facebook.com>.
+2. **Criar portfólio empresarial**.
+3. Nome do portfólio, seu nome e um e-mail de trabalho.
+4. Confirme o e-mail.
+
+> **Não precisa verificar.** A própria tela diz que dá para conectar um portfólio **não
+> verificado**. A verificação (com CNPJ) é outro passo, depois, e não bloqueia nada nesta
+> escala — ver "O que a ALNA CORE paga uma vez", na Parte 2.
+
 ## Passo 1 — Criar o app na Meta
 
-1. Entre em <https://developers.facebook.com> com a conta Facebook da clínica.
+> ⚠️ **O app é da ALNA CORE, não da clínica.** A primeira versão deste guia mandava usar a
+> conta e o Business Manager **da clínica**, porque tratava a Parte 1 como piloto isolado.
+> Está errado para o caminho 1A → Parte 2: ali o Lensys é o **Tech Provider**, o app é nosso,
+> e cada clínica conecta a WABA **dela** pelo Embedded Signup. App criado sob o portfólio de
+> uma clínica vira app de uma clínica só — e o App Review feito nele não serve para cadastrar
+> a segunda. Refazer depois custa outro App Review.
+
+1. Entre em <https://developers.facebook.com> com **a sua** conta Facebook.
 2. **Meus apps → Criar app**.
 3. Tipo: escolha a opção de negócios/empresa (o nome exato do card muda com frequência; é a
    que menciona "empresa" ou "business").
-4. Dê um nome — `Lensys Care` serve — e associe ao Business Manager da clínica. Se não houver
-   um, o próprio fluxo cria.
+4. Dê um nome — `Lensys Care` serve — e, na etapa **Empresa**, selecione o portfólio da
+   **ALNA CORE**, criado no Passo 0.
 
 ## Passo 2 — Adicionar o produto WhatsApp
 
