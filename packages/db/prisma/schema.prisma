@@ -102,14 +102,20 @@ enum PaymentMethod {
 // ─── Clinic (Tenant) ─────────────────────────────────────────────────────────
 
 model Clinic {
-  id         String   @id @default(uuid()) @db.Uuid
-  name       String
-  slug       String   @unique
-  cnpj       String?
-  phone      String?
-  email      String
-  logo_url   String?
-  owner_id   String?  @db.Uuid // Profile.id of the clinic owner (set on registration)
+  id       String  @id @default(uuid()) @db.Uuid
+  name     String
+  slug     String  @unique
+  cnpj     String?
+  phone    String?
+  email    String
+  logo_url String?
+  owner_id String? @db.Uuid // Profile.id of the clinic owner (set on registration)
+
+  /// Preço da consulta em centavos, para a cobrança rápida do Financeiro.
+  /// NULL = não configurado, que é diferente de zero: a tela pede a
+  /// configuração em vez de lançar consulta de R$ 0,00.
+  consultation_price_cents Int?
+
   created_at DateTime @default(now()) @db.Timestamptz
 
   // Relations

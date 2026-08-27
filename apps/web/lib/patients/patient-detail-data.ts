@@ -12,6 +12,10 @@ export function getPatientDetailPageData(patientId: string, userId: string) {
     },
     select: {
       id: true,
+      // O tenant ja esta garantido pelo `where` acima; devolver o `clinic_id`
+      // evita que a pagina precise de uma segunda consulta so para saber de que
+      // clinica o paciente e (o botao de cobranca depende disso).
+      clinic_id: true,
       full_name: true,
       dob: true,
       phone: true,

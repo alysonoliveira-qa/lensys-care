@@ -11,6 +11,10 @@ import PatientExamHistory from '@/components/exams/PatientExamHistory'
 import PatientDetailHeader from '@/components/patients/PatientDetailHeader'
 import PatientRecallsCard from '@/components/patients/PatientRecallsCard'
 import PatientSummaryCard from '@/components/patients/PatientSummaryCard'
+import ChargeConsultationButton from '@/components/financeiro/ChargeConsultationButton'
+import { hasFeature } from '@/lib/features'
+import { getConsultationPriceCents } from '@/lib/financeiro/financeiro-data'
+import { formatCurrency } from '@/lib/financeiro/financeiro-normalizers'
 import { getPatientDetailPageData } from '@/lib/patients/patient-detail-data'
 import { mapPatientDetailSummary } from '@/lib/patients/patient-detail-mappers'
 
@@ -46,11 +50,25 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
 
   const summary = mapPatientDetailSummary(patient)
 
+  // O botao de cobranca so existe no Professional. O gate real esta na server
+  // action; isto aqui e para nao mostrar afordancia que vai ser negada.
+  const podeCobrar = await hasFeature(patient.clinic_id, 'financeiro')
+  const precoCents = podeCobrar ? await getConsultationPriceCents(patient.clinic_id) : null
+
   endPerformanceTimer(timer)
 
   return (
     <div className="space-y-8 select-none">
       <PatientDetailHeader patientId={patient.id} hasExams={patient.exams.length > 0} />
+
+      {podeCobrar ? (
+        <div className="flex justify-end">
+          <ChargeConsultationButton
+            patientId={patient.id}
+            priceLabel={precoCents === null ? null : formatCurrency(precoCents)}
+          />
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <PatientSummaryCard
