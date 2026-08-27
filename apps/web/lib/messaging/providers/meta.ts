@@ -10,6 +10,8 @@
 // Docs: https://developers.facebook.com/docs/whatsapp/cloud-api
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { normalizePhoneBR } from '../phone'
+
 const GRAPH_VERSION = 'v21.0'
 
 interface MetaSendResponse {
@@ -18,23 +20,11 @@ interface MetaSendResponse {
 }
 
 /**
- * Normaliza para o formato que a Meta espera: dígitos com código do país, sem
- * `+`, sem espaço e sem pontuação.
- *
- * Número brasileiro guardado como `(11) 99999-0000` vira `5511999990000`. O
- * cadastro da clínica não tem formato garantido — veio de digitação — então a
- * normalização acontece aqui e não na borda.
+ * Formato que a Meta espera: dígitos com código do país, sem `+`, sem espaço e
+ * sem pontuação. É o mesmo que a Z-API quer, então a regra mora em
+ * `lib/messaging/phone.ts` e os dois provedores compartilham.
  */
-export function normalizePhoneForMeta(phone: string): string {
-  const digits = phone.replace(/\D/g, '')
-
-  // Já veio com o código do país: 55 + DDD (2) + número (8 ou 9).
-  if (digits.startsWith('55') && digits.length >= 12) {
-    return digits
-  }
-
-  return `55${digits}`
-}
+export const normalizePhoneForMeta = normalizePhoneBR
 
 export function isMetaConfigured(): boolean {
   return Boolean(process.env.META_WHATSAPP_PHONE_NUMBER_ID && process.env.META_WHATSAPP_TOKEN)
