@@ -35,7 +35,11 @@ Conferir de onde a resposta saiu: header `x-vercel-id`, que deve mostrar `gru1::
 - **Pagamentos:** Stripe (checkout, portal, webhooks)
 - **Email:** Resend (`apps/web/lib/email/`) — domínio `lensyscare.com.br` verificado
 - **Mensageria:** WhatsApp pela **Meta Cloud API** (oficial, preferido —
-  `lib/messaging/providers/meta.ts`), com Z-API e Twilio como alternativas. Recall é mensagem
+  `lib/messaging/providers/meta.ts`), com Z-API e Twilio como alternativas. A Cloud API
+  exige app sob portfólio empresarial, e isso está **bloqueado** hoje (ver
+  `docs/whatsapp-meta-setup.md`), então a Z-API é a ponte em uso: não-oficial, aceita texto
+  livre, e exige o header `Client-Token` (`ZAPI_CLIENT_TOKEN`) assim que a conta ativa a
+  proteção — sem ele o envio volta `null not allowed`, que não menciona header nenhum. Recall é mensagem
   iniciada pela clínica, fora da janela de 24h, então sai como **template aprovado** — texto
   livre volta com erro 131047. O canal do alerta é resolvido **no disparo**, não na criação
   (`lib/alerts/alert-channel.ts`): entre o exame e o lembrete passa um ano.
