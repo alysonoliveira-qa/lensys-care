@@ -7,6 +7,8 @@
 import { prisma } from '@/lib/db'
 import { appointmentDateToUtc } from '@/lib/appointments/appointments-normalizers'
 
+import { buildConsultationDescription } from './financeiro-config'
+import type { PaymentMethod } from './financeiro-config'
 import type { FinancialEntryRecord } from './financeiro-mappers'
 import type { NormalizedFinancialEntry } from './financeiro-normalizers'
 import { summarizeEntries, type CashSummary } from './financeiro-normalizers'
@@ -138,4 +140,123 @@ export async function deleteEntry(clinicId: string, entryId: string): Promise<De
   })
 
   return deleted.count === 0 ? { ok: false, reason: 'NOT_FOUND' } : { ok: true }
+}
+
+// ─── Preço da consulta e cobrança rápida ─────────────────────────────────────
+
+/**
+ * Preço da consulta da clínica, em centavos, ou `null` se nunca foi configurado.
+ *
+ * `null` e zero significam coisas diferentes e a UI depende disso: `null` pede
+ * configuração, e zero é impedido pelo banco. Lançar consulta de R$ 0,00 encheria
+ * o caixa de linha sem dinheiro que ninguém questionaria — "0,00" parece resposta,
+ * não ausência.
+ */
+export async function getConsultationPriceCents(clinicId: string): Promise<number | null> {
+  const clinic = await prisma.clinic.findUnique({
+    where: { id: clinicId },
+    select: { consultation_price_cents: true },
+  })
+
+  return clinic?.consultation_price_cents ?? null
+}
+
+export type SetConsultationPriceResult = { ok: true } | { ok: false; reason: 'CLINIC_NOT_FOUND' }
+
+export async function setConsultationPriceCents(
+  clinicId: string,
+  priceCents: number
+): Promise<SetConsultationPriceResult> {
+  const updated = await prisma.clinic.updateMany({
+    where: { id: clinicId },
+    data: { consultation_price_cents: priceCents },
+  })
+
+  return updated.count === 0 ? { ok: false, reason: 'CLINIC_NOT_FOUND' } : { ok: true }
+}
+
+/** Quantos lançamentos de entrada este paciente já tem no dia. */
+export async function countPatientIncomeOnDate(
+  clinicId: string,
+  patientId: string,
+  date: string
+): Promise<number> {
+  return prisma.financialEntry.count({
+    where: {
+      clinic_id: clinicId,
+      patient_id: patientId,
+      type: 'INCOME',
+      entry_date: appointmentDateToUtc(date),
+    },
+  })
+}
+
+export interface RegisterConsultationInput {
+  clinicId: string
+  patientId: string
+  createdBy: string
+  paymentMethod: PaymentMethod
+  /** `YYYY-MM-DD` do lançamento. */
+  entryDate: string
+  /** Passa por cima do aviso de "já cobrado hoje". */
+  confirmed: boolean
+}
+
+export type RegisterConsultationResult =
+  | { ok: true; id: string; amountCents: number }
+  | { ok: false; reason: 'PATIENT_NOT_IN_CLINIC' | 'PRICE_NOT_SET' }
+  | { ok: false; reason: 'ALREADY_CHARGED_TODAY'; existingCount: number }
+
+/**
+ * Registra o pagamento da consulta de um paciente com um clique.
+ *
+ * O valor vem **da configuração da clínica**, nunca do formulário: um preço vindo
+ * do cliente deixaria qualquer usuário lançar o número que quisesse no caixa da
+ * própria clínica, e o botão existe justamente para não digitar valor.
+ *
+ * A checagem de duplicata avisa em vez de bloquear (decisão de 26/08/2026). Clique
+ * duplo é o erro comum, mas paciente que paga consulta e óculos no mesmo dia é
+ * caso real — travar seria consertar o acidente quebrando o legítimo.
+ */
+export async function registerConsultationPayment(
+  input: RegisterConsultationInput
+): Promise<RegisterConsultationResult> {
+  const [patient, priceCents] = await Promise.all([
+    prisma.patient.findFirst({
+      where: { id: input.patientId, clinic_id: input.clinicId },
+      select: { id: true, full_name: true },
+    }),
+    getConsultationPriceCents(input.clinicId),
+  ])
+
+  if (!patient) return { ok: false, reason: 'PATIENT_NOT_IN_CLINIC' }
+  if (priceCents === null) return { ok: false, reason: 'PRICE_NOT_SET' }
+
+  if (!input.confirmed) {
+    const jaLancados = await countPatientIncomeOnDate(
+      input.clinicId,
+      input.patientId,
+      input.entryDate
+    )
+
+    if (jaLancados > 0) {
+      return { ok: false, reason: 'ALREADY_CHARGED_TODAY', existingCount: jaLancados }
+    }
+  }
+
+  const created = await prisma.financialEntry.create({
+    data: {
+      clinic_id: input.clinicId,
+      type: 'INCOME',
+      amount_cents: priceCents,
+      description: buildConsultationDescription(patient.full_name),
+      payment_method: input.paymentMethod,
+      entry_date: appointmentDateToUtc(input.entryDate),
+      patient_id: patient.id,
+      created_by: input.createdBy,
+    },
+    select: { id: true },
+  })
+
+  return { ok: true, id: created.id, amountCents: priceCents }
 }

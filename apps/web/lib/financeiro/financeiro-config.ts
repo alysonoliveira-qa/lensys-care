@@ -75,6 +75,30 @@ export function isPaymentMethod(value: unknown): value is PaymentMethod {
 }
 
 /**
+ * Formas de pagamento oferecidas no botão de cobrança rápida.
+ *
+ * Subconjunto proposital: o balcão cobra por estes quatro, e a lista completa
+ * (com Transferência e Outro) continua no formulário de lançamento manual. Um
+ * botão com seis opções vira menu; com quatro, vira gesto.
+ */
+export const QUICK_PAYMENT_METHODS: readonly PaymentMethod[] = [
+  'CASH',
+  'PIX',
+  'DEBIT',
+  'CREDIT',
+]
+
+export const QUICK_PAYMENT_OPTIONS = QUICK_PAYMENT_METHODS.map((value) => ({
+  value,
+  label: PAYMENT_METHOD_LABELS[value],
+}))
+
+/** Descrição do lançamento gerado pelo botão de cobrança na ficha do paciente. */
+export function buildConsultationDescription(patientName: string): string {
+  return `Consulta — ${patientName}`
+}
+
+/**
  * Descrição do lançamento gerado ao pagar um indicante.
  *
  * Centralizada porque o texto é o que a clínica lê no fechamento do mês para

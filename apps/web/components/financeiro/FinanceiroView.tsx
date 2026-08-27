@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Plus, Wallet } from 'lucide-react'
 
 import CashSummaryCards from '@/components/financeiro/CashSummaryCards'
+import ConsultationPriceCard from '@/components/financeiro/ConsultationPriceCard'
 import FinancialEntryForm from '@/components/financeiro/FinancialEntryForm'
 import FinancialEntryRowItem from '@/components/financeiro/FinancialEntryRowItem'
 import { Button } from '@/components/ui/button'
@@ -26,6 +27,8 @@ interface FinanceiroViewProps {
   period: ResolvedPeriod
   today: string
   referrerOptions: ReferrerOption[]
+  consultationPrice: string | null
+  canEditPrice: boolean
 }
 
 export default function FinanceiroView({
@@ -34,6 +37,8 @@ export default function FinanceiroView({
   period,
   today,
   referrerOptions,
+  consultationPrice,
+  canEditPrice,
 }: FinanceiroViewProps) {
   const router = useRouter()
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -89,6 +94,8 @@ export default function FinanceiroView({
           </CardContent>
         </Card>
       ) : null}
+
+      <ConsultationPriceCard currentPrice={consultationPrice} canEdit={canEditPrice} />
 
       <div className="flex flex-wrap items-center gap-2">
         {PERIOD_PRESETS.map((preset) => (

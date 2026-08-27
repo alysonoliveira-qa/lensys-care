@@ -17,6 +17,10 @@ import {
 import { parsePatientsTab } from '@/lib/patients/patients-tabs'
 import { listReferrersWithPendingCount } from '@/lib/referrers/referrers-data'
 import { mapReferrersToRows } from '@/lib/referrers/referrers-mappers'
+import ChargeConsultationButton from '@/components/financeiro/ChargeConsultationButton'
+import { hasFeature } from '@/lib/features'
+import { getConsultationPriceCents } from '@/lib/financeiro/financeiro-data'
+import { formatCurrency } from '@/lib/financeiro/financeiro-normalizers'
 import PatientsListFilters from '@/components/patients/PatientsListFilters'
 import PatientsTabs from '@/components/patients/PatientsTabs'
 import ReferrersTab from '@/components/referrers/ReferrersTab'
@@ -134,6 +138,12 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
     activeTab === 'indicantes'
       ? mapReferrersToRows(await listReferrersWithPendingCount(clinicId))
       : []
+
+  // O botão de cobrança só existe no Professional. O gate real está na server
+  // action; isto aqui é para não mostrar afordância que vai ser negada.
+  const podeCobrar = await hasFeature(clinicId, 'financeiro')
+  const precoCents = podeCobrar ? await getConsultationPriceCents(clinicId) : null
+  const precoLabel = precoCents === null ? null : formatCurrency(precoCents)
 
   endPerformanceTimer(timer)
 
@@ -290,16 +300,26 @@ export default async function PatientsPage({ searchParams }: PatientsPageProps) 
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <Link href={`/patients/${p.id}`} data-cy="patient-record-link">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 rounded-lg border-border text-[11px] font-bold"
-                            >
-                              Ver Ficha
-                            </Button>
-                          </Link>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-wrap items-center justify-end gap-2">
+                            {podeCobrar ? (
+                              <ChargeConsultationButton
+                                patientId={p.id}
+                                priceLabel={precoLabel}
+                                variant="compact"
+                              />
+                            ) : null}
+
+                            <Link href={`/patients/${p.id}`} data-cy="patient-record-link">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 rounded-lg border-border text-[11px] font-bold"
+                              >
+                                Ver Ficha
+                              </Button>
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     )

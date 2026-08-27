@@ -129,6 +129,7 @@ Multi-tenant com **Clinic** como tenant raiz:
 | `013_drop_stray_demo_table.sql` | Remove `"Lensys Care Demo"`, tabela de teste criada fora das migrations |
 | `014_grant_service_role_on_public_tables.sql` | Restaura os grants do `service_role`, perdidos no restore para `sa-east-1` |
 | `015_add_financial_entries.sql` | Financeiro: enums `financial_entry_type`/`payment_method`, tabela `financial_entries` + RLS + índices |
+| `016_add_consultation_price.sql` | `clinics.consultation_price_cents` (NULL = não configurado) + CHECK de valor positivo |
 
 > **Importante:** O projeto usa SQL direto no Supabase, NÃO `prisma migrate dev`
 > (histórico de migrations está em `supabase/migrations/`).
@@ -186,6 +187,14 @@ Multi-tenant com **Clinic** como tenant raiz:
 - **Gate:** recurso `financeiro` em `PLAN_FEATURE_CONFIG`, só do Professional para cima.
   Validado **na rota e na server action** — esconder o item da sidebar é arrumação de
   menu, não controle de acesso.
+- **Cobrança rápida:** `clinics.consultation_price_cents` (configurado na aba Financeiro, só
+  OWNER) alimenta um botão na ficha do paciente e na lista. O valor vem **da clínica, nunca do
+  formulário** — preço vindo do cliente deixaria qualquer usuário lançar o número que quisesse.
+  `NULL` = não configurado, e é diferente de zero: o banco recusa zero, e a tela usa o `NULL`
+  para pedir configuração em vez de lançar consulta de R$ 0,00.
+- **Duplicata:** cobrar o mesmo paciente duas vezes no dia **avisa e pede confirmação**, não
+  bloqueia. Clique duplo é o erro comum, mas paciente que paga consulta e óculos no mesmo dia é
+  caso real — travar consertaria o acidente quebrando o legítimo.
 - **Indicantes:** `markReferralsPaid` cria o lançamento de saída **na mesma transação** em
   que carimba `referral_paid_at`. Separar as duas abriria a janela em que a indicação está
   quitada e o dinheiro não saiu de lugar nenhum — e nada voltaria a lembrar disso.

@@ -5,8 +5,13 @@ import FinanceiroView from '@/components/financeiro/FinanceiroView'
 import { todayAppointmentDate } from '@/lib/appointments/appointments-normalizers'
 import { getAuthenticatedShellData } from '@/lib/authenticated-shell'
 import { hasFeature } from '@/lib/features'
-import { listEntriesForPeriod, summarizePeriod } from '@/lib/financeiro/financeiro-data'
+import {
+  getConsultationPriceCents,
+  listEntriesForPeriod,
+  summarizePeriod,
+} from '@/lib/financeiro/financeiro-data'
 import { mapEntriesToRows } from '@/lib/financeiro/financeiro-mappers'
+import { formatCents } from '@/lib/financeiro/financeiro-normalizers'
 import { resolvePeriod } from '@/lib/financeiro/financeiro-period'
 import { listReferrers } from '@/lib/referrers/referrers-data'
 import { mapReferrersToOptions } from '@/lib/referrers/referrers-mappers'
@@ -42,10 +47,11 @@ export default async function FinanceiroPage({ searchParams }: FinanceiroPagePro
 
   const period = resolvePeriod(searchParams, todayAppointmentDate())
 
-  const [entries, summary, referrers] = await Promise.all([
+  const [entries, summary, referrers, consultationPriceCents] = await Promise.all([
     listEntriesForPeriod({ clinicId, from: period.from, to: period.to }),
     summarizePeriod({ clinicId, from: period.from, to: period.to }),
     listReferrers(clinicId, { activeOnly: true }),
+    getConsultationPriceCents(clinicId),
   ])
 
   return (
@@ -55,6 +61,10 @@ export default async function FinanceiroPage({ searchParams }: FinanceiroPagePro
       period={period}
       today={todayAppointmentDate()}
       referrerOptions={mapReferrersToOptions(referrers)}
+      consultationPrice={
+        consultationPriceCents === null ? null : formatCents(consultationPriceCents)
+      }
+      canEditPrice={shellData.profile.role === 'OWNER'}
     />
   )
 }
