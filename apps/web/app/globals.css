@@ -169,3 +169,19 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
+
+@layer utilities {
+  /* Esconde a setinha nativa do input[type=number].
+     O campo de grau traz o proprio stepper, maior e visivel; deixar as duas
+     coisas na mesma caixa dobra o controle e encolhe a area de arrasto. */
+  .no-spinner::-webkit-outer-spin-button,
+  .no-spinner::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .no-spinner {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+}
