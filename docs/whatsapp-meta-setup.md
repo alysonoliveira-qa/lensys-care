@@ -34,19 +34,35 @@ duas faz alguém comprar chip antes da hora.
 | Custo | zero | um chip, ou uma linha fixa |
 | Alcança quem | até **5 destinatários** cadastrados à mão | qualquer paciente |
 | Some do app WhatsApp? | **não** — não é seu número | **sim**, e não desfaz fácil |
-| Passos | 1, 2, 4, 5, 6, 7 | acrescenta o Passo 3 |
+| Passos | 0, 1, 2, 4, 5, 6, 7 | acrescenta o Passo 3 |
 | Serve para | provar a tubulação ponta a ponta | atender a clínica-piloto de verdade |
 
-**Faça a 1A primeiro, e pare ali.** Ela prova que o template foi aprovado, que o provider
-dispara, que o cron entrega e que a mensagem chega — sem gastar nada e sem queimar número. Só
-vá para a 1B quando quiser falar com paciente de verdade.
+**Faça a 1A e pare ali.** Ela prova que o template foi aprovado, que o provider dispara, que o
+cron entrega e que a mensagem chega — sem gastar nada e sem queimar número. A 1B é o caminho
+de exceção, não o passo seguinte natural: veja a nota abaixo antes de sequer considerá-la.
 
-> **Antes de comprar chip para a 1B, resolva esta pergunta:** o App Review da Meta (Parte 2)
-> aceita demonstração gravada com número de teste? Se aceitar, dá para ir da 1A direto para a
-> Parte 2 e **nunca precisar de chip** — no Embedded Signup o Coexistence deixa a clínica usar
-> o número que a recepção já tem. Se não aceitar, a 1B vira pré-requisito da burocracia.
-> Isto está **em aberto** (26/08/2026): é exigência que a Meta revisa, e só o texto atual do
-> App Review responde. Não presuma nenhuma das duas respostas.
+**O que pular a 1B custa:** nenhum paciente real recebe WhatsApp até a Parte 2 ficar de pé. Isso
+é aceitável porque o prazo é folgado — `due_date = exame + 365`, e o primeiro disparo automático
+da base atual é **17/05/2027**.
+
+> **A 1B provavelmente nunca vai acontecer, e isso é bom.** A pergunta que decidia isso era se
+> o App Review da Parte 2 aceita demonstração gravada com número de teste. Conferido no texto
+> oficial em 26/08/2026: **os dois vídeos exigidos saem inteiros da 1A.**
+>
+> - `whatsapp_business_messaging`: *"Record a video showing your app being used to send a
+>   message to a WhatsApp number, and the WhatsApp client (either web or mobile app) receiving
+>   and displaying the sent message."* — é literalmente o Passo 7, com um dos 5 destinatários.
+> - `whatsapp_business_management`: *"Record a video of your app, **or WhatsApp Manager**,
+>   being used to create a message template."* — aceita gravar o próprio painel, que é o Passo 5.
+>
+> Nenhum dos dois exige número registrado. **Ressalva:** a documentação não diz "número de
+> teste é aceito" — ela apenas não exige o contrário, e a revisão é humana. A causa nº 1 de
+> recusa é vídeo confuso, não tipo de número; se recusarem, regrava-se, sem perder chip.
+>
+> Caminho recomendado, então: **1A → Parte 2**, pulando a 1B. No Embedded Signup o Coexistence
+> deixa a clínica usar o número que a recepção já tem, e ninguém compra chip nenhum. A 1B só
+> volta a existir se uma clínica precisar de WhatsApp **antes** da Parte 2 ficar de pé — e aí
+> o número é da clínica (fixo serve), não seu.
 
 ## Antes de começar a 1B: as duas decisões que não dá para desfazer fácil
 
@@ -66,14 +82,49 @@ recall é de **~12 por dia** (1.126 alertas espalhados em três meses de vencime
 vinte vezes o necessário. A verificação só serve para subir de faixa depois — e para a Parte 2,
 onde ela deixa de ser opcional.
 
+## Passo 0 — Criar o portfólio empresarial da **ALNA CORE**
+
+O fluxo de criação de app tem uma etapa "Empresa" que **não deixa seguir sem um portfólio
+empresarial** (o antigo Business Manager). Se você não tiver nenhum, a tela mostra "Nenhuma
+empresa disponível" e trava ali — ela não cria um para você.
+
+1. Abra <https://business.facebook.com>.
+2. **Criar portfólio empresarial**.
+3. Nome do portfólio, seu nome e um e-mail de trabalho.
+4. Confirme o e-mail.
+
+> **Não precisa verificar.** A própria tela diz que dá para conectar um portfólio **não
+> verificado**. A verificação (com CNPJ) é outro passo, depois, e não bloqueia nada nesta
+> escala — ver "O que a ALNA CORE paga uma vez", na Parte 2.
+
+> ⚠️ **Se aparecer "Unable to Create Account — Seu acesso à publicidade foi restringido":**
+> não é o nome nem o e-mail. O Gerenciador de Negócios é ferramenta de anúncios na origem, e a
+> Meta gateia a criação de portfólio atrás do seu acesso à publicidade — restrito ele, nenhum
+> portfólio é criável, com nenhum nome. Aconteceu aqui em 26/08/2026.
+>
+> Veja o motivo em `business.facebook.com/accountquality` e use **Solicitar análise**. Pode
+> pedir documento com foto; o prazo relatado é de **5 a 21 dias úteis**.
+>
+> **Não crie segunda conta do Facebook, e não peça para outra pessoa criar o portfólio.** A
+> Meta vincula portfólios por administrador, dispositivo, IP e meio de pagamento em comum: o
+> novo herda a restrição e ainda registra histórico de evasão. Dois portfólios restritos em vez
+> de um. O caminho é o recurso na conta que já existe.
+
 ## Passo 1 — Criar o app na Meta
 
-1. Entre em <https://developers.facebook.com> com a conta Facebook da clínica.
+> ⚠️ **O app é da ALNA CORE, não da clínica.** A primeira versão deste guia mandava usar a
+> conta e o Business Manager **da clínica**, porque tratava a Parte 1 como piloto isolado.
+> Está errado para o caminho 1A → Parte 2: ali o Lensys é o **Tech Provider**, o app é nosso,
+> e cada clínica conecta a WABA **dela** pelo Embedded Signup. App criado sob o portfólio de
+> uma clínica vira app de uma clínica só — e o App Review feito nele não serve para cadastrar
+> a segunda. Refazer depois custa outro App Review.
+
+1. Entre em <https://developers.facebook.com> com **a sua** conta Facebook.
 2. **Meus apps → Criar app**.
 3. Tipo: escolha a opção de negócios/empresa (o nome exato do card muda com frequência; é a
    que menciona "empresa" ou "business").
-4. Dê um nome — `Lensys Care` serve — e associe ao Business Manager da clínica. Se não houver
-   um, o próprio fluxo cria.
+4. Dê um nome — `Lensys Care` serve — e, na etapa **Empresa**, selecione o portfólio da
+   **ALNA CORE**, criado no Passo 0.
 
 ## Passo 2 — Adicionar o produto WhatsApp
 
@@ -268,27 +319,63 @@ daí é tudo automático, sem a clínica ver:
 Os passos 1 a 6 da Parte 1 deixam de existir para o cliente. O vídeo de ativação que faz sentido
 gravar passa a ter três minutos, não uma tarde.
 
-## Coexistence: o número da recepção continua sendo o número da recepção
+## Implementar contra a **v4**, e só ela
+
+O Embedded Signup tem versões, e as antigas estão morrendo: **v2 e v3 são desativadas em
+15/10/2026**. A v4 unifica o onboarding de vários produtos de Business Messaging num fluxo só,
+e o onboarding de produto único continua suportado — ou seja, dá para oferecer só a Cloud API
+sem carregar Messenger e Instagram junto.
+
+> **Isso não é prazo para nós.** Não existe integração v2/v3 no Lensys para migrar; nascemos
+> direto na v4. O que a data significa aqui é outra coisa: **ignore tutorial e post de blog
+> anterior a dezembro/2025** — o fluxo que eles descrevem para de funcionar em outubro.
+
+## Coexistence: o número da recepção continua sendo o número da recepção — mas custa código
 
 Desde maio de 2025 a Meta liberou mundialmente o **Coexistence**: o mesmo número funciona no app
 WhatsApp Business no celular da recepção **e** na Cloud API ao mesmo tempo, com o histórico
 preservado e as mensagens caindo na mesma conversa. Para o paciente é um número só.
 
-Isso derruba a advertência mais dolorosa da Parte 1 — mas **só pelo Embedded Signup**, que é o
-único caminho que ativa esse modo. O custo são recursos que clínica não usa: chamada de voz e
-vídeo pelo número, listas de transmissão (as existentes viram somente leitura), mensagens
-temporárias e de visualização única, e sincronia de grupos.
+Isso derruba a advertência mais dolorosa da Parte 1 — mas **só pelo Embedded Signup**, e **não
+sai de graça**. A primeira versão deste guia tratava o Coexistence como um interruptor; ele é
+uma implementação. O que a Meta exige (conferido em 26/08/2026):
+
+- **três webhooks assinados** no painel do app: `history` (conversas passadas),
+  `smb_app_state_sync` (contatos) e `smb_message_echoes` (mensagens enviadas pelo app da
+  recepção). O Lensys **não tem receptor de webhook do WhatsApp hoje** — isso é rota nova,
+  com validação de assinatura, não configuração;
+- o fluxo do popup **customizado** para o caminho de usuário do app WhatsApp Business, com
+  registro de sessão detectando o evento `FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING`;
+- status de **Tech Provider ou Solution Partner** estabelecido;
+- a clínica no app **2.24.17 ou superior**;
+- a sincronização se completa em **24 horas**, ou o cadastro precisa ser refeito.
+
+Limitações depois de ligado: throughput fixo de **20 mensagens por segundo** (irrelevante para
+~12 lembretes por dia), e alguns recursos somem do app da recepção — mensagens temporárias e de
+visualização única, localização ao vivo e listas de transmissão. **Avise a clínica antes**, não
+depois: lista de transmissão é coisa que recepção usa.
+
+> **Sem Coexistence o Embedded Signup continua funcionando** — a clínica só precisa cadastrar
+> um número que ainda não esteja no app WhatsApp. É o caminho mais curto para o primeiro
+> cliente, e o Coexistence entra depois, quando houver clínica que não aceite trocar de número.
 
 ## O que a ALNA CORE paga uma vez
 
-A burocracia não some — ela sai do colo de cada clínica e cai no nosso, uma vez só:
+**Correção de 26/08/2026:** a versão anterior desta seção dizia que a verificação de negócio é
+obrigatória na Parte 2. **Não é.** O que a documentação diz é outra coisa, e mais leve:
 
-- **verificação de negócio** do nosso Business Manager (aqui é obrigatória, diferente da Parte 1);
-- **App Review** pedindo `whatsapp_business_messaging` e `whatsapp_business_management` em acesso
-  avançado, com o vídeo do Passo 7;
-- app dedicado a isso, com ícone e política de privacidade publicada, e 2FA ativo.
+- **App Review é o gate de verdade** — *"You will not be able to onboard business customers
+  until your app has been approved for advanced access for each of the permissions it
+  requires."* Pede `whatsapp_business_messaging` e `whatsapp_business_management` em acesso
+  avançado, com os vídeos que a **1A** já produz.
+- **Verificação de negócio é opcional, e o que ela compra é escala:** sem ela dá para
+  cadastrar até **10 clínicas por semana**; com ela (mais Access Verification), **200**. Com
+  um cliente ativo, 10 por semana é dez vezes o necessário — a verificação vira problema do
+  décimo primeiro cliente, não do primeiro.
+- app dedicado, com ícone, política de privacidade publicada e 2FA ativo.
 
-Conta em dias, não em horas. Roda em paralelo com o piloto e não bloqueia nada dele.
+Isso derruba o CNPJ e a papelada do caminho crítico. O que sobra é App Review — dias, e roda
+em paralelo com o piloto.
 
 ## Quem paga as mensagens
 
@@ -322,11 +409,16 @@ existe para corrigir:
 
 | Fase | O quê | Bloqueia? |
 |---|---|---|
-| 0 | Parte 1 deste guia, na clínica-piloto. Gera o vídeo. | é o que destrava o resto |
-| 1 | Verificação de negócio + App Review. | burocrática, roda em paralelo |
-| 2 | Embedded Signup, credenciais por clínica, template por API. | depende da 1 aprovada |
+| 0 | **1A** — número de teste. Prova a tubulação e grava os dois vídeos. | é o que destrava o resto |
+| 1 | **App Review** com os vídeos da fase 0. | sim — sem ele não se cadastra clínica nenhuma |
+| 2 | **Embedded Signup v4** + credenciais por clínica + template por API. | depende da 1 aprovada |
+| 3 | *(opcional)* Coexistence: webhooks e fluxo customizado. | só quando houver clínica que não troque de número |
+| — | Verificação de negócio. | **não bloqueia** — só sobe o teto de 10 para 200 clínicas/semana |
 
 O Conecta só é vendável fora da Feira no fim da fase 2.
+
+**A 1B não aparece nesta tabela de propósito.** Ela não é etapa do caminho: é exceção, para o
+caso de uma clínica precisar de WhatsApp antes da fase 2 ficar de pé.
 
 ---
 
@@ -342,7 +434,7 @@ O Conecta só é vendável fora da Feira no fim da fase 2.
 | Parou depois de ~250 envios no dia | Limite da faixa sem verificação. Aí sim vale verificar o Business Manager. |
 | Segunda clínica quer WhatsApp | Não tem gambiarra segura na Parte 1. É a Parte 2, ou nada. |
 
-Fontes consultadas em 24/08/2026 e revisadas em 25/08/2026: [Meta for Developers — Cloud API Get
+Fontes consultadas em 24/08/2026, revisadas em 25/08/2026 e **reconferidas em 26/08/2026** (App Review, Embedded Signup v4, requisitos de Coexistence): [Meta for Developers — Cloud API Get
 Started](https://developers.facebook.com/documentation/business-messaging/whatsapp/get-started),
 [Embedded Signup — visão
 geral](https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/overview/),
