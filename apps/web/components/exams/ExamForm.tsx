@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useAgeGroup } from '@/hooks/useAgeGroup'
 import ExamRefractionFields from '@/components/exams/ExamRefractionFields'
+import RefractionNumberField from '@/components/exams/RefractionNumberField'
 import PrescriptionNotesSection from '@/components/exams/PrescriptionNotesSection'
 import { useExamFormSubmission } from '@/components/exams/useExamFormSubmission'
 import {
@@ -287,20 +288,16 @@ export default function ExamForm({ patient, exam, previousExam }: ExamFormProps)
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Adição por Presbiopia (ADD)
               </label>
-              <Input
-                type="number"
-                step="0.25"
-                min="0"
-                max="4"
-                data-cy="exam-addition-input"
-                placeholder={hasPreviousExam && previousExam?.addition ? previousExam.addition : '+0.00'}
+              <RefractionNumberField
+                kind="addition"
+                label="adição por presbiopia"
+                dataCy="exam-addition-input"
                 value={addition}
-                onChange={(e) => setAddition(e.target.value)}
-                className={`h-11 rounded-xl border-slate-200/80 bg-white font-bold shadow-sm shadow-slate-200/40 dark:border-slate-800 dark:bg-slate-950/30 dark:shadow-none ${
-                  hasPreviousExam && previousExam?.addition
-                    ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80'
-                    : ''
-                }`}
+                onChange={setAddition}
+                placeholder={hasPreviousExam && previousExam?.addition ? previousExam.addition : '+0.00'}
+                highlightPlaceholder={Boolean(hasPreviousExam && previousExam?.addition)}
+                className="w-full"
+                inputClassName="h-11 flex-1 min-w-0 rounded-xl border-slate-200/80 bg-white font-bold shadow-sm shadow-slate-200/40 dark:border-slate-800 dark:bg-slate-950/30 dark:shadow-none"
               />
             </div>
 
@@ -308,20 +305,16 @@ export default function ExamForm({ patient, exam, previousExam }: ExamFormProps)
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Distância Pupilar (DP) em mm
               </label>
-              <Input
-                type="number"
-                step="0.5"
-                min="45"
-                max="80"
-                data-cy="exam-pd-input"
-                placeholder={hasPreviousExam && previousExam?.pd ? previousExam.pd : 'ex: 63.5'}
+              <RefractionNumberField
+                kind="pd"
+                label="distância pupilar"
+                dataCy="exam-pd-input"
                 value={pd}
-                onChange={(e) => setPd(e.target.value)}
-                className={`h-11 rounded-xl border-slate-200/80 bg-white font-semibold shadow-sm shadow-slate-200/40 dark:border-slate-800 dark:bg-slate-950/30 dark:shadow-none ${
-                  hasPreviousExam && previousExam?.pd
-                    ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80'
-                    : ''
-                }`}
+                onChange={setPd}
+                placeholder={hasPreviousExam && previousExam?.pd ? previousExam.pd : 'ex: 63.5'}
+                highlightPlaceholder={Boolean(hasPreviousExam && previousExam?.pd)}
+                className="w-full"
+                inputClassName="h-11 flex-1 min-w-0 rounded-xl border-slate-200/80 bg-white font-semibold shadow-sm shadow-slate-200/40 dark:border-slate-800 dark:bg-slate-950/30 dark:shadow-none"
               />
             </div>
 

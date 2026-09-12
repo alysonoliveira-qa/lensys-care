@@ -3,6 +3,7 @@ import { ChevronDown } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import PreviousExamReferencePanel from '@/components/exams/PreviousExamReferencePanel'
+import RefractionNumberField from '@/components/exams/RefractionNumberField'
 import {
   CUSTOM_VISUAL_ACUITY_OPTION,
   DEFAULT_VISUAL_ACUITY,
@@ -164,6 +165,9 @@ export default function ExamRefractionFields({
         <CardTitle className="text-lg font-bold">Graduação Refrativa (OD / OE)</CardTitle>
         <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
           Preencha os valores esféricos, cilíndricos, eixos e acuidade de cada olho.
+          <span className="mt-1 block text-xs text-slate-400 dark:text-slate-500">
+            Arraste sobre o número para os lados, use a roda do mouse ou as setas ↑↓ para ajustar o grau. Segure Shift para ajuste fino.
+          </span>
         </CardDescription>
         {hasPreviousExam ? (
           <PreviousExamReferencePanel
@@ -190,57 +194,45 @@ export default function ExamRefractionFields({
                   OD (Direito)
                 </td>
                 <td className="px-2 py-4">
-                  <Input
-                    type="number"
-                    step="0.25"
-                    min="-20"
-                    max="20"
-                    data-cy="exam-od-sphere-input"
-                    placeholder={hasPreviousExam && previousOdSph ? previousOdSph : '0.00'}
+                  <RefractionNumberField
+                    kind="sph"
+                    label="esférico do olho direito"
+                    dataCy="exam-od-sphere-input"
                     value={odSph}
-                    onChange={(event) => onOdSphChange(event.target.value)}
-                    className={`${inputClassName} w-24 font-bold ${
-                      hasPreviousExam && previousOdSph
-                        ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80'
-                        : ''
-                    }`}
+                    onChange={onOdSphChange}
+                    placeholder={hasPreviousExam && previousOdSph ? previousOdSph : '0.00'}
+                    highlightPlaceholder={Boolean(hasPreviousExam && previousOdSph)}
+                    inputClassName={`${inputClassName} w-20 font-bold `}
                   />
                 </td>
                 <td className="px-2 py-4">
-                  <Input
-                    type="number"
-                    step="0.25"
-                    min="-10"
-                    max="0"
-                    data-cy="exam-od-cylinder-input"
-                    placeholder={hasPreviousExam && previousOdCyl ? previousOdCyl : '0.00'}
+                  <RefractionNumberField
+                    kind="cyl"
+                    label="cilíndrico do olho direito"
+                    dataCy="exam-od-cylinder-input"
                     value={odCyl}
-                    onChange={(event) => onOdCylChange(event.target.value)}
-                    className={`${inputClassName} w-24 ${
-                      hasPreviousExam && previousOdCyl
-                        ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80'
-                        : ''
-                    }`}
+                    onChange={onOdCylChange}
+                    placeholder={hasPreviousExam && previousOdCyl ? previousOdCyl : '0.00'}
+                    highlightPlaceholder={Boolean(hasPreviousExam && previousOdCyl)}
+                    inputClassName={`${inputClassName} w-20 `}
                   />
                 </td>
                 <td className="px-2 py-4">
-                  <Input
-                    type="number"
-                    min="0"
-                    max="180"
-                    data-cy="exam-od-axis-input"
+                  <RefractionNumberField
+                    kind="axis"
+                    label="eixo do olho direito"
+                    dataCy="exam-od-axis-input"
+                    value={odAxis}
+                    onChange={onOdAxisChange}
                     placeholder={
                       hasPreviousExam && previousOdAxis !== null && previousOdAxis !== undefined
                         ? previousOdAxis.toString()
                         : 'Eixo'
                     }
-                    value={odAxis}
-                    onChange={(event) => onOdAxisChange(event.target.value)}
-                    className={`${inputClassName} w-20 ${
+                    highlightPlaceholder={
                       hasPreviousExam && previousOdAxis !== null && previousOdAxis !== undefined
-                        ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80'
-                        : ''
-                    }`}
+                    }
+                    inputClassName={`${inputClassName} w-16`}
                   />
                 </td>
                 <td className="px-2 py-4 align-middle">
@@ -259,57 +251,45 @@ export default function ExamRefractionFields({
                   OE (Esquerdo)
                 </td>
                 <td className="px-2 py-4">
-                  <Input
-                    type="number"
-                    step="0.25"
-                    min="-20"
-                    max="20"
-                    data-cy="exam-oe-sphere-input"
-                    placeholder={hasPreviousExam && previousOeSph ? previousOeSph : '0.00'}
+                  <RefractionNumberField
+                    kind="sph"
+                    label="esférico do olho esquerdo"
+                    dataCy="exam-oe-sphere-input"
                     value={oeSph}
-                    onChange={(event) => onOeSphChange(event.target.value)}
-                    className={`${inputClassName} w-24 font-bold ${
-                      hasPreviousExam && previousOeSph
-                        ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80'
-                        : ''
-                    }`}
+                    onChange={onOeSphChange}
+                    placeholder={hasPreviousExam && previousOeSph ? previousOeSph : '0.00'}
+                    highlightPlaceholder={Boolean(hasPreviousExam && previousOeSph)}
+                    inputClassName={`${inputClassName} w-20 font-bold `}
                   />
                 </td>
                 <td className="px-2 py-4">
-                  <Input
-                    type="number"
-                    step="0.25"
-                    min="-10"
-                    max="0"
-                    data-cy="exam-oe-cylinder-input"
-                    placeholder={hasPreviousExam && previousOeCyl ? previousOeCyl : '0.00'}
+                  <RefractionNumberField
+                    kind="cyl"
+                    label="cilíndrico do olho esquerdo"
+                    dataCy="exam-oe-cylinder-input"
                     value={oeCyl}
-                    onChange={(event) => onOeCylChange(event.target.value)}
-                    className={`${inputClassName} w-24 ${
-                      hasPreviousExam && previousOeCyl
-                        ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80'
-                        : ''
-                    }`}
+                    onChange={onOeCylChange}
+                    placeholder={hasPreviousExam && previousOeCyl ? previousOeCyl : '0.00'}
+                    highlightPlaceholder={Boolean(hasPreviousExam && previousOeCyl)}
+                    inputClassName={`${inputClassName} w-20 `}
                   />
                 </td>
                 <td className="px-2 py-4">
-                  <Input
-                    type="number"
-                    min="0"
-                    max="180"
-                    data-cy="exam-oe-axis-input"
+                  <RefractionNumberField
+                    kind="axis"
+                    label="eixo do olho esquerdo"
+                    dataCy="exam-oe-axis-input"
+                    value={oeAxis}
+                    onChange={onOeAxisChange}
                     placeholder={
                       hasPreviousExam && previousOeAxis !== null && previousOeAxis !== undefined
                         ? previousOeAxis.toString()
                         : 'Eixo'
                     }
-                    value={oeAxis}
-                    onChange={(event) => onOeAxisChange(event.target.value)}
-                    className={`${inputClassName} w-20 ${
+                    highlightPlaceholder={
                       hasPreviousExam && previousOeAxis !== null && previousOeAxis !== undefined
-                        ? 'placeholder:text-amber-500/80 dark:placeholder:text-amber-400/80'
-                        : ''
-                    }`}
+                    }
+                    inputClassName={`${inputClassName} w-16`}
                   />
                 </td>
                 <td className="px-2 py-4 align-middle">

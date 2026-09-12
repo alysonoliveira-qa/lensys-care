@@ -190,6 +190,24 @@ Multi-tenant com **Clinic** como tenant raiz:
   que carimba `referral_paid_at`. Separar as duas abriria a janela em que a indicação está
   quitada e o dinheiro não saiu de lugar nenhum — e nada voltaria a lembrar disso.
 
+## Campos de grau do exame
+
+- **`RefractionNumberField`** atende SPH, CYL, AXIS, ADD e DP. Quatro formas de ajuste:
+  arrastar o número para os lados, roda do mouse (só com o campo focado), setas ↑↓
+  (`PageUp/PageDown` = 4 passos) e os botões −/+ com repetição ao segurar.
+- **A regra do arrasto é "direita aumenta", não "direita é positivo".** No cilindro
+  negativo (−10 a 0) as duas só parecem a mesma coisa enquanto o campo chega a ser
+  positivo — pela segunda, arrastar para a direita travaria em zero sem explicar.
+- **O eixo dá a volta em vez de travar:** 180° e 0° são o mesmo meridiano, então passar
+  de 180 cai em 1. A faixa canônica de escrita é 1–180.
+- **O input segue `type="number"` de propósito.** Hoje a única validação de faixa da
+  refração é o `min`/`max` do navegador — `/api/exams` não checa intervalo. Trocar por
+  campo de texto removeria, calada, a trava que impede salvar um esférico de +80 D.
+- **Lógica pura em `lib/exams/refraction-stepper.ts`** (passo, encaixe na grade, limite,
+  volta do eixo, pixels por passo), com testes em `__tests__/refraction-stepper.test.ts`.
+  `REFRACTION_FIELD_SPECS` deriva min/max/step de `REFRACTION_LIMITS`: duplicar criaria um
+  campo que deixa arrastar até um valor que a validação depois recusa.
+
 ## Padrão de código (obrigatório — ver `docs/module-pattern.md`)
 
 - **Páginas compõem, não concentram lógica.** `page.tsx` resolve auth/contexto, chama
