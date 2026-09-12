@@ -54,3 +54,7 @@ coverage/
 .mcp.json
 skills-lock.json
 .claude/skills/
+graphify-out/
+
+# Supabase CLI scratch
+supabase/.temp/
