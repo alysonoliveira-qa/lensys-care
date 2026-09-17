@@ -211,6 +211,10 @@ Multi-tenant com **Clinic** como tenant raiz:
 - **A regra do arrasto é "direita aumenta", não "direita é positivo".** No cilindro
   negativo (−10 a 0) as duas só parecem a mesma coisa enquanto o campo chega a ser
   positivo — pela segunda, arrastar para a direita travaria em zero sem explicar.
+- **Receita só pelas setas** (`lib/exams/refraction-keyboard.ts`): ←→ trocam de campo
+  (atributo `data-refraction-nav`, ordem do DOM: OD, OE, ADD, DP; sem dar a volta) e ↑↓
+  ajustam — inclusive a acuidade, que é select. Pedido do optometrista, que examina com o
+  instrumento numa mão. No select o ←→ tem que ser interceptado: no Windows ele troca a opção.
 - **O eixo dá a volta em vez de travar:** 180° e 0° são o mesmo meridiano, então passar
   de 180 cai em 1. A faixa canônica de escrita é 1–180.
 - **O input segue `type="number"` de propósito.** Hoje a única validação de faixa da

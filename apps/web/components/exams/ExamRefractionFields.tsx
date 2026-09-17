@@ -1,3 +1,4 @@
+import type { KeyboardEvent } from 'react'
 import { ChevronDown } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
@@ -10,6 +11,11 @@ import {
   isCommonVisualAcuity,
   VISUAL_ACUITY_OPTIONS,
 } from '@/lib/exams/exam-options'
+import {
+  moveRefractionFocus,
+  navDirectionFromKey,
+  stepVisualAcuity,
+} from '@/lib/exams/refraction-keyboard'
 
 interface VisualAcuityFieldProps {
   value: string
@@ -75,20 +81,57 @@ function VisualAcuityField({
       : 'text-indigo-600 dark:text-indigo-400'
   }`
 
+  const selectOption = (nextValue: string) => {
+    onCustomModeChange(false)
+    onChange(nextValue)
+  }
+
+  // ←→ trocam de campo também aqui. No select é obrigatório segurar a tecla: no
+  // Windows a seta lateral troca a opção de um select fechado, e a acuidade
+  // mudaria calada enquanto o optometrista só queria passar para o próximo olho.
+  const handleNavKey = (event: KeyboardEvent<HTMLElement>) => {
+    const direction = navDirectionFromKey(event.key)
+
+    if (direction === null || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+      return false
+    }
+
+    event.preventDefault()
+    moveRefractionFocus(event.currentTarget, direction)
+    return true
+  }
+
+  const handleSelectKeyDown = (event: KeyboardEvent<HTMLSelectElement>) => {
+    if (handleNavKey(event)) return
+
+    // Alt+↓ é o atalho que abre a lista; esse fica com o navegador.
+    if (event.altKey) return
+
+    const steps = event.key === 'ArrowUp' ? 1 : event.key === 'ArrowDown' ? -1 : 0
+
+    if (!steps) return
+
+    // Tratado à mão em vez de deixar para o select nativo: no macOS a seta abre
+    // a lista em vez de trocar a opção, e o nativo cairia em "Manual".
+    event.preventDefault()
+    selectOption(stepVisualAcuity(customMode ? '' : value, steps, referenceValue))
+  }
+
   return (
     <div className="flex min-w-[13rem] items-center justify-center gap-2">
       <div className="relative">
         <select
           value={selectedValue}
           data-cy={dataCy}
+          data-refraction-nav=""
+          onKeyDown={handleSelectKeyDown}
           onChange={(event) => {
             if (event.target.value === CUSTOM_VISUAL_ACUITY_OPTION) {
               onCustomModeChange(true)
               return
             }
 
-            onCustomModeChange(false)
-            onChange(event.target.value)
+            selectOption(event.target.value)
           }}
           className={selectClassName}
         >
@@ -112,7 +155,9 @@ function VisualAcuityField({
           type="text"
           placeholder={DEFAULT_VISUAL_ACUITY}
           data-cy={dataCy}
+          data-refraction-nav=""
           value={value}
+          onKeyDown={handleNavKey}
           onChange={(event) => onChange(event.target.value)}
           className="h-11 w-24 rounded-xl border-slate-200/80 bg-white text-center font-bold text-indigo-600 shadow-sm shadow-slate-200/40 dark:border-slate-800 dark:bg-slate-950/30 dark:text-indigo-400 dark:shadow-none"
         />
@@ -166,7 +211,7 @@ export default function ExamRefractionFields({
         <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
           Preencha os valores esféricos, cilíndricos, eixos e acuidade de cada olho.
           <span className="mt-1 block text-xs text-slate-400 dark:text-slate-500">
-            Arraste sobre o número para os lados, use a roda do mouse ou as setas ↑↓ para ajustar o grau. Segure Shift para ajuste fino.
+            Só pelo teclado: setas ←→ passam de um campo para o outro e ↑↓ ajustam o valor. Também dá para arrastar o número para os lados ou usar a roda do mouse (Shift para ajuste fino).
           </span>
         </CardDescription>
         {hasPreviousExam ? (
