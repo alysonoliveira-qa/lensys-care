@@ -11,6 +11,7 @@ import {
   stepsFromDrag,
   type RefractionFieldKind,
 } from '@/lib/exams/refraction-stepper'
+import { moveRefractionFocus, navDirectionFromKey } from '@/lib/exams/refraction-keyboard'
 
 /** Espera antes de o botão segurado começar a repetir. */
 const HOLD_DELAY_MS = 400
@@ -198,6 +199,20 @@ export default function RefractionNumberField({
 
   // ─── Teclado ──────────────────────────────────────────────────────────────
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    // ←→ trocam de campo, como no sistema que o optometrista usava antes: com o
+    // instrumento numa mão, a receita sai inteira só pelas setas. Custa mover o
+    // cursor dentro do número, que aqui tem no máximo seis caracteres — corrigir
+    // é Backspace ou digitar por cima, já que o valor chega selecionado.
+    const direction = navDirectionFromKey(event.key)
+
+    if (direction !== null) {
+      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
+
+      event.preventDefault()
+      moveRefractionFocus(event.currentTarget, direction)
+      return
+    }
+
     const stepsByKey: Record<string, number> = {
       ArrowUp: 1,
       ArrowDown: -1,
@@ -254,7 +269,8 @@ export default function RefractionNumberField({
         max={spec.max}
         inputMode="decimal"
         aria-label={label}
-        title={label + ' — arraste para os lados, use a roda do mouse ou as setas ↑↓'}
+        title={label + ' — setas ↑↓ ajustam, ←→ trocam de campo; também dá para arrastar ou usar a roda do mouse'}
+        data-refraction-nav=""
         data-cy={dataCy}
         placeholder={placeholder}
         value={value}
