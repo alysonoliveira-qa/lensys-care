@@ -141,6 +141,14 @@ export async function activatePlan(
       // reconhece os eventos de fatura.
       metadata: { ...STRIPE_APP_METADATA, clinicId: clinic.id },
     },
+    // Por padrão o Checkout só reoferece cartão salvo com `allow_redisplay:
+    // 'always'`, e cartão salvo por checkout anterior fica 'limited' ou
+    // 'unspecified'. Sem este filtro, quem já tem cartão no Stripe tinha que
+    // digitá-lo de novo. O customer é sempre o da clínica da sessão, então só
+    // aparecem cartões dela mesma.
+    saved_payment_method_options: {
+      allow_redisplay_filters: ['always', 'limited', 'unspecified'],
+    },
     success_url: `${appUrl}/subscription?success=true`,
     cancel_url: `${appUrl}/subscription?canceled=true`,
     metadata: { ...STRIPE_APP_METADATA, clinicId: clinic.id },
