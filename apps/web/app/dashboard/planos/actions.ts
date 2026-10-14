@@ -4,14 +4,12 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
 import { getStripe } from '@/lib/stripe/client'
-import {
-  getPriceIdForPlan,
-  STRIPE_PLAN_IDS,
-  TRIAL_PERIOD_DAYS,
-  type StripePlanId,
-} from '@/lib/stripe/products'
+import { getPriceIdForPlan, STRIPE_PLAN_IDS, type StripePlanId } from '@/lib/stripe/products'
 import { STRIPE_APP_METADATA } from '@/lib/stripe/stripe-app-metadata'
 import { createBillingPortalUrl } from '@/lib/stripe/billing-portal'
+import { resolveCheckoutTrial } from '@/lib/stripe/checkout-trial'
+import { syncSubscriptionFromStripe } from '@/lib/stripe/stripe-sync'
+import type { StripeSubscriptionLike } from '@/lib/stripe/stripe-normalizers'
 
 // Alias em vez de uma segunda lista de planos: manter as duas em sincronia à mão
 // é exatamente o tipo de duplicação que deixa um plano novo fora do checkout.
@@ -92,13 +90,23 @@ export async function activatePlan(
   // registrada (webhook perdido). Antes de abrir um checkout novo, pergunta ao
   // Stripe se esse customer já tem assinatura viva.
   if (stripeCustomer) {
-    const existingSubscriptionId = await findLiveSubscriptionId(stripeCustomer.stripe_customer_id)
+    const existing = await findLiveSubscription(stripeCustomer.stripe_customer_id)
 
-    if (existingSubscriptionId) {
+    if (existing) {
       console.warn(
-        `[stripe] clínica ${clinic.id} já tem a assinatura ${existingSubscriptionId} no Stripe ` +
-          'sem registro local. Enviando ao portal em vez de abrir novo checkout.'
+        `[stripe] clínica ${clinic.id} já tem a assinatura ${existing.id} no Stripe ` +
+          'sem registro local. Sincronizando e enviando ao portal em vez de abrir novo checkout.'
       )
+
+      // Grava o que o webhook deveria ter gravado. Sem isso a faixa de teste
+      // vencido continua no ar para quem já cadastrou o cartão, e o próximo
+      // clique cai aqui de novo, sem que nada mude.
+      try {
+        await syncSubscriptionFromStripe(clinic.id, existing)
+      } catch (error) {
+        console.error(`[stripe] falha ao sincronizar a assinatura ${existing.id}:`, error)
+      }
+
       redirect(await createBillingPortalUrl(stripeCustomer.stripe_customer_id, appUrl))
     }
   }
@@ -119,12 +127,15 @@ export async function activatePlan(
     })
   }
 
+  const trial = resolveCheckoutTrial(subscription)
+
   const session = await getStripe().checkout.sessions.create({
     customer: stripeCustomerId,
     line_items: [{ price: priceId, quantity: 1 }],
     mode: 'subscription',
     subscription_data: {
-      trial_period_days: TRIAL_PERIOD_DAYS,
+      ...(trial.kind === 'full' ? { trial_period_days: trial.trialPeriodDays } : {}),
+      ...(trial.kind === 'until' ? { trial_end: trial.trialEnd } : {}),
       // Carimbar aqui tambem faz a invoice da assinatura carregar o app em
       // `parent.subscription_details.metadata`, que e por onde o webhook
       // reconhece os eventos de fatura.
@@ -146,7 +157,7 @@ export async function activatePlan(
  * `incomplete` e `canceled` não contam: a primeira é checkout abandonado, a
  * segunda já acabou — nenhuma das duas impede uma assinatura nova.
  */
-async function findLiveSubscriptionId(customerId: string): Promise<string | null> {
+async function findLiveSubscription(customerId: string): Promise<StripeSubscriptionLike | null> {
   const subscriptions = await getStripe().subscriptions.list({
     customer: customerId,
     status: 'all',
@@ -157,5 +168,5 @@ async function findLiveSubscriptionId(customerId: string): Promise<string | null
     (item) => item.status === 'active' || item.status === 'trialing' || item.status === 'past_due'
   )
 
-  return live?.id ?? null
+  return (live as unknown as StripeSubscriptionLike | undefined) ?? null
 }
