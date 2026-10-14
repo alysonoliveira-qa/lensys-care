@@ -17,7 +17,12 @@ export default async function SubscriptionPage() {
   if (!shellData) {
     redirect('/login')
   }
-  const currentPlan = resolveDisplayPlanId(shellData.subscription?.plan)
+  // Plano só conta como "atual" quando passou pelo Stripe. O teste do cadastro
+  // grava ESSENTIAL sem cartão nenhum, e marcar esse card como "Plano ativo"
+  // desabilitava justamente o botão que a faixa de teste vencido manda clicar.
+  const currentPlan = shellData.subscription?.stripe_subscription_id
+    ? resolveDisplayPlanId(shellData.subscription.plan)
+    : null
   const canManagePlan = shellData.profile.role === 'OWNER'
 
   // O portal so existe para quem ja tem customer no Stripe. Checar aqui evita

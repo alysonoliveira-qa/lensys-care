@@ -10,7 +10,8 @@ import { PLAN_DISPLAY_CONFIG } from '@/lib/plans/plan-display-config'
 import { activatePlan, type AvailablePlan, type PlanActionState } from './actions'
 
 interface PlanActivationCardsProps {
-  currentPlan: AvailablePlan
+  /** `null` quando a clínica ainda não assinou pelo Stripe (teste do cadastro). */
+  currentPlan: AvailablePlan | null
   canManagePlan: boolean
 }
 
